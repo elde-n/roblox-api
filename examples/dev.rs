@@ -5,7 +5,7 @@ use roblox_api::{
             self,
             v1::{AssetType, CreationContext, Creator},
         },
-        data, users,
+        data, develop, users,
     },
     client::{Client, Cookie},
 };
@@ -104,4 +104,7 @@ async fn main() {
         .unwrap();
 
     println!("Asset status: {asset_status:?}");
+
+    let assets = develop::v1::assets(&mut client, &[47433]).await.unwrap();
+    println!("Assets: {assets:?}");
 }

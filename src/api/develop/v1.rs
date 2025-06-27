@@ -64,13 +64,13 @@ pub struct Asset {
     pub is_moderated: bool,
     #[serde(rename = "isArchivable")]
     pub is_archivable: bool,
-    #[serde(rename = "canHaveThumbnails")]
+    #[serde(rename = "canHaveThumbnail")]
     pub thumbnails_allowed: bool,
     #[serde(rename = "isVersioningEnabled")]
     pub is_versioning_enabled: bool,
 
     #[serde(rename = "moderationStatus")]
-    pub moderation_status: String,
+    pub moderation_status: Option<String>,
     #[serde(rename = "reviewStatus")]
     pub review_status: String,
 
@@ -100,6 +100,7 @@ pub async fn assets(client: &mut Client, ids: &[u64]) -> Result<Vec<Asset>, Erro
 
     #[derive(Deserialize)]
     struct Response {
+        #[serde(rename = "data")]
         assets: Vec<Asset>,
     }
 
