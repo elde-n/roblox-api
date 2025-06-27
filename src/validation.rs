@@ -158,10 +158,6 @@ impl Client {
                     }
                 };
 
-                for error in &errors.errors {
-                    dbg!(error);
-                }
-
                 match code {
                     400 => {
                         let errors: Vec<ApiError> = errors
