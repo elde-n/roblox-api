@@ -65,9 +65,9 @@ impl Client {
         Ok(())
     }
 
-    /// TODO: test if account is terminated
-    /// TODO: add reactivate account function
-    //pub async fn test_account_status() {}
+    // TODO: test if account is terminated
+    // TODO: add reactivate account function
+    // pub async fn test_account_status() {}
 
     pub(crate) async fn validate_response(
         &mut self,
@@ -83,7 +83,7 @@ impl Client {
                 let token = response.headers().get(TOKEN_HEADER);
                 if let Some(token) = token {
                     // EVERYTHING must be mutable to do this, perhaps there's another datatype we can use
-                    self.set_token(&String::from_utf8_lossy(token.as_bytes()).to_string());
+                    self.set_token(String::from_utf8_lossy(token.as_bytes()).as_ref());
                 }
 
                 // TODO: some apis like the data api can return an error even with status_code 200
@@ -101,6 +101,7 @@ impl Client {
                         (challenge_id, challenge_type, challenge_metadata_b64)
                     {
                         let kind = ChallengeType::from(kind.to_str().unwrap());
+                        dbg!(&kind);
                         match kind {
                             ChallengeType::Chef => {
                                 let _metadata: ChefChallengeMetadata = serde_json::from_slice(
@@ -111,7 +112,11 @@ impl Client {
                                 )
                                 .unwrap();
 
-                                todo!("Unsupported chef challenge");
+                                todo!("Unsupported challenge-type: \"chef\"");
+                            }
+
+                            ChallengeType::Captcha => {
+                                todo!("Unsupported challenge-type: \"captcha\"")
                             }
 
                             _ => {
@@ -199,6 +204,50 @@ impl Client {
                                 | "XSRF token invalid"
                                 | "XSRF Token Validation Failed"
                                 | "\"XSRF Token Validation Failed\"" => ApiError::TokenValidation,
+
+                                "Incorrect username or password. Please try again." => {
+                                    ApiError::InvalidCredentials
+                                }
+
+                                "You must pass the robot test before logging in." => {
+                                    ApiError::CaptchaFailed
+                                }
+
+                                "Account has been locked. Please request a password reset." => {
+                                    ApiError::AccontLocked
+                                }
+
+                                "Unable to login. Please use Social Network sign on." => {
+                                    ApiError::SocialNetworkLoginRequired
+                                }
+
+                                "Account issue. Please contact Support." => {
+                                    ApiError::AccountIssue
+                                }
+
+                                "Unable to login with provided credentials. Default login is required." => {
+                                    ApiError::DefaultLoginRequired
+                                }
+
+                                "Received credentials are unverified." => {
+                                    ApiError::UnverifiedCredentials
+                                }
+
+                                "Existing login session found. Please log out first." => {
+                                    ApiError::ExistingLoginSession
+                                }
+
+                                "The account is unable to log in. Please log in to the LuoBu app." => {
+                                    ApiError::LuoBuAppLoginRequired
+                                }
+
+                                "Too many attempts. Please wait a bit." => {
+                                    ApiError::Ratelimited
+                                }
+
+                                "The account is unable to login. Please log in with the VNG app." => {
+                                    ApiError::VNGAppLoginRequired
+                                }
 
                                 "PIN is locked." => ApiError::PinIsLocked,
                                 "Invalid birthdate change." => ApiError::InvalidBirthdate,

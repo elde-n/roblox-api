@@ -28,9 +28,9 @@ pub async fn upload(
 
     let mut url = format!("{URL}/upload.ashx?assetId={id}");
     if let AssetTypeId::Model = asset_type {
-        url.push_str(&format!("&type=Model"));
+        url.push_str("&type=Model");
     } else if let AssetTypeId::Place = asset_type {
-        url.push_str(&format!("&type=Place"));
+        url.push_str("&type=Place");
     } else {
         let asset_type_id = asset_type as u8;
         url.push_str(&format!("&assetTypeId={asset_type_id}"));

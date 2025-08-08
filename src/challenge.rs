@@ -121,7 +121,7 @@ impl Client {
         verification_token: &str,
     ) -> Result<(), Error> {
         // the challenge requires this api call, otherwise it fails
-        challenge::v1::continue_challenge(self, &challenge, verification_token).await?;
+        challenge::v1::continue_challenge(self, challenge, verification_token).await?;
 
         self.requestor.default_headers.insert(
             CHALLENGE_ID_HEADER,

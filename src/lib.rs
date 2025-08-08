@@ -36,9 +36,9 @@ impl DateTime {
     }
 }
 
-impl ToString for DateTime {
-    fn to_string(&self) -> String {
-        self.0.clone()
+impl std::fmt::Display for DateTime {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 
@@ -65,6 +65,7 @@ pub enum ApiError {
     InvalidUserId,
     PinIsLocked,
     TokenValidation,
+    CaptchaFailed,
     ChallengeRequired(Challenge),
     ChallengeFailed,
     InvalidChallengeId,
@@ -72,6 +73,15 @@ pub enum ApiError {
     TwoStepVerificationMaintenance,
     Multiple(Vec<ApiError>),
     PermissionError,
+    AccontLocked,
+    AccountIssue,
+    InvalidCredentials,
+    UnverifiedCredentials,
+    ExistingLoginSession,
+    DefaultLoginRequired,
+    VNGAppLoginRequired,
+    LuoBuAppLoginRequired,
+    SocialNetworkLoginRequired,
 }
 
 #[repr(u8)]
@@ -154,12 +164,16 @@ pub enum SortOrder {
     Descending,
 }
 
-impl ToString for SortOrder {
-    fn to_string(&self) -> String {
-        match self {
-            SortOrder::Ascending => "Asc".to_string(),
-            SortOrder::Descending => "Desc".to_string(),
-        }
+impl std::fmt::Display for SortOrder {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                SortOrder::Ascending => "Asc",
+                SortOrder::Descending => "Desc",
+            }
+        )
     }
 }
 

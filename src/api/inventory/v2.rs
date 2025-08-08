@@ -1,5 +1,6 @@
-use crate::{AssetTypeId, DateTime, Error, Paging, client::Client};
 use serde::Deserialize;
+
+use crate::{AssetTypeId, DateTime, Error, Paging, client::Client};
 
 pub const URL: &str = "https://inventory.roblox.com/v2";
 

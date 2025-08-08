@@ -1,9 +1,5 @@
 use roblox_api::{
-    Paging,
-    api::{
-        inventory::{self, v1::ItemType},
-        users,
-    },
+    api::users,
     client::{Client, Cookie},
 };
 

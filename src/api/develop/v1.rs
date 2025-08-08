@@ -132,16 +132,12 @@ pub async fn published_asset_versions(
         .await
 }
 
-pub async fn revert_asset_version(
-    client: &mut Client,
-    id: u64,
-    asset_version: u64,
-) -> Result<(), Error> {
+pub async fn revert_asset_version(client: &mut Client, id: u64, version: u64) -> Result<(), Error> {
     let result = client
         .requestor
         .client
         .post(format!(
-            "{URL}/assets/{id}/revert-version?assetVersionNumber={asset_version}"
+            "{URL}/assets/{id}/revert-version?assetVersionNumber={version}"
         ))
         .headers(client.requestor.default_headers.clone())
         .send()

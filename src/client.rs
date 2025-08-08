@@ -3,14 +3,16 @@ use reqwest::{
     header::{self, HeaderMap, HeaderValue},
 };
 
-use crate::Error;
 use serde::de::DeserializeOwned;
+
+use crate::Error;
 
 #[derive(Default)]
 pub struct Cookie(String);
-impl ToString for Cookie {
-    fn to_string(&self) -> String {
-        self.0.clone()
+
+impl std::fmt::Display for Cookie {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 
