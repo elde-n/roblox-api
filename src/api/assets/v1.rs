@@ -9,7 +9,10 @@ const URL: &str = "https://apis.roblox.com/assets/user-auth/v1";
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum AssetType {
+    Audio,
     Decal,
+    Model,
+    Video,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
