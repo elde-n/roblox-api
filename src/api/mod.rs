@@ -1,9 +1,13 @@
+pub mod asset_delivery;
 pub mod assets;
 pub mod auth;
+pub mod auth_token_service;
 pub mod challenge;
 pub mod data;
 pub mod develop;
+pub mod hba_service;
 pub mod inventory;
+pub mod thumbnails;
 pub mod toolbox_service;
 pub mod two_step_verification;
 pub mod users;
