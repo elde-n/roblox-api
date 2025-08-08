@@ -1,5 +1,6 @@
-use crate::{DateTime, Error, Paging, client::Client};
 use serde::{Deserialize, Serialize};
+
+use crate::{DateTime, Error, Paging, client::Client};
 
 pub const URL: &str = "https://users.roblox.com/v1";
 
@@ -27,6 +28,20 @@ pub struct ClientDetails {
     pub name: String,
     #[serde(rename = "displayName")]
     pub display_name: String,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+pub struct ClientAppLaunchInfo {
+    pub id: u64,
+    pub name: String,
+    #[serde(rename = "displayName")]
+    pub display_name: String,
+    #[serde(rename = "isPremium")]
+    pub is_premium: bool,
+    #[serde(rename = "countryCode")]
+    pub country_code: String,
+    #[serde(rename = "ageBracket")]
+    pub age_bracket: u64,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
@@ -351,6 +366,24 @@ pub async fn authenticated_roles(client: &mut Client) -> Result<Vec<String>, Err
         .roles)
 }
 
+pub async fn authenticated_app_launch_info(
+    client: &mut Client,
+) -> Result<ClientAppLaunchInfo, Error> {
+    let result = client
+        .requestor
+        .client
+        .get(format!("{URL}/users/authenticated/app-launch-info"))
+        .headers(client.requestor.default_headers.clone())
+        .send()
+        .await;
+
+    let response = client.validate_response(result).await?;
+    client
+        .requestor
+        .parse_json::<ClientAppLaunchInfo>(response)
+        .await
+}
+
 pub async fn birthdate(client: &mut Client) -> Result<DateTime, Error> {
     let result = client
         .requestor
@@ -510,7 +543,7 @@ pub async fn validate_display_name(
         .client
         .get(format!(
             "{URL}/display-names/validate?displayName={display_name}&birthdate={}",
-            birthdate.to_string()
+            birthdate
         ))
         .headers(client.requestor.default_headers.clone())
         .send()
