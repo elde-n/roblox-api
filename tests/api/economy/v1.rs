@@ -1,9 +1,6 @@
 use dotenvy_macro::dotenv;
 
-use roblox_api::{
-    api::economy::{self, v1::Currency},
-    client::Client,
-};
+use roblox_api::{Currency, api::economy, client::Client};
 
 #[tokio::test]
 async fn purchase() {

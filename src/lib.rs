@@ -149,6 +149,14 @@ pub enum AssetTypeId {
     DynamicHead,
 }
 
+#[repr(u8)]
+#[derive(Clone, Debug, Default, Serialize, PartialEq, Eq)]
+pub enum Currency {
+    #[default]
+    Robux = 1,
+    Tickets,
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Paging<'a> {
     pub cursor: Option<&'a str>,

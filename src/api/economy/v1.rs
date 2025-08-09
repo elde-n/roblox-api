@@ -1,16 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{Error, client::Client};
+use crate::{Currency, Error, client::Client};
 
 pub const URL: &str = "https://economy.roblox.com/v1";
-
-#[repr(u8)]
-#[derive(Clone, Debug, Default, Serialize, PartialEq, Eq)]
-pub enum Currency {
-    #[default]
-    Robux = 1,
-    Tickets,
-}
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 pub struct PurchaseResponse {
@@ -30,8 +22,8 @@ pub async fn purchase(
         currency: u8,
         #[serde(rename = "expectedPrice")]
         price: u64,
-        //#[serde(rename = "expectedSellerId")]
-        //seller_user_id: Option<u64>,
+        #[serde(rename = "expectedSellerId")]
+        seller_user_id: Option<u64>,
     }
 
     let result = client
@@ -41,7 +33,7 @@ pub async fn purchase(
         .json(&Request {
             currency: currency as u8,
             price,
-            //seller_user_id,
+            seller_user_id,
         })
         .headers(client.requestor.default_headers.clone())
         .send()

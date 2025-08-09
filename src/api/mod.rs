@@ -8,6 +8,7 @@ pub mod develop;
 pub mod economy;
 pub mod hba_service;
 pub mod inventory;
+pub mod marketplace_sales;
 pub mod thumbnails;
 pub mod toolbox_service;
 pub mod two_step_verification;
