@@ -101,7 +101,6 @@ impl Client {
                         (challenge_id, challenge_type, challenge_metadata_b64)
                     {
                         let kind = ChallengeType::from(kind.to_str().unwrap());
-                        dbg!(&kind);
                         match kind {
                             ChallengeType::Chef => {
                                 let _metadata: ChefChallengeMetadata = serde_json::from_slice(
@@ -169,6 +168,7 @@ impl Client {
                             .errors
                             .iter()
                             .map(|x| match x.message.as_str() {
+                                "The asset id is invalid." => ApiError::InvalidAssetId,
                                 "Invalid challenge ID." => ApiError::InvalidChallengeId,
                                 "User not found." => ApiError::UserNotFound,
                                 "The user ID is invalid." => ApiError::InvalidUserId,

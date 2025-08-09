@@ -82,6 +82,7 @@ pub enum ApiError {
     VNGAppLoginRequired,
     LuoBuAppLoginRequired,
     SocialNetworkLoginRequired,
+    InvalidAssetId,
 }
 
 #[repr(u8)]

@@ -5,6 +5,7 @@ pub mod auth_token_service;
 pub mod challenge;
 pub mod data;
 pub mod develop;
+pub mod economy;
 pub mod hba_service;
 pub mod inventory;
 pub mod thumbnails;
