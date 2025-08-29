@@ -12,12 +12,7 @@ use roblox_api::{
 
 #[tokio::main]
 async fn main() {
-    let cookie: String = std::fs::read_to_string(".cookie")
-        .unwrap()
-        .split_whitespace()
-        .collect();
-
-    let mut client = Client::from_cookie(Cookie::from(cookie.as_str()));
+    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
     let authenticted = users::v1::authenticated_details(&mut client).await.unwrap();
 
     let bytes = &mut [
