@@ -1,13 +1,16 @@
 use std::path::Path;
 
-use reqwest::{header::HeaderValue, multipart::Form};
+use reqwest::{
+    header::{self, HeaderValue},
+    multipart::Form,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::{DateTime, Error, client::Client};
 
 const URL: &str = "https://apis.roblox.com/assets/user-auth/v1";
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum AssetType {
     Audio,
     Decal,
@@ -15,7 +18,7 @@ pub enum AssetType {
     Video,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum Creator {
     #[serde(rename = "userId")]
     // TODO: cast to u64
@@ -24,20 +27,45 @@ pub enum Creator {
     GroupId(String),
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CreationContext {
     pub creator: Creator,
     #[serde(rename = "expectedPrice")]
     pub expected_price: Option<u64>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 pub struct ModerationResult {
     #[serde(rename = "moderationState")]
     pub state: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+pub struct AssetInfo {
+    #[serde(rename = "assetId")]
+    pub id: String,
+    pub icon: String,
+    #[serde(rename = "displayName")]
+    pub title: String,
+    pub description: String,
+
+    pub path: String,
+    pub state: String,
+    #[serde(rename = "assetType")]
+    pub asset_type: AssetType,
+
+    #[serde(rename = "revisionId")]
+    pub revision_id: String,
+    #[serde(rename = "revisionCreateTime")]
+    pub revision_creation_time: DateTime,
+
+    #[serde(rename = "creationContext")]
+    pub creation_context: CreationContext,
+    #[serde(rename = "moderationResult")]
+    pub moderation_result: ModerationResult,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 pub struct AssetUploadResponse {
     pub path: String,
     // TODO: cast to u64 please
@@ -45,9 +73,11 @@ pub struct AssetUploadResponse {
     pub id: String,
     #[serde(rename = "displayName")]
     pub title: String,
+
+    pub state: String,
     #[serde(rename = "assetType")]
     pub asset_type: AssetType,
-    pub state: String,
+
     #[serde(rename = "revisionId")]
     pub revision_id: String,
     #[serde(rename = "revisionCreateTime")]
@@ -58,7 +88,7 @@ pub struct AssetUploadResponse {
     pub moderation_result: ModerationResult,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 pub struct AssetUploadStatus {
     pub path: String,
     #[serde(rename = "operationId")]
@@ -66,6 +96,19 @@ pub struct AssetUploadStatus {
     #[serde(rename = "done")]
     pub complete: bool,
     pub response: Option<AssetUploadResponse>,
+}
+
+pub async fn asset(client: &mut Client, id: u64) -> Result<AssetInfo, Error> {
+    let result = client
+        .requestor
+        .client
+        .get(format!("{URL}/{id}"))
+        .headers(client.requestor.default_headers.clone())
+        .send()
+        .await;
+
+    let response = client.validate_response(result).await?;
+    client.requestor.parse_json::<AssetInfo>(response).await
 }
 
 // this api also takes in a patch request to update an exists asset "{URL}/assets/{id}"
@@ -78,7 +121,7 @@ pub async fn upload(
     creation_context: CreationContext,
 ) -> Result<AssetUploadStatus, Error> {
     let mut headers = client.requestor.default_headers.clone();
-    headers.insert("Accept", HeaderValue::from_str("*/*").unwrap());
+    headers.insert(header::ACCEPT, HeaderValue::from_str("*/*").unwrap());
 
     #[derive(Clone, Debug, Deserialize, Serialize)]
     struct Request<'a> {
