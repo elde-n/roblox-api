@@ -6,14 +6,28 @@ use roblox_api::{
             ThumbnailSize,
         },
     },
-    client::{Client, Cookie},
+    client::Client,
 };
 
-#[tokio::main]
-async fn main() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
+#[test]
+fn thumbnail_size_from_str() {
+    assert_eq!(
+        ThumbnailSize::try_from("100x100").unwrap(),
+        ThumbnailSize::S100x100
+    );
+}
 
-    client.ensure_token().await.unwrap();
+#[test]
+fn thumbnail_request_type_from_str() {
+    assert_eq!(
+        ThumbnailRequestType::try_from("GameThumbnail").unwrap(),
+        ThumbnailRequestType::GameThumbnail
+    );
+}
+
+#[tokio::test]
+async fn assets() {
+    let mut client = Client::default();
 
     let thumbnails = thumbnails::v1::assets(
         &mut client,
@@ -26,11 +40,14 @@ async fn main() {
     .await
     .unwrap();
 
-    for thumbnail in &thumbnails {
-        println!("{:?}", thumbnail);
-    }
+    thumbnails.get(0).unwrap();
+}
 
-    let badge_icons = thumbnails::v1::badge_icons(
+#[tokio::test]
+async fn badge_icons() {
+    let mut client = Client::default();
+
+    let thumbnails = thumbnails::v1::badge_icons(
         &mut client,
         &[2124615090],
         ThumbnailSize::S150x150,
@@ -40,11 +57,14 @@ async fn main() {
     .await
     .unwrap();
 
-    for thumbnail in &badge_icons {
-        println!("{:?}", thumbnail);
-    }
+    thumbnails.get(0).unwrap();
+}
 
-    let bundles = thumbnails::v1::bundles(
+#[tokio::test]
+async fn bundles() {
+    let mut client = Client::default();
+
+    let thumbnails = thumbnails::v1::bundles(
         &mut client,
         &[175772208088820],
         ThumbnailSize::S420x420,
@@ -54,11 +74,14 @@ async fn main() {
     .await
     .unwrap();
 
-    for thumbnail in &bundles {
-        println!("{:?}", thumbnail);
-    }
+    thumbnails.get(0).unwrap();
+}
 
-    let batch = thumbnails::v1::batch(
+#[tokio::test]
+async fn batch() {
+    let mut client = Client::default();
+
+    let thumbnails = thumbnails::v1::batch(
         &mut client,
         vec![ThumbnailBatchRequest {
             id: 3139503587,
@@ -74,7 +97,5 @@ async fn main() {
     .await
     .unwrap();
 
-    for thumbnail in &batch {
-        println!("{:?}", thumbnail);
-    }
+    thumbnails.get(0).unwrap();
 }
