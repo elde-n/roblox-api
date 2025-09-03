@@ -1,3 +1,4 @@
+use dotenvy_macro::dotenv;
 use roblox_api::{
     AssetTypeId,
     api::{
@@ -7,9 +8,8 @@ use roblox_api::{
         },
         data, develop, users,
     },
-    client::{Client, Cookie},
+    client::Client,
 };
-use dotenvy_macro::dotenv;
 
 #[tokio::main]
 async fn main() {

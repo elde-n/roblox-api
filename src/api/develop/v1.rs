@@ -117,10 +117,22 @@ pub async fn published_asset_versions(
     id: u64,
     paging: Paging<'_>,
 ) -> Result<PublishedAssetVersions, Error> {
+    let limit = paging.limit.unwrap_or(10).to_string();
+    let sort_order = paging.order.unwrap_or_default().to_string();
+    let cursor = match paging.cursor {
+        Some(cursor) => cursor.to_string(),
+        None => String::new(),
+    };
+
     let result = client
         .requestor
         .client
         .get(format!("{URL}/assets/{id}/published-versions"))
+        .query(&[
+            ("limit", limit),
+            ("sortOrder", sort_order),
+            ("cursor", cursor),
+        ])
         .headers(client.requestor.default_headers.clone())
         .send()
         .await;
