@@ -1,10 +1,11 @@
 use serde::{Deserialize, Serialize, Serializer};
+use strum::{EnumIter, IntoEnumIterator};
 
 use crate::{Error, client::Client};
 
 const URL: &str = "https://thumbnails.roblox.com/v1";
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, EnumIter)]
 pub enum ThumbnailSize {
     S30x30,
     S48x48,
@@ -64,7 +65,7 @@ pub enum ThumbnailVersion {
     TN3,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, EnumIter)]
 pub enum ThumbnailRequestType {
     Avatar = 1,
     AvatarHeadShot,
@@ -149,6 +150,20 @@ impl std::fmt::Display for ThumbnailSize {
     }
 }
 
+impl TryFrom<&str> for ThumbnailSize {
+    type Error = &'static str;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        for size in ThumbnailSize::iter() {
+            if size.to_string().as_str().strip_prefix('S').unwrap() == value {
+                return Ok(size);
+            }
+        }
+
+        Err("Failed to convert string to ThumbnailSize")
+    }
+}
+
 impl std::fmt::Display for ThumbnailFormat {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let content = format!("{:?}", self).to_lowercase();
@@ -156,9 +171,33 @@ impl std::fmt::Display for ThumbnailFormat {
     }
 }
 
+impl ThumbnailFormat {
+    pub fn extension(&self) -> &str {
+        match self {
+            ThumbnailFormat::Png => "png",
+            ThumbnailFormat::Jpeg => "jpeg",
+            ThumbnailFormat::Webp => "webp",
+        }
+    }
+}
+
 impl std::fmt::Display for ThumbnailRequestType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
+    }
+}
+
+impl TryFrom<&str> for ThumbnailRequestType {
+    type Error = &'static str;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        for kind in ThumbnailRequestType::iter() {
+            if kind.to_string().as_str() == value {
+                return Ok(kind);
+            }
+        }
+
+        Err("Failed to convert string to ThumbnailRequestType")
     }
 }
 
