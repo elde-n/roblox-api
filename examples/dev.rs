@@ -9,6 +9,7 @@ use roblox_api::{
     },
     client::{Client, Cookie},
 };
+use dotenvy_macro::dotenv;
 
 #[tokio::main]
 async fn main() {

@@ -2,6 +2,7 @@ use roblox_api::{
     api::users,
     client::{Client, Cookie},
 };
+use dotenvy_macro::dotenv;
 
 #[tokio::main]
 async fn main() {
