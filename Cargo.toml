@@ -4,7 +4,7 @@ readme = "README.md"
 description = "Roblox web api bindings"
 repository = "https://github.com/elde-n/roblox-api"
 
-version = "0.1.2"
+version = "0.1.3"
 edition = "2024"
 license = "LGPL-3.0-only"
 
