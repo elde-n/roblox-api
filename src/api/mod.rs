@@ -6,6 +6,7 @@ pub mod challenge;
 pub mod data;
 pub mod develop;
 pub mod economy;
+pub mod groups;
 pub mod hba_service;
 pub mod inventory;
 pub mod marketplace_sales;
