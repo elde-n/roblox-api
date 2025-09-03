@@ -155,7 +155,7 @@ impl TryFrom<&str> for ThumbnailSize {
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         for size in ThumbnailSize::iter() {
-            if size.to_string().as_str().strip_prefix('S').unwrap() == value {
+            if size.to_string().as_str() == value {
                 return Ok(size);
             }
         }
