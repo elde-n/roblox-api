@@ -9,6 +9,7 @@ pub struct PurchaseResponse {
     pub purchased: bool,
 }
 
+/// This api seems to only give an Internal Server Error, try using `marketplace_sales::v1::purchase` instead
 pub async fn purchase(
     client: &mut Client,
     product_id: u64,
@@ -46,11 +47,51 @@ pub async fn purchase(
         .await
 }
 
+/// Returns how much `Currency::Robux` the authenticated user has
+pub async fn currency(client: &mut Client) -> Result<u64, Error> {
+    let result = client
+        .requestor
+        .client
+        .get(format!("{URL}/user/currency"))
+        .headers(client.requestor.default_headers.clone())
+        .send()
+        .await;
+
+    #[derive(Clone, Debug, Deserialize)]
+    struct Response {
+        robux: u64,
+    }
+
+    let response = client.validate_response(result).await?;
+    let response = client.requestor.parse_json::<Response>(response).await?;
+
+    Ok(response.robux)
+}
+
+/// Returns how much `Currency::Robux` the user has
+pub async fn currency_from_user_id(client: &mut Client, id: u64) -> Result<u64, Error> {
+    let result = client
+        .requestor
+        .client
+        .get(format!("{URL}/users/{id}/currency"))
+        .headers(client.requestor.default_headers.clone())
+        .send()
+        .await;
+
+    #[derive(Clone, Debug, Deserialize)]
+    struct Response {
+        robux: u64,
+    }
+
+    let response = client.validate_response(result).await?;
+    let response = client.requestor.parse_json::<Response>(response).await?;
+
+    Ok(response.robux)
+}
+
 // TODO:
-// user/{id}/currency
 // assets/{id}/resellers
 // assets/{id}/resale-data
 // groups/{id}/currency
 // groups/{id}/revenue/summary/{date?}
-// groups/{id}/transactions
-//
+// groups/{id}/transactions - seems to be 404
