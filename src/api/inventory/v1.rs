@@ -97,16 +97,15 @@ pub async fn user_owned_assets(
     let item_type = item_type as u8;
 
     let cursor = match paging.cursor {
-        Some(cursor) => format!("&cursor={cursor}"),
+        Some(cursor) => cursor.to_string(),
         None => String::new(),
     };
 
     let result = client
         .requestor
         .client
-        .get(format!(
-            "{URL}/users/{user_id}/items/{item_type}/{id}{cursor}"
-        ))
+        .get(format!("{URL}/users/{user_id}/items/{item_type}/{id}"))
+        .query(&[("cursor", cursor)])
         .headers(client.requestor.default_headers.clone())
         .send()
         .await;
@@ -124,17 +123,17 @@ pub async fn user_owned_collectibles(
     asset_type_id: Option<AssetTypeId>,
     paging: Paging<'_>,
 ) -> Result<UserOwnedCollectibles, Error> {
-    let limit = paging.limit.unwrap_or(10);
+    let limit = paging.limit.unwrap_or(10).to_string();
     let sort_order = paging.order.unwrap_or_default().to_string();
     let cursor = match paging.cursor {
-        Some(cursor) => format!("&cursor={cursor}"),
+        Some(cursor) => cursor.to_string(),
         None => String::new(),
     };
 
     let asset_type = match asset_type_id {
         Some(id) => {
             let id = id as u8;
-            format!("?assetType={id}")
+            id.to_string()
         }
         None => String::new(),
     };
@@ -142,9 +141,13 @@ pub async fn user_owned_collectibles(
     let result = client
         .requestor
         .client
-        .get(format!(
-            "{URL}/users/{user_id}/assets/collectibles{asset_type}&limit={limit}&sortOrder={sort_order}{cursor}"
-        ))
+        .get(format!("{URL}/users/{user_id}/assets/collectibles"))
+        .query(&[
+            ("assetType", asset_type),
+            ("limit", limit),
+            ("sortOrder", sort_order),
+            ("cursor", cursor),
+        ])
         .headers(client.requestor.default_headers.clone())
         .send()
         .await;
