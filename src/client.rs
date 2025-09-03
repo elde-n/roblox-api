@@ -2,7 +2,6 @@ use reqwest::{
     Response,
     header::{self, HeaderMap, HeaderValue},
 };
-
 use serde::de::DeserializeOwned;
 
 use crate::Error;
