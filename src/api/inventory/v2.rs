@@ -28,10 +28,11 @@ pub struct FromOwnerAssetInfo {
 pub struct UserOwnedAssetOwner {
     #[serde(rename = "userId")]
     pub id: u64,
-    #[serde(rename = "buildersClubMembershipType")]
-    pub premium_membership_type: String,
     #[serde(rename = "username")]
     pub name: String,
+    // TODO: change this to an enum
+    #[serde(rename = "buildersClubMembershipType")]
+    pub premium_membership_type: String,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -44,9 +45,9 @@ pub struct UserOwnedAssetInfo {
     pub name: String,
     pub owner: UserOwnedAssetOwner,
     #[serde(rename = "collectibleItemId")]
-    pub collectible_id: Option<u64>,
+    pub collectible_id: Option<String>,
     #[serde(rename = "collectibleItemInstanceId")]
-    pub collectible_instance_id: Option<u64>,
+    pub collectible_instance_id: Option<String>,
     #[serde(rename = "serialNumber")]
     pub serial: Option<u64>,
     pub created: DateTime,
@@ -78,19 +79,22 @@ pub async fn asset_owners(
     id: u64,
     paging: Paging<'_>,
 ) -> Result<AssetOwners, Error> {
-    let limit = paging.limit.unwrap_or(10);
+    let limit = paging.limit.unwrap_or(10).to_string();
     let sort_order = paging.order.unwrap_or_default().to_string();
     let cursor = match paging.cursor {
-        Some(cursor) => format!("&cursor={cursor}"),
+        Some(cursor) => cursor.to_string(),
         None => String::new(),
     };
 
     let result = client
         .requestor
         .client
-        .get(format!(
-            "{URL}/assets/{id}/owners?limit={limit}&sortOrder={sort_order}{cursor}"
-        ))
+        .get(format!("{URL}/assets/{id}/owners"))
+        .query(&[
+            ("limit", limit),
+            ("sortOrder", sort_order),
+            ("cursor", cursor),
+        ])
         .headers(client.requestor.default_headers.clone())
         .send()
         .await;
@@ -107,17 +111,22 @@ pub async fn user_owned_assets(
 ) -> Result<UserOwnedAssets, Error> {
     let asset_type_id = asset_type_id as u8;
 
-    let limit = paging.limit.unwrap_or(10);
+    let limit = paging.limit.unwrap_or(10).to_string();
     let sort_order = paging.order.unwrap_or_default().to_string();
     let cursor = match paging.cursor {
-        Some(cursor) => format!("&cursor={cursor}"),
+        Some(cursor) => cursor.to_string(),
         None => String::new(),
     };
 
     let result = client
         .requestor
         .client
-        .get(format!("{URL}/users/{user_id}/inventory/{asset_type_id}?limit={limit}&sortOrder={sort_order}{cursor}"))
+        .get(format!("{URL}/users/{user_id}/inventory/{asset_type_id}"))
+        .query(&[
+            ("limit", limit),
+            ("sortOrder", sort_order),
+            ("cursor", cursor),
+        ])
         .headers(client.requestor.default_headers.clone())
         .send()
         .await;
