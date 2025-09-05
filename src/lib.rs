@@ -6,6 +6,7 @@ pub mod validation;
 use challenge::Challenge;
 use chrono::{Datelike, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
+use strum::{EnumIter, IntoEnumIterator};
 
 // TODO: using this wrapper as I couldn't figure out how to use chronos datetime alone
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
@@ -86,7 +87,7 @@ pub enum ApiError {
 }
 
 #[repr(u8)]
-#[derive(Copy, Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, Deserialize, PartialEq, Eq, EnumIter)]
 pub enum AssetTypeId {
     Image = 1,
     TShirt,
@@ -171,6 +172,40 @@ pub enum SortOrder {
     Ascending,
     #[serde(rename = "Desc")]
     Descending,
+}
+
+impl std::fmt::Display for AssetTypeId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl TryFrom<&str> for AssetTypeId {
+    type Error = &'static str;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        for kind in AssetTypeId::iter() {
+            if kind.to_string().as_str() == value {
+                return Ok(kind);
+            }
+        }
+
+        Err("Failed to convert string to AssetTypeId")
+    }
+}
+
+impl TryFrom<u8> for AssetTypeId {
+    type Error = &'static str;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        for kind in AssetTypeId::iter() {
+            if kind as u8 == value {
+                return Ok(kind);
+            }
+        }
+
+        Err("Failed to convert u8 to AssetTypeId")
+    }
 }
 
 impl std::fmt::Display for SortOrder {
