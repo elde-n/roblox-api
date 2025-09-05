@@ -84,6 +84,7 @@ pub enum ApiError {
     LuoBuAppLoginRequired,
     SocialNetworkLoginRequired,
     InvalidAssetId,
+    InvalidBrowserTrackerId,
 }
 
 #[repr(u8)]

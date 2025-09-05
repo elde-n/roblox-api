@@ -15,4 +15,5 @@ pub mod premium_features;
 pub mod thumbnails;
 pub mod toolbox_service;
 pub mod two_step_verification;
+pub mod user_blocking;
 pub mod users;

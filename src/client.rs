@@ -47,6 +47,12 @@ impl Client {
             HeaderValue::from_str(&cookie.to_string()).unwrap(),
         );
 
+        // For some reason some APIs error if not set
+        default_headers.append(
+            header::COOKIE,
+            HeaderValue::from_str("RBXEventTrackerV2=&browserid=2").unwrap(),
+        );
+
         Client {
             requestor: ClientRequestor {
                 client,

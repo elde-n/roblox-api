@@ -6,4 +6,5 @@ mod groups;
 mod inventory;
 mod premium_features;
 mod thumbnails;
+mod user_blocking;
 mod users;

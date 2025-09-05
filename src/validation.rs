@@ -264,10 +264,15 @@ impl Client {
                                     ApiError::PermissionError
                                 }
 
+                                "Request Context BrowserTrackerID is missing or invalid." => {
+                                    ApiError::InvalidBrowserTrackerId
+                                }
+
                                 "an internal error occurred" => ApiError::Internal,
 
                                 // TODO: add missing challenge duplicate code
                                 _ => ApiError::Unknown(code),
+                                
                             })
                             .collect();
 
