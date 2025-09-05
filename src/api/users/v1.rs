@@ -1,15 +1,36 @@
 use serde::{Deserialize, Serialize};
+use strum::{EnumIter, IntoEnumIterator};
 
 use crate::{DateTime, Error, Paging, client::Client};
 
 pub const URL: &str = "https://users.roblox.com/v1";
 
 #[repr(u8)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, EnumIter)]
 pub enum Gender {
     None = 1,
     Male = 2,
     Female = 3,
+}
+
+impl std::fmt::Display for Gender {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl TryFrom<&str> for Gender {
+    type Error = &'static str;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        for kind in Gender::iter() {
+            if kind.to_string().as_str() == value {
+                return Ok(kind);
+            }
+        }
+
+        Err("Failed to convert string to Gender")
+    }
 }
 
 impl Gender {
