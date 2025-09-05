@@ -11,6 +11,7 @@ pub mod groups;
 pub mod hba_service;
 pub mod inventory;
 pub mod marketplace_sales;
+pub mod premium_features;
 pub mod thumbnails;
 pub mod toolbox_service;
 pub mod two_step_verification;

@@ -4,5 +4,6 @@ mod economy;
 mod friends;
 mod groups;
 mod inventory;
+mod premium_features;
 mod thumbnails;
 mod users;
