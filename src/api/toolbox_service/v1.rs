@@ -37,9 +37,9 @@ pub struct ItemDetailAsset {
     #[serde(rename = "isAssetHashApproved")]
     pub is_asset_hash_approved: bool,
     #[serde(rename = "createdUtc")]
-    pub creation_date: DateTime,
+    pub created: DateTime,
     #[serde(rename = "updatedUtc")]
-    pub last_updated_date: DateTime,
+    pub updated: DateTime,
     //#[serde(rename = "assetSubTypes")]
     //pub sub_types: Vec<String?>,
     //#[serde(rename = "socialLinks")]

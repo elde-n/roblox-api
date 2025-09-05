@@ -16,8 +16,7 @@ pub struct PublishedAssetVersion {
     pub creator_id: u64,
     #[serde(rename = "creatorType")]
     pub creator_type: String,
-    #[serde(rename = "created")]
-    pub created_at: DateTime,
+    pub created: DateTime,
     #[serde(rename = "isPublished")]
     pub is_published: bool,
     #[serde(rename = "isEqualToCurrentPublishedVersion")]
@@ -74,10 +73,8 @@ pub struct Asset {
     #[serde(rename = "reviewStatus")]
     pub review_status: String,
 
-    #[serde(rename = "created")]
-    pub creation_date: DateTime,
-    #[serde(rename = "updated")]
-    pub last_updated_date: DateTime,
+    pub created: DateTime,
+    pub updated: DateTime,
 
     pub genres: Vec<String>,
     pub creator: AssetCreator,

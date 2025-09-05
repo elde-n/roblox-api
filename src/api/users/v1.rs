@@ -72,8 +72,7 @@ pub struct UserDetails {
     #[serde(rename = "displayName")]
     pub display_name: String,
     pub description: String,
-    #[serde(rename = "created")]
-    pub created_date: DateTime,
+    pub created: DateTime,
     #[serde(rename = "isBanned")]
     pub is_terminated: bool,
     #[serde(rename = "hasVerifiedBadge")]
