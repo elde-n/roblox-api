@@ -10,7 +10,7 @@ async fn user_owned_assets() {
     let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
 
     client.ensure_token().await.unwrap();
-    inventory::v1::user_owned_assets(
+    inventory::v1::user_owns_assets(
         &mut client,
         3139503587,
         4391384843,

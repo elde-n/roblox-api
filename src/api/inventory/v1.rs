@@ -24,7 +24,7 @@ pub struct AssetInfo {
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct UserOwnedAssets {
+pub struct UserOwnsAssets {
     #[serde(rename = "nextPageCursor")]
     pub next_cursor: Option<String>,
     #[serde(rename = "previousPageCursor")]
@@ -87,13 +87,13 @@ pub async fn can_view_inventory(client: &mut Client, user_id: u64) -> Result<boo
         .can_view)
 }
 
-pub async fn user_owned_assets(
+pub async fn user_owns_assets(
     client: &mut Client,
     user_id: u64,
     id: u64,
     item_type: ItemType,
     paging: Paging<'_>,
-) -> Result<UserOwnedAssets, Error> {
+) -> Result<UserOwnsAssets, Error> {
     let item_type = item_type as u8;
 
     let cursor = match paging.cursor {
@@ -113,7 +113,7 @@ pub async fn user_owned_assets(
     let response = client.validate_response(result).await?;
     client
         .requestor
-        .parse_json::<UserOwnedAssets>(response)
+        .parse_json::<UserOwnsAssets>(response)
         .await
 }
 
