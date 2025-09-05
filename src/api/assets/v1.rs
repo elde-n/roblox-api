@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{DateTime, Error, client::Client};
 
-const URL: &str = "https://apis.roblox.com/assets/user-auth/v1";
+pub const URL: &str = "https://apis.roblox.com/assets/user-auth/v1";
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum AssetType {

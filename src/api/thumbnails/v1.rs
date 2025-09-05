@@ -3,7 +3,7 @@ use strum::{EnumIter, IntoEnumIterator};
 
 use crate::{Error, client::Client};
 
-const URL: &str = "https://thumbnails.roblox.com/v1";
+pub const URL: &str = "https://thumbnails.roblox.com/v1";
 
 #[derive(Clone, Debug, PartialEq, Eq, EnumIter)]
 pub enum ThumbnailSize {

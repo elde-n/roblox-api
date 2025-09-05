@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{Error, challenge::ActionType, client::Client};
 
-const URL: &str = "https://twostepverification.roblox.com/v1";
+pub const URL: &str = "https://twostepverification.roblox.com/v1";
 
 // TODO: I don't know what `user_id` is for, as this api only seems to be used for the client only,
 // there's also currently no way to require id from Client, perhaps we should authenticate

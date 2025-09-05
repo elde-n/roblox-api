@@ -2,8 +2,8 @@ use serde::Deserialize;
 
 use crate::{Error, client::Client};
 
-const URL: &str = "https://assetdelivery.roblox.com/v1";
-const SECONDARY_URL: &str = "https://apis.roblox.com/asset-delivery-api/v1";
+pub const URL: &str = "https://assetdelivery.roblox.com/v1";
+pub const SECONDARY_URL: &str = "https://apis.roblox.com/asset-delivery-api/v1";
 
 #[derive(Clone, Debug, Deserialize)]
 pub enum PermissionContext {
