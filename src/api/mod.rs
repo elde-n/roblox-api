@@ -1,3 +1,4 @@
+pub mod account_information;
 pub mod asset_delivery;
 pub mod assets;
 pub mod auth;
