@@ -6,7 +6,7 @@ use roblox_api::{
 };
 
 #[tokio::test]
-async fn user_owned_assets() {
+async fn user_owns_assets() {
     let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
 
     client.ensure_token().await.unwrap();
