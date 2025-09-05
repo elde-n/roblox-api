@@ -6,8 +6,6 @@ const BHOP_GROUP_ID: u64 = 6980477;
 #[tokio::test]
 async fn information() {
     let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-
-    client.ensure_token().await.unwrap();
     groups::v1::information(&mut client, BHOP_GROUP_ID)
         .await
         .unwrap();
@@ -16,8 +14,6 @@ async fn information() {
 #[tokio::test]
 async fn users() {
     let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-
-    client.ensure_token().await.unwrap();
     groups::v1::users(&mut client, BHOP_GROUP_ID, Paging::default())
         .await
         .unwrap();

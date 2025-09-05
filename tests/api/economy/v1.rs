@@ -8,16 +8,12 @@ use roblox_api::{
 #[tokio::test]
 async fn currency() {
     let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-
-    client.ensure_token().await.unwrap();
     economy::v1::currency(&mut client).await.unwrap();
 }
 
 #[tokio::test]
 async fn currency_from_user_id() {
     let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-
-    client.ensure_token().await.unwrap();
 
     let authenticated = users::v1::authenticated_details(&mut client).await.unwrap();
     economy::v1::currency_from_user_id(&mut client, authenticated.id)

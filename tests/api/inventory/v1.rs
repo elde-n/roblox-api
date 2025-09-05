@@ -8,8 +8,6 @@ use roblox_api::{
 #[tokio::test]
 async fn user_owns_assets() {
     let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-
-    client.ensure_token().await.unwrap();
     inventory::v1::user_owns_assets(
         &mut client,
         3139503587,
@@ -24,8 +22,6 @@ async fn user_owns_assets() {
 #[tokio::test]
 async fn user_owned_collectibles() {
     let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-
-    client.ensure_token().await.unwrap();
     inventory::v1::user_owned_collectibles(&mut client, 3139503587, None, Paging::default())
         .await
         .unwrap();

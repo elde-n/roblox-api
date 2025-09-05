@@ -6,8 +6,6 @@ const USER_ID: u64 = 3139503587;
 #[tokio::test]
 async fn user_owned_assets() {
     let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-
-    client.ensure_token().await.unwrap();
     inventory::v2::user_owned_assets(&mut client, USER_ID, AssetTypeId::Hat, Paging::default())
         .await
         .unwrap();
