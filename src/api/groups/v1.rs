@@ -72,6 +72,41 @@ pub async fn information(client: &mut Client, id: u64) -> Result<GroupInformatio
         .await
 }
 
+pub async fn user_roles(
+    client: &mut Client,
+    id: u64,
+) -> Result<Vec<(GroupInformation, GroupRole)>, Error> {
+    let result = client
+        .requestor
+        .client
+        .get(format!("{URL}/users/{id}/groups/roles"))
+        .headers(client.requestor.default_headers.clone())
+        .send()
+        .await;
+
+    #[derive(Clone, Debug, Deserialize)]
+    struct GroupAndRole {
+        group: GroupInformation,
+        role: GroupRole,
+    }
+
+    #[derive(Clone, Debug, Deserialize)]
+    struct Response {
+        #[serde(rename = "data")]
+        items: Vec<GroupAndRole>,
+    }
+
+    let response = client.validate_response(result).await?;
+    let response = client.requestor.parse_json::<Response>(response).await?;
+
+    let mut roles = Vec::new();
+    for item in &response.items {
+        roles.push((item.group.clone(), item.role.clone()));
+    }
+
+    Ok(roles)
+}
+
 pub async fn users(client: &mut Client, id: u64, paging: Paging<'_>) -> Result<GroupUsers, Error> {
     let limit = paging.limit.unwrap_or(10).to_string();
     let sort_order = paging.order.unwrap_or_default().to_string();
@@ -142,6 +177,23 @@ pub async fn join(client: &mut Client, id: u64) -> Result<(), Error> {
             session_id: "",
             redemption_token: "",
         })
+        .send()
+        .await;
+
+    client.validate_response(result).await?;
+    Ok(())
+}
+
+pub async fn remove_join_request(client: &mut Client, id: u64, user_id: u64) -> Result<(), Error> {
+    #[derive(Serialize)]
+    struct Request {}
+
+    let result = client
+        .requestor
+        .client
+        .delete(format!("{URL}/groups/{id}/join-requests/users/{user_id}"))
+        .json(&Request {})
+        .headers(client.requestor.default_headers.clone())
         .send()
         .await;
 
