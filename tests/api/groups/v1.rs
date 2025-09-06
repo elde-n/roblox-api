@@ -5,6 +5,7 @@ use roblox_api::{
     client::Client,
 };
 
+const USER_ID: u64 = 3139503587;
 const ROBLOX_GROUP_ID: u64 = 7;
 const BHOP_GROUP_ID: u64 = 6980477;
 
@@ -14,6 +15,18 @@ async fn information() {
     groups::v1::information(&mut client, BHOP_GROUP_ID)
         .await
         .unwrap();
+}
+
+#[tokio::test]
+async fn roles() {
+    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
+    groups::v1::roles(&mut client, BHOP_GROUP_ID).await.unwrap();
+}
+
+#[tokio::test]
+async fn user_roles() {
+    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
+    groups::v1::user_roles(&mut client, USER_ID).await.unwrap();
 }
 
 #[tokio::test]

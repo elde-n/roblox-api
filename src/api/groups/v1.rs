@@ -72,6 +72,28 @@ pub async fn information(client: &mut Client, id: u64) -> Result<GroupInformatio
         .await
 }
 
+pub async fn roles(client: &mut Client, id: u64) -> Result<Vec<GroupRole>, Error> {
+    let result = client
+        .requestor
+        .client
+        .get(format!("{URL}/groups/{id}/roles"))
+        .headers(client.requestor.default_headers.clone())
+        .send()
+        .await;
+
+    #[derive(Clone, Debug, Deserialize)]
+    struct Response {
+        roles: Vec<GroupRole>,
+    }
+
+    let response = client.validate_response(result).await?;
+    Ok(client
+        .requestor
+        .parse_json::<Response>(response)
+        .await?
+        .roles)
+}
+
 pub async fn user_roles(
     client: &mut Client,
     id: u64,
