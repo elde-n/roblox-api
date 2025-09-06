@@ -37,7 +37,7 @@ pub struct GroupInformation {
     pub name: String,
     pub description: String,
 
-    pub owner: GroupUser,
+    pub owner: Option<GroupUser>,
     pub shout: Option<GroupShout>,
 
     #[serde(rename = "memberCount")]
