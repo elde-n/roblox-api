@@ -16,7 +16,7 @@ const TOKEN_HEADER: &str = "x-csrf-token";
 
 #[derive(Debug, Deserialize)]
 pub struct ErrorJson {
-    code: u8,
+    //code: u8,
     message: String,
 }
 
@@ -27,11 +27,56 @@ pub struct ErrorsJson {
 
 #[derive(Debug, Deserialize)]
 pub struct DataErrorJson {
-    #[serde(rename = "isValid")]
-    is_valid: bool,
-    data: Option<String>, // maybe, i always got null,
+    //#[serde(rename = "isValid")]
+    //is_valid: bool,
+    //data: Option<String>, // maybe, i always got null,
     #[serde(rename = "error")]
     message: String,
+}
+
+fn challenge_from_headers(
+    id: Option<HeaderValue>,
+    kind: Option<HeaderValue>,
+    metadata_b64: Option<HeaderValue>,
+) -> Option<Challenge> {
+    if let (Some(id), Some(kind), Some(metadata_b64)) = (id, kind, metadata_b64) {
+        let kind = ChallengeType::from(kind.to_str().unwrap());
+        match kind {
+            ChallengeType::Chef => {
+                let _metadata: ChefChallengeMetadata = serde_json::from_slice(
+                    BASE64_STANDARD
+                        .decode(metadata_b64.to_str().unwrap())
+                        .unwrap()
+                        .as_slice(),
+                )
+                .unwrap();
+
+                todo!("Unsupported challenge-type: \"chef\"");
+            }
+
+            ChallengeType::Captcha => {
+                todo!("Unsupported challenge-type: \"captcha\"")
+            }
+
+            _ => {
+                let metadata: ChallengeMetadata = serde_json::from_slice(
+                    BASE64_STANDARD
+                        .decode(metadata_b64.to_str().unwrap())
+                        .unwrap()
+                        .as_slice(),
+                )
+                .unwrap();
+
+                Some(Challenge {
+                    id: id.to_str().unwrap().to_string(),
+                    kind,
+                    metadata,
+                })
+            }
+        }
+    } else {
+        None
+    }
 }
 
 impl Client {
@@ -91,53 +136,10 @@ impl Client {
                     return Ok(response);
                 }
 
-                // TODO: move this block into the challenge required case
-                let challenge = {
-                    let challenge_id = response.headers().get(CHALLENGE_ID_HEADER);
-                    let challenge_type = response.headers().get(CHALLENGE_TYPE_HEADER);
-                    let challenge_metadata_b64 = response.headers().get(CHALLENGE_METADATA_HEADER);
-
-                    if let (Some(id), Some(kind), Some(metadata_b64)) =
-                        (challenge_id, challenge_type, challenge_metadata_b64)
-                    {
-                        let kind = ChallengeType::from(kind.to_str().unwrap());
-                        match kind {
-                            ChallengeType::Chef => {
-                                let _metadata: ChefChallengeMetadata = serde_json::from_slice(
-                                    BASE64_STANDARD
-                                        .decode(metadata_b64.to_str().unwrap())
-                                        .unwrap()
-                                        .as_slice(),
-                                )
-                                .unwrap();
-
-                                todo!("Unsupported challenge-type: \"chef\"");
-                            }
-
-                            ChallengeType::Captcha => {
-                                todo!("Unsupported challenge-type: \"captcha\"")
-                            }
-
-                            _ => {
-                                let metadata: ChallengeMetadata = serde_json::from_slice(
-                                    BASE64_STANDARD
-                                        .decode(metadata_b64.to_str().unwrap())
-                                        .unwrap()
-                                        .as_slice(),
-                                )
-                                .unwrap();
-
-                                Some(Challenge {
-                                    id: id.to_str().unwrap().to_string(),
-                                    kind,
-                                    metadata,
-                                })
-                            }
-                        }
-                    } else {
-                        None
-                    }
-                };
+                let challenge_id = response.headers().get(CHALLENGE_ID_HEADER).cloned();
+                let challenge_type = response.headers().get(CHALLENGE_TYPE_HEADER).cloned();
+                let challenge_metadata_b64 =
+                    response.headers().get(CHALLENGE_METADATA_HEADER).cloned();
 
                 let bytes = response.bytes().await.unwrap().to_owned();
                 let errors = if let Ok(errors) = serde_json::from_slice::<ErrorsJson>(&bytes) {
@@ -149,25 +151,29 @@ impl Client {
                 } else if let Ok(error) = serde_json::from_slice::<DataErrorJson>(&bytes) {
                     ErrorsJson {
                         errors: vec![ErrorJson {
-                            code: 0,
+                            //code: 0,
                             message: error.message,
                         }],
                     }
                 } else {
                     ErrorsJson {
                         errors: vec![ErrorJson {
-                            code: 0,
+                            //code: 0,
                             message: String::from_utf8_lossy(&bytes).to_string(),
                         }],
                     }
                 };
 
                 match code {
-                    400 => {
+                    401 => Err(Error::ApiError(ApiError::Unauthorized)),
+                    429 => Err(Error::ApiError(ApiError::Ratelimited)),
+                    500 => Err(Error::ApiError(ApiError::Internal)),
+                    _ => {
                         let errors: Vec<ApiError> = errors
                             .errors
                             .iter()
                             .map(|x| match x.message.as_str() {
+                                // 400 
                                 "The asset id is invalid." => ApiError::InvalidAssetId,
                                 "Invalid challenge ID." => ApiError::InvalidChallengeId,
                                 "User not found." => ApiError::UserNotFound,
@@ -183,23 +189,7 @@ impl Client {
                                     ApiError::RequestMissingArgument("Birthdate".to_string())
                                 }
 
-                                _ => ApiError::Unknown(code),
-                            })
-                            .collect();
-
-                        if errors.len() == 1 {
-                            Err(Error::ApiError(errors.first().unwrap().clone()))
-                        } else {
-                            Err(Error::ApiError(ApiError::Multiple(errors)))
-                        }
-                    }
-
-                    401 => Err(Error::ApiError(ApiError::Unauthorized)),
-                    403 => {
-                        let errors: Vec<ApiError> = errors
-                            .errors
-                            .iter()
-                            .map(|x| match x.message.as_str() {
+                                // 403
                                 "Token Validation Failed"
                                 | "XSRF token invalid"
                                 | "XSRF Token Validation Failed"
@@ -252,8 +242,16 @@ impl Client {
                                 "PIN is locked." => ApiError::PinIsLocked,
                                 "Invalid birthdate change." => ApiError::InvalidBirthdate,
 
+                                // TODO: not sure what this means please use more verbose todo messages
+                                // TODO: add missing challenge duplicate code
+
                                 "Challenge is required to authorize the request" => {
-                                    ApiError::ChallengeRequired(challenge.clone().unwrap())
+                                    let challenge = challenge_from_headers(
+                                        challenge_id.clone(),
+                                        challenge_type.clone(),
+                                        challenge_metadata_b64.clone(),
+                                    );
+                                    ApiError::ChallengeRequired(challenge.unwrap())
                                 }
 
                                 "Challenge failed to authorize request" => {
@@ -270,11 +268,14 @@ impl Client {
 
                                 "an internal error occurred" => ApiError::Internal,
 
-                                // TODO: add missing challenge duplicate code
-                                _ => ApiError::Unknown(code),
-                                
-                            })
-                            .collect();
+                                // 409
+                                "You are already a member of this group." => ApiError::AlreadyInGroup,
+                                "You have already requested to join this group." => ApiError::AlreadyInGroupRequests,
+
+                                _ => {
+                                    ApiError::Unknown(code)
+                                },
+                            }).collect();
 
                         if errors.len() == 1 {
                             Err(Error::ApiError(errors.first().unwrap().clone()))
@@ -282,11 +283,6 @@ impl Client {
                             Err(Error::ApiError(ApiError::Multiple(errors)))
                         }
                     }
-
-                    429 => Err(Error::ApiError(ApiError::Ratelimited)),
-                    500 => Err(Error::ApiError(ApiError::Internal)),
-
-                    _ => Err(Error::ApiError(ApiError::Unknown(code))),
                 }
             }
 

@@ -1,0 +1,5 @@
+# TODO: enable these when stable
+#trailing_comma = "Never"
+#trailing_semicolon = false
+#merge_imports = true
+edition = "2024"

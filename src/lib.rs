@@ -85,6 +85,8 @@ pub enum ApiError {
     SocialNetworkLoginRequired,
     InvalidAssetId,
     InvalidBrowserTrackerId,
+    AlreadyInGroup,
+    AlreadyInGroupRequests,
 }
 
 #[repr(u8)]
