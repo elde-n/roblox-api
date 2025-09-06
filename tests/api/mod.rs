@@ -7,6 +7,7 @@ mod friends;
 mod groups;
 mod inventory;
 mod premium_features;
+mod presence;
 mod thumbnails;
 mod user_blocking;
 mod users;
