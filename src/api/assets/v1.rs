@@ -6,17 +6,9 @@ use reqwest::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::{DateTime, Error, client::Client};
+use crate::{AssetTypeId, DateTime, Error, client::Client};
 
 pub const URL: &str = "https://apis.roblox.com/assets/user-auth/v1";
-
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub enum AssetType {
-    Audio,
-    Decal,
-    Model,
-    Video,
-}
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum Creator {
@@ -44,15 +36,15 @@ pub struct ModerationResult {
 pub struct AssetInfo {
     #[serde(rename = "assetId")]
     pub id: String,
-    pub icon: String,
+    pub icon: Option<String>,
     #[serde(rename = "displayName")]
-    pub title: String,
+    pub name: String,
     pub description: String,
 
     pub path: String,
     pub state: String,
     #[serde(rename = "assetType")]
-    pub asset_type: AssetType,
+    pub asset_type: AssetTypeId,
 
     #[serde(rename = "revisionId")]
     pub revision_id: String,
@@ -72,16 +64,17 @@ pub struct AssetUploadResponse {
     #[serde(rename = "assetId")]
     pub id: String,
     #[serde(rename = "displayName")]
-    pub title: String,
+    pub name: String,
 
     pub state: String,
     #[serde(rename = "assetType")]
-    pub asset_type: AssetType,
+    pub asset_type: AssetTypeId,
 
     #[serde(rename = "revisionId")]
     pub revision_id: String,
     #[serde(rename = "revisionCreateTime")]
     pub revision_creation_time: DateTime,
+
     #[serde(rename = "creationContext")]
     pub creation_context: CreationContext,
     #[serde(rename = "moderationResult")]
@@ -102,7 +95,7 @@ pub async fn asset(client: &mut Client, id: u64) -> Result<AssetInfo, Error> {
     let result = client
         .requestor
         .client
-        .get(format!("{URL}/{id}"))
+        .get(format!("{URL}/assets/{id}"))
         .headers(client.requestor.default_headers.clone())
         .send()
         .await;
@@ -117,7 +110,7 @@ pub async fn upload(
     path: impl AsRef<Path>,
     title: &str,
     description: &str,
-    asset_type: AssetType,
+    asset_type: AssetTypeId,
     creation_context: CreationContext,
 ) -> Result<AssetUploadStatus, Error> {
     let mut headers = client.requestor.default_headers.clone();
@@ -129,7 +122,7 @@ pub async fn upload(
         title: &'a str,
         description: &'a str,
         #[serde(rename = "assetType")]
-        asset_type: AssetType,
+        asset_type: AssetTypeId,
         #[serde(rename = "creationContext")]
         creation_context: CreationContext,
     }

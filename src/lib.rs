@@ -90,7 +90,7 @@ pub enum ApiError {
 }
 
 #[repr(u8)]
-#[derive(Copy, Clone, Debug, Deserialize, PartialEq, Eq, EnumIter)]
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq, EnumIter)]
 pub enum AssetTypeId {
     Image = 1,
     TShirt,

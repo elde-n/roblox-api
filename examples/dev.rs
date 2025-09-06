@@ -4,7 +4,7 @@ use roblox_api::{
     api::{
         assets::{
             self,
-            v1::{AssetType, CreationContext, Creator},
+            v1::{CreationContext, Creator},
         },
         data, develop, users,
     },
@@ -124,7 +124,7 @@ async fn main() {
         "test.png",
         "test",
         "",
-        AssetType::Decal,
+        AssetTypeId::Decal,
         CreationContext {
             creator: Creator::UserId(authenticted.id.to_string()),
             expected_price: None,

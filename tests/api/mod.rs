@@ -1,4 +1,5 @@
 mod account_information;
+mod assets;
 mod auth;
 mod auth_token_service;
 mod economy;
