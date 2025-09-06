@@ -4,7 +4,7 @@ use reqwest::{
 };
 use serde::de::DeserializeOwned;
 
-use crate::Error;
+use crate::{Error, ratelimit::Ratelimit};
 
 #[derive(Default)]
 pub struct Cookie(String);
@@ -30,6 +30,7 @@ pub struct ClientRequestor {
 #[derive(Default, Debug)]
 pub struct Client {
     pub requestor: ClientRequestor,
+    pub(crate) ratelimit: Option<Ratelimit>,
 }
 
 impl Client {
@@ -54,6 +55,7 @@ impl Client {
         );
 
         Client {
+            ratelimit: None,
             requestor: ClientRequestor {
                 client,
                 default_headers,

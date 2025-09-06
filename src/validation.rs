@@ -10,6 +10,9 @@ use crate::{
         ChallengeMetadata, ChallengeType, ChefChallengeMetadata,
     },
     client::Client,
+    ratelimit::{
+        RATELIMIT_LIMIT_HEADER, RATELIMIT_REMAINING_HEADER, RATELIMIT_RESET_HEADER, Ratelimit,
+    },
 };
 
 const TOKEN_HEADER: &str = "x-csrf-token";
@@ -32,6 +35,26 @@ pub struct DataErrorJson {
     //data: Option<String>, // maybe, i always got null,
     #[serde(rename = "error")]
     message: String,
+}
+
+fn ratelimit_from_headers(
+    limit: Option<&HeaderValue>,
+    reset: Option<&HeaderValue>,
+    remaining: Option<&HeaderValue>,
+) -> Option<Ratelimit> {
+    if let (Some(_limit), Some(reset), Some(remaining)) = (limit, reset, remaining) {
+        let remaining = remaining.to_str().unwrap().parse::<u32>().unwrap();
+        let reset_in_seconds = reset.to_str().unwrap().parse::<u32>().unwrap();
+
+        Some(Ratelimit {
+            remaining,
+            reset_in_seconds,
+            // TODO: honestly i don't know how to parse this
+            windows: Vec::new(),
+        })
+    } else {
+        None
+    }
 }
 
 fn challenge_from_headers(
@@ -129,6 +152,14 @@ impl Client {
                 if let Some(token) = token {
                     // EVERYTHING must be mutable to do this, perhaps there's another datatype we can use
                     self.set_token(String::from_utf8_lossy(token.as_bytes()).as_ref());
+                }
+
+                {
+                    let limit = response.headers().get(RATELIMIT_LIMIT_HEADER);
+                    let reset = response.headers().get(RATELIMIT_RESET_HEADER);
+                    let remaining = response.headers().get(RATELIMIT_REMAINING_HEADER);
+
+                    self.ratelimit = ratelimit_from_headers(limit, reset, remaining);
                 }
 
                 // TODO: some apis like the data api can return an error even with status_code 200

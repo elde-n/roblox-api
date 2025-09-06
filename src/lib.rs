@@ -1,6 +1,7 @@
 pub mod api;
 pub mod challenge;
 pub mod client;
+pub mod ratelimit;
 pub mod validation;
 
 use challenge::Challenge;
