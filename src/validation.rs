@@ -220,11 +220,17 @@ impl Client {
                                     ApiError::RequestMissingArgument("Birthdate".to_string())
                                 }
 
+                                "Ascending sort order is not supported for user's favorite games." => {
+                                    ApiError::UnsupportedSortOrder
+                                }
+
                                 // 403
                                 "Token Validation Failed"
                                 | "XSRF token invalid"
                                 | "XSRF Token Validation Failed"
                                 | "\"XSRF Token Validation Failed\"" => ApiError::TokenValidation,
+
+                                "Not authorized." => ApiError::Unauthorized,
 
                                 "Incorrect username or password. Please try again." => {
                                     ApiError::InvalidCredentials

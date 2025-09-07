@@ -88,6 +88,7 @@ pub enum ApiError {
     InvalidBrowserTrackerId,
     AlreadyInGroup,
     AlreadyInGroupRequests,
+    UnsupportedSortOrder,
 }
 
 #[repr(u8)]
@@ -115,7 +116,8 @@ pub enum AssetTypeId {
     LeftLeg,
     RightLeg,
     Package,
-    Gamepass = 34,
+    YouTubeVideo,
+    Gamepass,
     Plugin = 38,
     MeshPart = 40,
     HairAccessory,
