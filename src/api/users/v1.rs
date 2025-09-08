@@ -33,8 +33,8 @@ impl TryFrom<&str> for Gender {
     }
 }
 
-impl Gender {
-    fn from_u8(value: u8) -> Self {
+impl From<u8> for Gender {
+    fn from(value: u8) -> Self {
         match value {
             2 => Self::Male,
             3 => Self::Female,
@@ -525,7 +525,7 @@ pub async fn gender(client: &mut Client) -> Result<Gender, Error> {
     let response = client.validate_response(result).await?;
     let gender: Response = client.requestor.parse_json(response).await?;
 
-    Ok(Gender::from_u8(gender.value))
+    Ok(Gender::from(gender.value))
 }
 
 pub async fn set_gender(client: &mut Client, gender: Gender) -> Result<(), Error> {
