@@ -29,19 +29,16 @@ impl std::fmt::Display for ActionType {
 }
 
 #[derive(Clone, Copy, Default, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
 pub enum ChallengeType {
     #[default]
-    #[serde(rename = "generic")]
     Generic,
-    #[serde(rename = "captcha")]
     Captcha,
     // This requires doing javascript challenges, however completing them is upto the user of this api
-    #[serde(rename = "chef")]
     Chef,
     #[serde(rename = "twostepverification")]
     TwoStepVerification,
     // I'm not sure what this is, however I say it being referenced in some places
-    #[serde(rename = "reauthentication")]
     Reauthentication,
     // I'm not sure what this is, however I say it being referenced in some places
     #[serde(rename = "security-questions")]
@@ -70,26 +67,22 @@ impl std::fmt::Display for ChallengeType {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct ChallengeMetadata {
-    #[serde(rename = "userId")]
     pub(crate) user_id: String,
     #[serde(rename = "challengeId")]
     pub server_challenge_id: String,
-    #[serde(rename = "actionType")]
     pub action_type: ActionType,
-    #[serde(rename = "rememberDevice")]
     pub(crate) remember_device: bool,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct ChefChallengeMetadata {
-    #[serde(rename = "userId")]
     pub(crate) user_id: String,
     #[serde(rename = "challengeId")]
     pub server_challenge_id: String,
-    #[serde(rename = "expectedSymbols")]
     pub expected_symbols: Vec<String>,
-    #[serde(rename = "scriptIdentifiers")]
     pub script_identifiers: Vec<String>,
 }
 
@@ -101,14 +94,11 @@ pub struct Challenge {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub(crate) struct ChallengeMetadataRequest {
-    #[serde(rename = "verificationToken")]
     pub(crate) verification_token: String,
-    #[serde(rename = "challengeId")]
     pub(crate) challenge_id: String,
-    #[serde(rename = "actionType")]
     pub(crate) action_type: ActionType,
-    #[serde(rename = "rememberDevice")]
     pub(crate) remember_device: bool,
 }
 

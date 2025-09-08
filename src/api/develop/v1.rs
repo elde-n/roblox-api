@@ -5,19 +5,17 @@ use crate::{DateTime, Error, Paging, client::Client};
 pub const URL: &str = "https://develop.roblox.com/v1";
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct PublishedAssetVersion {
     #[serde(rename = "Id")]
     pub id: u64,
-    #[serde(rename = "assetId")]
     pub asset_id: u64,
     #[serde(rename = "assetVersionNumber")]
     pub asset_version: u64,
     #[serde(rename = "creatorTargetId")]
     pub creator_id: u64,
-    #[serde(rename = "creatorType")]
     pub creator_type: String,
     pub created: DateTime,
-    #[serde(rename = "isPublished")]
     pub is_published: bool,
     #[serde(rename = "isEqualToCurrentPublishedVersion")]
     pub is_current_published_version: bool,
@@ -34,43 +32,37 @@ pub struct PublishedAssetVersions {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct AssetCreator {
     #[serde(rename = "targetId")]
     pub id: u64,
     #[serde(rename = "type")]
     pub kind: String,
-    #[serde(rename = "typeId")]
     pub type_id: u32,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct Asset {
     pub id: u64,
     pub name: String,
     pub description: String,
     #[serde(rename = "type")]
     pub kind: String,
-    #[serde(rename = "typeId")]
     pub type_id: u32,
 
     #[serde(rename = "enableComments")]
     pub comments_enabled: bool,
-    #[serde(rename = "isCopyingAllowed")]
     pub is_copying_allowed: bool,
     #[serde(rename = "isPublicDomainEnabled")]
     pub is_public_domain: bool,
-    #[serde(rename = "isModerated")]
     pub is_moderated: bool,
-    #[serde(rename = "isArchivable")]
     pub is_archivable: bool,
     #[serde(rename = "canHaveThumbnail")]
     pub thumbnails_allowed: bool,
-    #[serde(rename = "isVersioningEnabled")]
     pub is_versioning_enabled: bool,
 
-    #[serde(rename = "moderationStatus")]
     pub moderation_status: Option<String>,
-    #[serde(rename = "reviewStatus")]
     pub review_status: String,
 
     pub created: DateTime,

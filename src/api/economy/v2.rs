@@ -69,7 +69,6 @@ pub struct DetailsResponse {
     pub asset_type_id: u8,
     pub creator: Creator,
 
-    #[serde(rename = "IconImageAssetId")]
     pub icon_image_asset_id: u64,
     pub created: DateTime,
     pub updated: DateTime,

@@ -73,8 +73,8 @@ pub async fn can_view_inventory(client: &mut Client, user_id: u64) -> Result<boo
         .await;
 
     #[derive(Clone, Debug, Deserialize)]
+    #[serde(rename_all = "camelCase")]
     struct Response {
-        #[serde(rename = "canView")]
         can_view: bool,
     }
 

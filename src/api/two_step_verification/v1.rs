@@ -15,17 +15,16 @@ pub async fn authenticator_verify(
     server_challenge_id: &str,
 ) -> Result<String, Error> {
     #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
     struct Request<'a> {
-        #[serde(rename = "actionType")]
         action_type: &'a str,
-        #[serde(rename = "challengeId")]
         challenge_id: &'a str,
         code: &'a str,
     }
 
     #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase")]
     struct Response {
-        #[serde(rename = "verificationToken")]
         verification_token: String,
     }
 

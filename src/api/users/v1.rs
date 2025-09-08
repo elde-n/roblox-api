@@ -325,8 +325,8 @@ pub async fn authenticated_age_bracket(client: &mut Client) -> Result<u64, Error
         .await;
 
     #[derive(Debug, Deserialize)]
+    #[serde(rename_all = "camelCase")]
     struct Response {
-        #[serde(rename = "ageBracket")]
         age_bracket: u64,
     }
 
@@ -348,8 +348,8 @@ pub async fn authenticated_country_code(client: &mut Client) -> Result<String, E
         .await;
 
     #[derive(Debug, Deserialize)]
+    #[serde(rename_all = "camelCase")]
     struct Response {
-        #[serde(rename = "countryCode")]
         country_code: String,
     }
 

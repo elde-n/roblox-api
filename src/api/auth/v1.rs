@@ -153,8 +153,8 @@ pub async fn recommended_usernames_from_display_name(
     birthday: DateTime,
 ) -> Result<RecommendedUsernamesFromDisplayName, Error> {
     #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
     struct Request<'a> {
-        #[serde(rename = "displayName")]
         display_name: &'a str,
         birthday: &'a str,
     }

@@ -110,13 +110,12 @@ pub async fn upload(
     headers.insert(header::ACCEPT, HeaderValue::from_str("*/*").unwrap());
 
     #[derive(Clone, Debug, Deserialize, Serialize)]
+    #[serde(rename_all = "camelCase")]
     struct Request<'a> {
         #[serde(rename = "displayName")]
         title: &'a str,
         description: &'a str,
-        #[serde(rename = "assetType")]
         asset_type: AssetTypeId,
-        #[serde(rename = "creationContext")]
         creation_context: CreationContext,
     }
 

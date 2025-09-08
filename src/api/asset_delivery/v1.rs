@@ -1,13 +1,13 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{Error, client::Client};
 
 pub const URL: &str = "https://assetdelivery.roblox.com/v1";
 pub const SECONDARY_URL: &str = "https://apis.roblox.com/asset-delivery-api/v1";
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub enum PermissionContext {
-    #[serde(rename = "ignoreUniverse")]
     IgnoreUniverse,
 }
 

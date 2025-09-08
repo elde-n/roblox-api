@@ -37,6 +37,7 @@ pub async fn purchase(
     seller: MarketEntity,
 ) -> Result<PurchaseResponse, Error> {
     #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
     struct Request<'a> {
         #[serde(rename = "collectibleItemId")]
         asset_id: &'a str,
@@ -54,7 +55,6 @@ pub async fn purchase(
         seller_id: u64,
         #[serde(rename = "expectedSellerType")]
         seller_type: MarketEntityType,
-        #[serde(rename = "idempotencyKey")]
         idempotency_key: &'a str,
     }
 

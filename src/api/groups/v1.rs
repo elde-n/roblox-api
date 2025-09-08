@@ -183,10 +183,9 @@ pub async fn users(client: &mut Client, id: u64, paging: Paging<'_>) -> Result<G
 
 pub async fn join(client: &mut Client, id: u64) -> Result<(), Error> {
     #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
     struct Request<'a> {
-        #[serde(rename = "sessionId")]
         session_id: &'a str,
-        #[serde(rename = "redemptionToken")]
         redemption_token: &'a str,
     }
 

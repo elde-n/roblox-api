@@ -57,6 +57,7 @@ pub struct ItemDetailCreator {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub struct ItemDetailVotes {
     #[serde(rename = "upVotes")]
     pub likes: u32,
@@ -66,11 +67,8 @@ pub struct ItemDetailVotes {
     pub votes: u32,
     #[serde(rename = "votePercent")]
     pub like_ratio: f32,
-    #[serde(rename = "showVotes")]
     pub show_votes: bool,
-    #[serde(rename = "canVote")]
     pub can_vote: bool,
-    #[serde(rename = "hasVoted")]
     pub has_voted: bool,
 }
 
