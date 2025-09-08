@@ -188,7 +188,7 @@ pub struct UniverseGamepass {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct UniverseGamepassesResponse {
     #[serde(rename = "data")]
-    pub servers: Vec<UniverseGamepass>,
+    pub gamepasses: Vec<UniverseGamepass>,
     #[serde(rename = "nextPageCursor")]
     pub next_cursor: Option<String>,
     #[serde(rename = "previousPageCursor")]
