@@ -11,28 +11,28 @@ use crate::{AssetTypeId, DateTime, Error, client::Client};
 pub const URL: &str = "https://apis.roblox.com/assets/user-auth/v1";
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub enum Creator {
-    #[serde(rename = "userId")]
     // TODO: cast to u64
     UserId(String), // can be sent as a u64, but it's returned as a string in some cases
-    #[serde(rename = "groupId")]
     GroupId(String),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct CreationContext {
     pub creator: Creator,
-    #[serde(rename = "expectedPrice")]
     pub expected_price: Option<u64>,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct ModerationResult {
     #[serde(rename = "moderationState")]
     pub state: String,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct AssetInfo {
     #[serde(rename = "assetId")]
     pub id: String,
@@ -43,21 +43,18 @@ pub struct AssetInfo {
 
     pub path: String,
     pub state: String,
-    #[serde(rename = "assetType")]
     pub asset_type: AssetTypeId,
 
-    #[serde(rename = "revisionId")]
     pub revision_id: String,
     #[serde(rename = "revisionCreateTime")]
     pub revision_creation_time: DateTime,
 
-    #[serde(rename = "creationContext")]
     pub creation_context: CreationContext,
-    #[serde(rename = "moderationResult")]
     pub moderation_result: ModerationResult,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct AssetUploadResponse {
     pub path: String,
     // TODO: cast to u64 please
@@ -67,24 +64,20 @@ pub struct AssetUploadResponse {
     pub name: String,
 
     pub state: String,
-    #[serde(rename = "assetType")]
     pub asset_type: AssetTypeId,
 
-    #[serde(rename = "revisionId")]
     pub revision_id: String,
     #[serde(rename = "revisionCreateTime")]
     pub revision_creation_time: DateTime,
 
-    #[serde(rename = "creationContext")]
     pub creation_context: CreationContext,
-    #[serde(rename = "moderationResult")]
     pub moderation_result: ModerationResult,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct AssetUploadStatus {
     pub path: String,
-    #[serde(rename = "operationId")]
     pub operation_id: String,
     #[serde(rename = "done")]
     pub complete: bool,

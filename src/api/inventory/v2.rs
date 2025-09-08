@@ -1,10 +1,10 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{AssetTypeId, DateTime, Error, Paging, client::Client};
 
 pub const URL: &str = "https://inventory.roblox.com/v2";
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct FromOwnerAssetOwner {
     pub id: u64,
     #[serde(rename = "type")]
@@ -12,7 +12,7 @@ pub struct FromOwnerAssetOwner {
     pub name: String,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct FromOwnerAssetInfo {
     pub id: u64,
     #[serde(rename = "serialNumber")]
@@ -24,7 +24,7 @@ pub struct FromOwnerAssetInfo {
     pub updated: DateTime,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct UserOwnedAssetOwner {
     #[serde(rename = "userId")]
     pub id: u64,
@@ -35,7 +35,7 @@ pub struct UserOwnedAssetOwner {
     pub premium_membership_type: String,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct UserOwnedAssetInfo {
     #[serde(rename = "assetId")]
     pub id: u64,
@@ -54,7 +54,7 @@ pub struct UserOwnedAssetInfo {
     pub updated: DateTime,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct UserOwnedAssets {
     #[serde(rename = "nextPageCursor")]
     pub next_cursor: Option<String>,
@@ -64,7 +64,7 @@ pub struct UserOwnedAssets {
     pub assets: Vec<UserOwnedAssetInfo>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AssetOwners {
     #[serde(rename = "nextPageCursor")]
     pub next_cursor: String,

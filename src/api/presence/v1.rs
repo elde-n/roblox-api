@@ -4,7 +4,8 @@ use crate::{Error, client::Client};
 
 pub const URL: &str = "https://presence.roblox.com/v1";
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct UserPresence {
     #[serde(rename = "userId")]
     pub id: u64,
@@ -13,11 +14,8 @@ pub struct UserPresence {
     #[serde(rename = "lastLocation")]
     pub status: String,
 
-    #[serde(rename = "placeId")]
     pub place_id: Option<u64>,
-    #[serde(rename = "rootPlaceId")]
     pub root_place_id: Option<u64>,
-    #[serde(rename = "universeId")]
     pub universe_id: Option<u64>,
     #[serde(rename = "gameId")]
     pub job_id: Option<String>,

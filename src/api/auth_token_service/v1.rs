@@ -6,35 +6,28 @@ pub const URL: &str = "https://apis.roblox.com/auth-token-service/v1";
 
 // TODO: look into `qr-code-image`, `entercode`, `validatecode`, `metadata`
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum LoginStatus {
     Created,
     Validated,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct LoginToken {
-    #[serde(rename = "code")]
     pub code: String,
-    #[serde(rename = "status")]
     pub status: String,
-    #[serde(rename = "privateKey")]
     pub private_key: String,
-    #[serde(rename = "expirationTime")]
     pub expiration_time: DateTime,
-    #[serde(rename = "imagePath")]
     pub image_path: String,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct LoginTokenStatus {
-    #[serde(rename = "status")]
     pub status: LoginStatus,
-    #[serde(rename = "accountName")]
     pub account_name: Option<String>,
-    #[serde(rename = "accountPictureUrl")]
     pub account_picture_url: Option<String>,
-    #[serde(rename = "expirationTime")]
     pub expiration_time: String,
 }
 

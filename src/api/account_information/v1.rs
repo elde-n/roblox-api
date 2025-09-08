@@ -1,15 +1,15 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{Error, client::Client};
 
 pub const URL: &str = "https://accountinformation.roblox.com/v1";
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct RobloxBadge {
     pub id: u8,
     pub name: String,
     pub description: String,
-    #[serde(rename = "imageUrl")]
     pub image_url: String,
 }
 

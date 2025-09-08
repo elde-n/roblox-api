@@ -1,6 +1,6 @@
 use base64::{Engine, prelude::BASE64_STANDARD};
 use reqwest::{Response, header::HeaderValue};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     ApiError, Error,
@@ -17,18 +17,18 @@ use crate::{
 
 const TOKEN_HEADER: &str = "x-csrf-token";
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ErrorJson {
     //code: u8,
     message: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ErrorsJson {
     errors: Vec<ErrorJson>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct DataErrorJson {
     //#[serde(rename = "isValid")]
     //is_valid: bool,

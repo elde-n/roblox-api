@@ -4,7 +4,7 @@ use crate::{Currency, Error, client::Client};
 
 pub const URL: &str = "https://economy.roblox.com/v1";
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct PurchaseResponse {
     pub purchased: bool,
 }

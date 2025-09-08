@@ -12,7 +12,7 @@ use crate::{DateTime, Error, api::hba_service, client::Client};
 
 pub const URL: &str = "https://auth.roblox.com/v1";
 
-#[derive(Clone, Debug, Default, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub enum LoginType {
     Email,
     #[default]
@@ -23,7 +23,7 @@ pub enum LoginType {
     Passkey,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum MediaType {
     Email,
     SMS,
@@ -35,7 +35,7 @@ pub enum MediaType {
     Passkey,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct RecommendedUsernamesFromDisplayName {
     #[serde(rename = "didGenerateNewUsername")]
     pub new_name_generated: bool,
@@ -43,39 +43,36 @@ pub struct RecommendedUsernamesFromDisplayName {
     pub suggested_names: Vec<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct User {
     pub id: u64,
     pub name: String,
-    #[serde(rename = "displayName")]
     pub display_name: String,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct TwoStepVerificationInfo {
-    #[serde(rename = "mediaType")]
     pub media_type: MediaType,
     pub ticket: String,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct LoginResponse {
     pub user: User,
     #[serde(rename = "twoStepVerificationData")]
     pub two_step_verification_info: TwoStepVerificationInfo,
     #[serde(rename = "identityVerificationLoginTicket")]
     pub verification_ticket: String,
-    #[serde(rename = "isBanned")]
     pub is_banned: bool,
-    #[serde(rename = "shouldUpdateEmail")]
     pub should_update_email: bool,
-    #[serde(rename = "recoveryEmail")]
     pub recovery_email: String,
-    #[serde(rename = "accountBlob")]
     pub account_blob: String,
 }
 
-#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 struct AuthenticationIntent {
     #[serde(rename = "clientPublicKey")]
     public_key: String,

@@ -4,26 +4,26 @@ use crate::{DateTime, Error, Paging, client::Client};
 
 pub const URL: &str = "https://groups.roblox.com/v1";
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GroupUser {
     #[serde(rename = "userId")]
     pub id: u64,
     #[serde(rename = "username")]
     pub name: String,
-    #[serde(rename = "displayName")]
     pub display_name: String,
     #[serde(rename = "hasVerifiedBadge")]
     pub is_verified: bool,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct GroupRole {
     pub id: u64,
     pub name: String,
     pub rank: u8,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct GroupShout {
     pub body: String,
     pub poster: GroupUser,
@@ -31,7 +31,8 @@ pub struct GroupShout {
     pub updated: DateTime,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GroupInformation {
     pub id: u64,
     pub name: String,
@@ -40,7 +41,6 @@ pub struct GroupInformation {
     pub owner: Option<GroupUser>,
     pub shout: Option<GroupShout>,
 
-    #[serde(rename = "memberCount")]
     pub member_count: u64,
     #[serde(rename = "isBuildersClubOnly")]
     pub premium_only: bool,

@@ -1,40 +1,37 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{AssetTypeId, DateTime, Error, Paging, client::Client};
 
 pub const URL: &str = "https://apis.roblox.com/toolbox-service/v1";
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CreationObject {
     pub id: u64,
     pub name: String,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct Creations {
     #[serde(rename = "totalResults")]
     pub results: u16,
-    #[serde(rename = "filteredKeyword")]
     pub filtered_keyword: String,
     #[serde(rename = "data")]
     pub objects: Vec<CreationObject>,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct ItemDetailAsset {
     pub id: u64,
     pub name: String,
     pub description: String,
-    #[serde(rename = "typeId")]
     pub type_id: u32,
     pub duration: u32,
     #[serde(rename = "visibilityStatus")]
     pub visibility: u32,
-    #[serde(rename = "isEndorsed")]
     pub is_endorsed: bool,
-    #[serde(rename = "hasScripts")]
     pub has_scripts: bool,
-    #[serde(rename = "isAssetHashApproved")]
     pub is_asset_hash_approved: bool,
     #[serde(rename = "createdUtc")]
     pub created: DateTime,
@@ -49,7 +46,7 @@ pub struct ItemDetailAsset {
     pub genres: Vec<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct ItemDetailCreator {
     pub id: u64,
     pub name: String,
@@ -59,7 +56,7 @@ pub struct ItemDetailCreator {
     pub is_verified: bool,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct ItemDetailVotes {
     #[serde(rename = "upVotes")]
     pub likes: u32,
@@ -77,20 +74,20 @@ pub struct ItemDetailVotes {
     pub has_voted: bool,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct FiatProductPriceQuantity {
     pub significand: u32,
     pub exponent: u32,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct FiatProductPrice {
-    #[serde(rename = "currencyCode")]
     pub currency_code: String,
     pub quantity: FiatProductPriceQuantity,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct FiatProduct {
     #[serde(rename = "purchasePrice")]
     pub price: FiatProductPrice,
@@ -98,12 +95,12 @@ pub struct FiatProduct {
     pub purchasable: bool,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub struct ItemDetail {
     pub asset: ItemDetailAsset,
     pub creator: ItemDetailCreator,
     pub votes: ItemDetailVotes,
-    #[serde(rename = "fiatProduct")]
     pub fiat_product: FiatProduct,
 }
 

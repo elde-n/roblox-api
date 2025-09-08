@@ -1,10 +1,10 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{DateTime, Error, Paging, client::Client};
 
 pub const URL: &str = "https://games.roblox.com/v1";
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct PlaceDetails {
     #[serde(rename = "placeId")]
@@ -33,13 +33,13 @@ pub struct PlaceDetails {
     pub is_verified: bool,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct PrivateServerInfoGameRootPlace {
     pub id: u64,
     pub name: String,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct PrivateServerInfoGame {
     pub id: u64,
@@ -47,7 +47,7 @@ pub struct PrivateServerInfoGame {
     pub root_place: PrivateServerInfoGameRootPlace,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct PrivateServerInfoSubscription {
     pub price: u64,
@@ -62,7 +62,7 @@ pub struct PrivateServerInfoSubscription {
     pub expiration_date: DateTime,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct PrivateServerInfoPermissions {
     // TODO: find out what it holds
@@ -75,12 +75,12 @@ pub struct PrivateServerInfoPermissions {
     pub friends_allowed: bool,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct PrivateServerInfoVoiceSettings {
     pub enabled: bool,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct PrivateServerInfo {
     pub id: u64,
@@ -98,7 +98,7 @@ pub struct PrivateServerInfo {
     pub voice_settings: PrivateServerInfoVoiceSettings,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct PrivateServerOwner {
     pub id: u64,
@@ -108,7 +108,7 @@ pub struct PrivateServerOwner {
     pub is_verified: bool,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct PrivateServer {
     pub name: String,
@@ -122,7 +122,7 @@ pub struct PrivateServer {
     pub player_tokens: Vec<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct PrivateServersResponse {
     #[serde(rename = "data")]
     pub servers: Vec<PrivateServer>,
@@ -134,7 +134,7 @@ pub struct PrivateServersResponse {
     pub previous_cursor: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Server {
     #[serde(rename = "id")]
@@ -149,7 +149,7 @@ pub struct Server {
     pub player_tokens: Vec<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct ServersResponse {
     #[serde(rename = "data")]
     pub servers: Vec<Server>,
@@ -159,7 +159,7 @@ pub struct ServersResponse {
     pub previous_cursor: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct UniverseVotes {
     pub id: u64,
     #[serde(rename = "upVotes")]
@@ -168,7 +168,7 @@ pub struct UniverseVotes {
     pub dislikes: u32,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct UniverseGamepass {
     pub id: u64,
@@ -185,7 +185,7 @@ pub struct UniverseGamepass {
     pub seller_name: String,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct UniverseGamepassesResponse {
     #[serde(rename = "data")]
     pub servers: Vec<UniverseGamepass>,

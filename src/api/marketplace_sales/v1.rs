@@ -5,23 +5,23 @@ use crate::{Currency, Error, client::Client};
 
 pub const URL: &str = "https://apis.roblox.com/marketplace-sales/v1";
 
-#[derive(Clone, Debug, Default, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub enum MarketEntityType {
     #[default]
     User,
 }
 
-#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct MarketEntity {
     pub id: u64,
     pub kind: MarketEntityType,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct PurchaseResponse {
     pub pending: bool,
     pub purchased: bool,
-    #[serde(rename = "purchaseResult")]
     pub purchase_result: String,
     #[serde(rename = "errorMessage")]
     pub error: Option<String>,

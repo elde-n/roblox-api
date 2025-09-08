@@ -4,13 +4,12 @@ use crate::{Error, client::Client};
 
 pub const URL: &str = "https://apis.roblox.com/user-blocking-api/v1";
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct UserBlockStatus {
     #[serde(rename = "userId")]
     pub id: u64,
-    #[serde(rename = "isBlocked")]
     pub is_blocked: bool,
-    #[serde(rename = "isBlockingViewer")]
     pub is_blocking_viewer: bool,
 }
 

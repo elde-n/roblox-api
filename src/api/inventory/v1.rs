@@ -13,17 +13,17 @@ pub enum ItemType {
     Bundle,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AssetInfo {
     pub id: u64,
     #[serde(rename = "type")]
     pub kind: String,
     pub name: String,
-    #[serde(rename = "instanceId")]
     pub instance_id: u64,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct UserOwnsAssets {
     #[serde(rename = "nextPageCursor")]
     pub next_cursor: Option<String>,
@@ -33,13 +33,12 @@ pub struct UserOwnsAssets {
     pub assets: Vec<AssetInfo>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CollectibleInfo {
     #[serde(rename = "assetId")]
     pub id: u64,
-    #[serde(rename = "originalPrice")]
     pub original_price: u64,
-    #[serde(rename = "recentAveragePrice")]
     pub recent_average_price: u64,
     #[serde(rename = "assetStock")]
     pub stock: u64,
@@ -54,7 +53,7 @@ pub struct CollectibleInfo {
     pub serial: Option<u64>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct UserOwnedCollectibles {
     #[serde(rename = "nextPageCursor")]
     pub next_cursor: Option<String>,

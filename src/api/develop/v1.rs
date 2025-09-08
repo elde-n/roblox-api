@@ -1,10 +1,10 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{DateTime, Error, Paging, client::Client};
 
 pub const URL: &str = "https://develop.roblox.com/v1";
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct PublishedAssetVersion {
     #[serde(rename = "Id")]
     pub id: u64,
@@ -23,7 +23,7 @@ pub struct PublishedAssetVersion {
     pub is_current_published_version: bool,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct PublishedAssetVersions {
     #[serde(rename = "data")]
     pub assets: Vec<PublishedAssetVersion>,
@@ -33,7 +33,7 @@ pub struct PublishedAssetVersions {
     pub previous_cursor: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct AssetCreator {
     #[serde(rename = "targetId")]
     pub id: u64,
@@ -43,7 +43,7 @@ pub struct AssetCreator {
     pub type_id: u32,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Asset {
     pub id: u64,
     pub name: String,

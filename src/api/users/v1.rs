@@ -43,33 +43,30 @@ impl Gender {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct ClientDetails {
     pub id: u64,
     pub name: String,
-    #[serde(rename = "displayName")]
     pub display_name: String,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct ClientAppLaunchInfo {
     pub id: u64,
     pub name: String,
-    #[serde(rename = "displayName")]
     pub display_name: String,
-    #[serde(rename = "isPremium")]
     pub is_premium: bool,
-    #[serde(rename = "countryCode")]
     pub country_code: String,
-    #[serde(rename = "ageBracket")]
     pub age_bracket: u64,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct UserDetails {
     pub id: u64,
     pub name: String,
-    #[serde(rename = "displayName")]
     pub display_name: String,
     pub description: String,
     pub created: DateTime,
@@ -79,33 +76,33 @@ pub struct UserDetails {
     pub is_verified: bool,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct UserById {
     pub id: u64,
     pub name: String,
-    #[serde(rename = "displayName")]
     pub display_name: String,
     #[serde(rename = "hasVerifiedBadge")]
     pub is_verified: bool,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct UserByName {
     pub id: u64,
     pub name: String,
     #[serde(rename = "requestedUsername")]
     pub requested_name: String,
-    #[serde(rename = "displayName")]
     pub display_name: String,
     #[serde(rename = "hasVerifiedBadge")]
     pub is_verified: bool,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct UserByKeyword {
     pub id: u64,
     pub name: String,
-    #[serde(rename = "displayName")]
     pub display_name: String,
     #[serde(rename = "previousUsernames")]
     pub previous_names: Vec<String>,
@@ -113,14 +110,14 @@ pub struct UserByKeyword {
     pub is_verified: bool,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct NameHistory {
     pub names: Vec<String>,
     pub next_cursor: Option<String>,
     pub previous_cursor: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct UserSearchByKeyword {
     #[serde(rename = "data")]
     pub users: Vec<UserByKeyword>,

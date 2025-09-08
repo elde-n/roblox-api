@@ -1,10 +1,10 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{AssetTypeId, DateTime, Error, Paging, client::Client};
 
 pub const URL: &str = "https://games.roblox.com/v2";
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct UniverseMedia {
     pub asset_type: AssetTypeId,
@@ -21,7 +21,7 @@ pub struct UniverseMedia {
 }
 
 // TODO: use CreatorType instead
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct GameCreator {
     pub id: u64,
     #[serde(rename = "type")]
@@ -29,14 +29,14 @@ pub struct GameCreator {
     pub name: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct GameRootPlace {
     pub id: u64,
     #[serde(rename = "type")]
     pub kind: String,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Game {
     pub id: u64,
@@ -53,7 +53,7 @@ pub struct Game {
     pub place_visits: u64,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct GamesResponse {
     #[serde(rename = "data")]
     pub games: Vec<Game>,

@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use strum::{EnumIter, IntoEnumIterator};
 
 // TODO: using this wrapper as I couldn't figure out how to use chronos datetime alone
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct DateTime(String);
 impl DateTime {
     pub fn from_ymd(year: i32, month: u8, day: u8) -> Self {

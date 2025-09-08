@@ -4,13 +4,12 @@ use crate::{Error, client::Client};
 
 pub const URL: &str = "https://friends.roblox.com/v1";
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct FollowingStatus {
     #[serde(rename = "userId")]
     pub id: u64,
-    #[serde(rename = "isFollowing")]
     pub is_following: bool,
-    #[serde(rename = "isFollowed")]
     pub is_followed: bool,
 }
 
