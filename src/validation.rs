@@ -305,6 +305,10 @@ impl Client {
 
                                 "an internal error occurred" => ApiError::Internal,
 
+                                // 404
+                                "Badge is invalid or does not exist." => ApiError::InvalidBadge,
+
+
                                 // 409
                                 "You are already a member of this group." => ApiError::AlreadyInGroup,
                                 "You have already requested to join this group." => ApiError::AlreadyInGroupRequests,

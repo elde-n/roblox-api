@@ -3,6 +3,7 @@ pub mod asset_delivery;
 pub mod assets;
 pub mod auth;
 pub mod auth_token_service;
+pub mod badges;
 pub mod challenge;
 pub mod data;
 pub mod develop;

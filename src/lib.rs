@@ -89,6 +89,7 @@ pub enum ApiError {
     AlreadyInGroup,
     AlreadyInGroupRequests,
     UnsupportedSortOrder,
+    InvalidBadge,
 }
 
 #[repr(u8)]
