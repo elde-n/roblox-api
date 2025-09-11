@@ -16,6 +16,7 @@ pub mod inventory;
 pub mod marketplace_sales;
 pub mod premium_features;
 pub mod presence;
+pub mod private_messages;
 pub mod thumbnails;
 pub mod toolbox_service;
 pub mod two_step_verification;

@@ -10,6 +10,7 @@ mod groups;
 mod inventory;
 mod premium_features;
 mod presence;
+mod private_messages;
 mod thumbnails;
 mod user_blocking;
 mod users;
