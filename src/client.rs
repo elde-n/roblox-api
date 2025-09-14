@@ -69,9 +69,6 @@ impl ClientRequestor {
         &self,
         response: Response,
     ) -> Result<T, Error> {
-        match response.json::<T>().await {
-            Ok(result) => Ok(result),
-            Err(_) => Err(Error::BadResponse),
-        }
+        Ok(response.json::<T>().await?)
     }
 }

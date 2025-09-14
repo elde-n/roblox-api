@@ -38,18 +38,12 @@ impl DateTime {
     }
 }
 
-impl std::fmt::Display for DateTime {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
 #[derive(Debug)]
 pub enum Error {
     ApiError(ApiError),
-    BadResponse,
-    ReqwestError(reqwest::Error),
+    BadJson,
     IoError(std::io::Error),
+    ReqwestError(reqwest::Error),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -182,6 +176,24 @@ pub enum SortOrder {
     Ascending,
     #[serde(rename = "Desc")]
     Descending,
+}
+
+impl From<serde_json::Error> for Error {
+    fn from(_error: serde_json::Error) -> Self {
+        Error::BadJson
+    }
+}
+
+impl From<reqwest::Error> for Error {
+    fn from(error: reqwest::Error) -> Self {
+        Error::ReqwestError(error)
+    }
+}
+
+impl std::fmt::Display for DateTime {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
 }
 
 impl std::fmt::Display for AssetTypeId {
