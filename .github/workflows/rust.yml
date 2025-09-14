@@ -23,7 +23,7 @@ jobs:
         echo ROBLOX_COOKIE="${{ secrets.ROBLOX_COOKIE}}" >> .env
     
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --features=web-socket --verbose
     - name: Run tests
-      run: cargo test --verbose
+      run: cargo test --features=web-socket --verbose
 
