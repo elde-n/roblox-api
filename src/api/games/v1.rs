@@ -143,7 +143,7 @@ pub struct Server {
     pub playing: u16,
     pub max_players: u16,
     pub fps: f32,
-    pub ping: u16,
+    pub ping: Option<u16>,
 
     //pub players: Vec<()>, // Seems to be an empty vec?
     pub player_tokens: Vec<String>,
