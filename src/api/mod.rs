@@ -9,6 +9,7 @@ pub mod data;
 pub mod develop;
 pub mod economy;
 pub mod friends;
+pub mod gamepasses;
 pub mod games;
 pub mod groups;
 pub mod hba_service;

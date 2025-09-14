@@ -5,6 +5,7 @@ mod auth_token_service;
 mod badges;
 mod economy;
 mod friends;
+mod gamepasses;
 mod games;
 mod groups;
 mod inventory;
