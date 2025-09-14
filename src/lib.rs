@@ -44,6 +44,8 @@ pub enum Error {
     BadJson,
     IoError(std::io::Error),
     ReqwestError(reqwest::Error),
+    #[cfg(feature = "web-socket")]
+    ReqwestWebSocketError(reqwest_websocket::Error),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -187,6 +189,13 @@ impl From<serde_json::Error> for Error {
 impl From<reqwest::Error> for Error {
     fn from(error: reqwest::Error) -> Self {
         Error::ReqwestError(error)
+    }
+}
+
+#[cfg(feature = "web-socket")]
+impl From<reqwest_websocket::Error> for Error {
+    fn from(error: reqwest_websocket::Error) -> Self {
+        Error::ReqwestWebSocketError(error)
     }
 }
 

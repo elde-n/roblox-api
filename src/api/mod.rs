@@ -24,3 +24,5 @@ pub mod two_step_verification;
 pub mod user_agreements;
 pub mod user_blocking;
 pub mod users;
+#[cfg(feature = "web-socket")]
+pub mod web_socket;
