@@ -8,6 +8,7 @@ mod friends;
 mod games;
 mod groups;
 mod inventory;
+mod platform_chat;
 mod premium_features;
 mod presence;
 mod private_messages;

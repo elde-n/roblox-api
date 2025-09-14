@@ -207,7 +207,8 @@ impl Client {
                                 // 400 
                                 "The asset id is invalid." => ApiError::InvalidAssetId,
                                 "Invalid challenge ID." => ApiError::InvalidChallengeId,
-                                "User not found." => ApiError::UserNotFound,
+                                "User not found." => ApiError::InvalidUser,
+                                "The user is invalid or does not exist." => ApiError::InvalidUser,
                                 "The user ID is invalid." => ApiError::InvalidUserId,
                                 "The gender provided is invalid." => ApiError::InvalidGender,
                                 "The two step verification challenge code is invalid." => {
@@ -303,6 +304,10 @@ impl Client {
                                     ApiError::InvalidBrowserTrackerId
                                 }
 
+                                "Attempt to add non-friends to a conversation" => ApiError::ConversationUserAddFailed,
+                                "Attempt to create conversations with non-friends" => ApiError::ConversationCreationFailed,
+                                "{\"Error\":\"OneToOne conversations cannot be updated\"}" => ApiError::InvalidConversation,
+
                                 "an internal error occurred" => ApiError::Internal,
 
                                 // 404
@@ -314,7 +319,7 @@ impl Client {
                                 "You have already requested to join this group." => ApiError::AlreadyInGroupRequests,
 
                                 _ => {
-                                    ApiError::Unknown(code)
+                                    ApiError::Unknown(code, Some(x.message.to_owned()))
                                 },
                             }).collect();
 

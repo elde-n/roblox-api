@@ -58,12 +58,12 @@ pub enum ApiError {
     BadRequest,
     RequestMissingArgument(String),
     Ratelimited,
-    Unknown(u16),
+    Unknown(u16, Option<String>),
     Unauthorized,
     InvalidBirthdate,
     InvalidDisplayName,
     InvalidGender,
-    UserNotFound,
+    InvalidUser,
     InvalidUserId,
     PinIsLocked,
     TokenValidation,
@@ -90,6 +90,9 @@ pub enum ApiError {
     AlreadyInGroupRequests,
     UnsupportedSortOrder,
     InvalidBadge,
+    ConversationCreationFailed,
+    InvalidConversation,
+    ConversationUserAddFailed,
 }
 
 #[repr(u8)]
