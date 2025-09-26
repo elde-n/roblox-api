@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{DateTime, Error, client::Client};
+use crate::{DateTime, Error, Paging, client::Client};
 
 pub const URL: &str = "https://privatemessages.roblox.com/v1";
 
@@ -140,20 +140,26 @@ pub async fn unread_count(client: &mut Client) -> Result<u64, Error> {
         .count)
 }
 
+/// The paging cursor is a page number
 pub async fn messages(
     client: &mut Client,
     tab: MessageTab,
-    page: u64,
-    page_size: u64,
+    paging: Paging<'_>,
 ) -> Result<Messages, Error> {
+    let limit = paging.limit.unwrap_or(100).to_string();
+    let cursor = match paging.cursor {
+        Some(cursor) => cursor.to_string(),
+        None => String::new(),
+    };
+
     let result = client
         .requestor
         .client
         .get(format!("{URL}/messages"))
         .query(&[
             ("messageTab", tab.to_string()),
-            ("pageNumber", page.to_string()),
-            ("pageSize", page_size.to_string()),
+            ("pageNumber", cursor),
+            ("pageSize", limit),
         ])
         .headers(client.requestor.default_headers.clone())
         .send()
