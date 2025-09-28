@@ -9,6 +9,7 @@ mod gamepasses;
 mod games;
 mod groups;
 mod inventory;
+mod notifications;
 mod platform_chat;
 mod premium_features;
 mod presence;

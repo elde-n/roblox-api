@@ -15,6 +15,7 @@ pub mod groups;
 pub mod hba_service;
 pub mod inventory;
 pub mod marketplace_sales;
+pub mod notifications;
 pub mod platform_chat;
 pub mod premium_features;
 pub mod presence;
