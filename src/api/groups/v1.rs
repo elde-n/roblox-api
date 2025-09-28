@@ -4,7 +4,7 @@ use crate::{DateTime, Error, Paging, client::Client};
 
 pub const URL: &str = "https://groups.roblox.com/v1";
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct GroupUser {
     #[serde(rename = "userId")]
@@ -16,14 +16,20 @@ pub struct GroupUser {
     pub is_verified: bool,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct GroupRole {
     pub id: u64,
     pub name: String,
     pub rank: u8,
+
+    /// How many users have the role
+    pub member_count: Option<u64>,
+    pub description: Option<String>,
+}
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct GroupShout {
     pub body: String,
     pub poster: GroupUser,
@@ -31,7 +37,7 @@ pub struct GroupShout {
     pub updated: DateTime,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct GroupInformation {
     pub id: u64,
@@ -41,7 +47,7 @@ pub struct GroupInformation {
     pub owner: Option<GroupUser>,
     pub shout: Option<GroupShout>,
 
-    pub member_count: u64,
+    pub member_count: Option<u64>,
     #[serde(rename = "isBuildersClubOnly")]
     pub premium_only: bool,
     #[serde(rename = "publicEntryAllowed")]
@@ -50,6 +56,8 @@ pub struct GroupInformation {
     pub is_verified: bool,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct GroupUsers {
     pub users: Vec<(GroupUser, GroupRole)>,
     pub next_cursor: Option<String>,
