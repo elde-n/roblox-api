@@ -6,13 +6,42 @@ use roblox_api::{
 };
 
 const USER_ID: u64 = 3139503587;
-const ROBLOX_GROUP_ID: u64 = 7;
+
 const BHOP_GROUP_ID: u64 = 6980477;
+
+const ROBLOX_GROUP_ID: u64 = 7;
+const ROBLOX_GROUP_GUEST_ROLE_ID: u64 = 260;
 
 #[tokio::test]
 async fn information() {
     let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
     groups::v1::information(&mut client, BHOP_GROUP_ID)
+        .await
+        .unwrap();
+}
+
+#[tokio::test]
+async fn membership() {
+    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
+    let membership = groups::v1::membership(&mut client, BHOP_GROUP_ID, false)
+        .await
+        .unwrap();
+
+    assert_eq!(membership.id, BHOP_GROUP_ID);
+}
+
+#[tokio::test]
+async fn name_history() {
+    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
+    groups::v1::name_history(&mut client, BHOP_GROUP_ID)
+        .await
+        .unwrap();
+}
+
+#[tokio::test]
+async fn pending_join_requests() {
+    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
+    groups::v1::pending_join_requests(&mut client)
         .await
         .unwrap();
 }
@@ -30,9 +59,30 @@ async fn user_roles() {
 }
 
 #[tokio::test]
+async fn roleset_permissions() {
+    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
+    let permissions =
+        groups::v1::roleset_permissions(&mut client, ROBLOX_GROUP_ID, ROBLOX_GROUP_GUEST_ROLE_ID)
+            .await
+            .unwrap();
+
+    assert_eq!(permissions.id, ROBLOX_GROUP_ID);
+    assert_eq!(permissions.role.id, ROBLOX_GROUP_GUEST_ROLE_ID);
+    assert_eq!(permissions.role.rank, 0);
+}
+
+#[tokio::test]
 async fn users() {
     let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
     groups::v1::users(&mut client, BHOP_GROUP_ID, Paging::default())
+        .await
+        .unwrap();
+}
+
+#[tokio::test]
+async fn wall_posts() {
+    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
+    groups::v1::wall_posts(&mut client, BHOP_GROUP_ID, Paging::default())
         .await
         .unwrap();
 }
