@@ -1,4 +1,5 @@
-use serde::{Deserialize, Serialize};
+use reqwest::Method;
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 use crate::{Error, client::Client};
 
@@ -13,26 +14,38 @@ pub struct FollowingStatus {
     pub is_followed: bool,
 }
 
-async fn generic_count(client: &mut Client, path: &str) -> Result<u16, Error> {
-    let result = client
+async fn generic_request<'a, R: Serialize, T: DeserializeOwned>(
+    client: &mut Client,
+    method: Method,
+    path: &str,
+    request: Option<&'a R>,
+) -> Result<T, Error> {
+    let mut builder = client
         .requestor
         .client
-        .get(format!("{URL}/{path}/count"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
+        .request(method, format!("{URL}/{path}"))
+        .headers(client.requestor.default_headers.clone());
 
+    // Even though sending None works, it might get serialized as null in json, which is a waste of bytes
+    if let Some(request) = request {
+        builder = builder.json(&request);
+    }
+
+    let response = client.validate_response(builder.send().await).await?;
+    client.requestor.parse_json::<T>(response).await
+}
+
+async fn generic_count(client: &mut Client, path: &str) -> Result<u16, Error> {
     #[derive(Debug, Deserialize)]
     struct Response {
         count: u16,
     }
 
-    let response = client.validate_response(result).await?;
-    Ok(client
-        .requestor
-        .parse_json::<Response>(response)
-        .await?
-        .count)
+    Ok(
+        generic_request::<(), Response>(client, Method::GET, &format!("{path}/count"), None)
+            .await?
+            .count,
+    )
 }
 
 pub async fn friend_requests_count(client: &mut Client) -> Result<u16, Error> {
@@ -65,27 +78,20 @@ pub async fn following_status(
         user_ids: &'a [u64],
     }
 
-    let result = client
-        .requestor
-        .client
-        .post(format!("{URL}/user/following-exists"))
-        .json(&Request { user_ids: ids })
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
     #[derive(Debug, Deserialize)]
     struct Response {
         #[serde(rename = "followings")]
         statuses: Vec<FollowingStatus>,
     }
 
-    let response = client.validate_response(result).await?;
-    Ok(client
-        .requestor
-        .parse_json::<Response>(response)
-        .await?
-        .statuses)
+    Ok(generic_request::<Request, Response>(
+        client,
+        Method::POST,
+        "user/following-exists",
+        Some(&Request { user_ids: ids }),
+    )
+    .await?
+    .statuses)
 }
 
 // TODO:
