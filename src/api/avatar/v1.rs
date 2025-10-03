@@ -14,6 +14,19 @@ pub enum AvatarType {
     R15 = 2,
 }
 
+impl std::fmt::Display for AvatarType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                AvatarType::R6 => "R6",
+                AvatarType::R15 => "R15",
+            }
+        )
+    }
+}
+
 #[repr(u8)]
 #[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum MorphAvatarType {
