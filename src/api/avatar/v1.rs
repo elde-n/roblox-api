@@ -306,11 +306,15 @@ pub async fn user_outfits(
     client: &mut Client,
     id: u64,
     paging: Paging<'_>,
-    is_editable: bool,
+    is_editable: Option<bool>,
     //outfit_type: OutfitType, all seem to be null
 ) -> Result<OutfitsResponse, Error> {
     let limit = paging.limit.unwrap_or(25).to_string();
     let cursor = paging.cursor.unwrap_or("1");
+    let is_editable = match is_editable {
+        Some(editable) => editable.to_string(),
+        None => "".to_string(),
+    };
 
     generic_request::<(), OutfitsResponse>(
         client,
@@ -320,7 +324,7 @@ pub async fn user_outfits(
         Some(&[
             ("page", cursor),
             ("itemsPerPage", &limit),
-            ("isEditable", is_editable.to_string().as_str()),
+            ("isEditable", &is_editable),
         ]),
     )
     .await

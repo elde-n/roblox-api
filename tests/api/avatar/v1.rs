@@ -83,7 +83,7 @@ async fn avatar_set_scales() {
 #[tokio::test]
 async fn user_outfits() {
     let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-    avatar::v1::user_outfits(&mut client, 1, Paging::default(), false)
+    avatar::v1::user_outfits(&mut client, 1, Paging::default(), None)
         .await
         .unwrap();
 }
@@ -92,7 +92,7 @@ async fn user_outfits() {
 async fn outfit_details() {
     let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
 
-    let result = avatar::v1::user_outfits(&mut client, USER_ID, Paging::default(), false)
+    let result = avatar::v1::user_outfits(&mut client, USER_ID, Paging::default(), None)
         .await
         .unwrap();
     let outfit = result.outfits.first().unwrap();
