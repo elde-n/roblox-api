@@ -2,6 +2,7 @@ mod account_information;
 mod assets;
 mod auth;
 mod auth_token_service;
+mod avatar;
 mod badges;
 mod economy;
 mod friends;

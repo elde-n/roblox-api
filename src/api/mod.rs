@@ -3,6 +3,7 @@ pub mod asset_delivery;
 pub mod assets;
 pub mod auth;
 pub mod auth_token_service;
+pub mod avatar;
 pub mod badges;
 pub mod challenge;
 pub mod data;
