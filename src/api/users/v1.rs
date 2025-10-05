@@ -1,46 +1,16 @@
 use serde::{Deserialize, Serialize};
-use strum::{EnumIter, IntoEnumIterator};
+use strum_macros::{Display, EnumString, FromRepr};
 
 use crate::{DateTime, Error, Paging, client::Client};
 
 pub const URL: &str = "https://users.roblox.com/v1";
 
 #[repr(u8)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq, EnumIter)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Display, EnumString, FromRepr)]
 pub enum Gender {
     None = 1,
     Male = 2,
     Female = 3,
-}
-
-impl std::fmt::Display for Gender {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-impl TryFrom<&str> for Gender {
-    type Error = &'static str;
-
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        for kind in Gender::iter() {
-            if kind.to_string().as_str() == value {
-                return Ok(kind);
-            }
-        }
-
-        Err("Failed to convert string to Gender")
-    }
-}
-
-impl From<u8> for Gender {
-    fn from(value: u8) -> Self {
-        match value {
-            2 => Self::Male,
-            3 => Self::Female,
-            _ => Self::None,
-        }
-    }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -525,7 +495,7 @@ pub async fn gender(client: &mut Client) -> Result<Gender, Error> {
     let response = client.validate_response(result).await?;
     let gender: Response = client.requestor.parse_json(response).await?;
 
-    Ok(Gender::from(gender.value))
+    Ok(Gender::from_repr(gender.value).expect("failed to parse gender"))
 }
 
 pub async fn set_gender(client: &mut Client, gender: Gender) -> Result<(), Error> {

@@ -7,7 +7,7 @@ pub mod validation;
 use challenge::Challenge;
 use chrono::{Datelike, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
-use strum::{EnumIter, IntoEnumIterator};
+use strum_macros::{Display, EnumString, FromRepr};
 
 // TODO: using this wrapper as I couldn't figure out how to use chronos datetime alone
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -48,7 +48,7 @@ pub enum Error {
     ReqwestWebSocketError(reqwest_websocket::Error),
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Display)]
 pub enum ApiError {
     Internal,
     BadRequest,
@@ -93,7 +93,9 @@ pub enum ApiError {
 }
 
 #[repr(u8)]
-#[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq, EnumIter)]
+#[derive(
+    Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Display, EnumString, FromRepr,
+)]
 pub enum AssetTypeId {
     Image = 1,
     TShirt,
@@ -158,11 +160,20 @@ pub enum AssetTypeId {
 }
 
 #[repr(u8)]
-#[derive(Clone, Debug, Default, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq, Display)]
 pub enum Currency {
     #[default]
     Robux = 1,
     Tickets,
+}
+
+#[derive(Clone, Copy, Debug, Default, Deserialize, Serialize, PartialEq, Eq, Display)]
+pub enum SortOrder {
+    #[default]
+    #[serde(rename = "Asc")]
+    Ascending,
+    #[serde(rename = "Desc")]
+    Descending,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -170,15 +181,6 @@ pub struct Paging<'a> {
     pub cursor: Option<&'a str>,
     pub limit: Option<u16>,
     pub order: Option<SortOrder>,
-}
-
-#[derive(Clone, Copy, Debug, Default, Serialize, PartialEq, Eq)]
-pub enum SortOrder {
-    #[default]
-    #[serde(rename = "Asc")]
-    Ascending,
-    #[serde(rename = "Desc")]
-    Descending,
 }
 
 impl From<serde_json::Error> for Error {
@@ -203,53 +205,6 @@ impl From<reqwest_websocket::Error> for Error {
 impl std::fmt::Display for DateTime {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
-    }
-}
-
-impl std::fmt::Display for AssetTypeId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-impl TryFrom<&str> for AssetTypeId {
-    type Error = &'static str;
-
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        for kind in AssetTypeId::iter() {
-            if kind.to_string().as_str() == value {
-                return Ok(kind);
-            }
-        }
-
-        Err("Failed to convert string to AssetTypeId")
-    }
-}
-
-impl TryFrom<u8> for AssetTypeId {
-    type Error = &'static str;
-
-    fn try_from(value: u8) -> Result<Self, Self::Error> {
-        for kind in AssetTypeId::iter() {
-            if kind as u8 == value {
-                return Ok(kind);
-            }
-        }
-
-        Err("Failed to convert u8 to AssetTypeId")
-    }
-}
-
-impl std::fmt::Display for SortOrder {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                SortOrder::Ascending => "Asc",
-                SortOrder::Descending => "Desc",
-            }
-        )
     }
 }
 

@@ -1,24 +1,25 @@
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
+use strum_macros::{Display, EnumString};
 
 use crate::{DateTime, Error, Paging, client::Client};
 
 pub const URL: &str = "https://badges.roblox.com/v1";
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Display, EnumString)]
 pub enum BadgeSortBy {
     Rank,
     DateCreated,
 }
 
 // TODO: use CreatorType instead
-#[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Display, EnumString)]
 pub enum BadgeCreatorType {
     User,
     Group,
 }
 
-#[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Display, EnumString)]
 pub enum BadgeAwarderType {
     Place,
 }
@@ -90,12 +91,6 @@ pub struct BadgesResponse {
     pub next_cursor: Option<String>,
     #[serde(rename = "previousPageCursor")]
     pub previous_cursor: Option<String>,
-}
-
-impl std::fmt::Display for BadgeSortBy {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
 }
 
 async fn badges_generic<Response: DeserializeOwned>(

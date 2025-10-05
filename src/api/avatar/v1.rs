@@ -1,5 +1,6 @@
 use reqwest::Method;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use strum_macros::{Display, EnumString, FromRepr};
 
 use crate::{Error, Paging, client::Client};
 
@@ -8,27 +9,18 @@ pub const URL: &str = "https://avatar.roblox.com/v1";
 pub type ColorId = u8;
 
 #[repr(u8)]
-#[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(
+    Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Display, EnumString, FromRepr,
+)]
 pub enum AvatarType {
     R6 = 1,
     R15 = 2,
 }
 
-impl std::fmt::Display for AvatarType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                AvatarType::R6 => "R6",
-                AvatarType::R15 => "R15",
-            }
-        )
-    }
-}
-
 #[repr(u8)]
-#[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(
+    Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Display, EnumString, FromRepr,
+)]
 pub enum MorphAvatarType {
     MorphR6 = 1,
     MorphR15 = 2,
