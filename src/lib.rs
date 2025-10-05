@@ -89,6 +89,7 @@ pub enum ApiError {
     ConversationCreationFailed,
     InvalidConversation,
     ConversationUserAddFailed,
+    NotEnoughFunds(Currency),
 }
 
 #[repr(u8)]

@@ -3,7 +3,7 @@ use reqwest::{Response, header::HeaderValue};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    ApiError, Error,
+    ApiError, Currency, Error,
     api::auth,
     challenge::{
         CHALLENGE_ID_HEADER, CHALLENGE_METADATA_HEADER, CHALLENGE_TYPE_HEADER, Challenge,
@@ -207,9 +207,12 @@ impl Client {
                                 // 400 
                                 "The asset id is invalid." => ApiError::InvalidAssetId,
                                 "Invalid challenge ID." => ApiError::InvalidChallengeId,
+
                                 "User not found." => ApiError::InvalidUser,
                                 "The user is invalid or does not exist." => ApiError::InvalidUser,
+                                "The target user is invalid or does not exist." => ApiError::InvalidUser,
                                 "The user ID is invalid." => ApiError::InvalidUserId,
+
                                 "The gender provided is invalid." => ApiError::InvalidGender,
                                 "The two step verification challenge code is invalid." => {
                                     ApiError::InvalidTwoStepVerificationCode
@@ -278,7 +281,10 @@ impl Client {
                                 }
 
                                 "PIN is locked." => ApiError::PinIsLocked,
+
                                 "Invalid birthdate change." => ApiError::InvalidBirthdate,
+
+                                "Insufficient Robux funds." => ApiError::NotEnoughFunds(Currency::Robux),
 
                                 // TODO: not sure what this means please use more verbose todo messages
                                 // TODO: add missing challenge duplicate code
