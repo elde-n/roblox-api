@@ -75,7 +75,7 @@ pub struct GamepassDetails {
 
     #[serde(rename = "isForSale")]
     pub on_sale: bool,
-    pub price_information: PriceInformation,
+    pub price_information: Option<PriceInformation>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
