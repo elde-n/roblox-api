@@ -67,3 +67,17 @@ async fn validate_code() {
         .await
         .unwrap();
 }
+
+#[tokio::test]
+async fn qr_code_image() {
+    let mut client = Client::default();
+    let token = auth_token_service::v1::login_create(&mut client)
+        .await
+        .unwrap();
+
+    let bytes = auth_token_service::v1::qr_code_image(&mut client, &token.private_key, &token.code)
+        .await
+        .unwrap();
+
+    assert!(bytes.len() > 0);
+}
