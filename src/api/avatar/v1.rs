@@ -65,7 +65,7 @@ pub struct AssetMeta {
     pub version: u8,
 
     pub order: u16,
-    pub puffiness: f32,
+    pub puffiness: Option<f32>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
