@@ -76,17 +76,14 @@ impl Client {
     // pub async fn test_account_status() {}
 }
 
-pub(crate) struct NewRequest {
-    response: Response,
-}
-
-impl NewRequest {
+pub(crate) struct ResponseWrapped(Response);
+impl ResponseWrapped {
     pub(crate) async fn json<T: DeserializeOwned>(self) -> Result<T, Error> {
-        Ok(self.response.json::<T>().await?)
+        Ok(self.0.json::<T>().await?)
     }
 
     pub(crate) async fn bytes(self) -> Result<Vec<u8>, Error> {
-        let bytes = self.response.bytes().await;
+        let bytes = self.0.bytes().await;
         match bytes {
             Ok(bytes) => Ok(bytes.to_vec()),
             Err(error) => Err(Error::ReqwestError(error)),
@@ -109,7 +106,9 @@ impl ClientRequestor {
         request: Option<&'a R>,
         query: Option<&'a [(&'a str, &'a str)]>,
         headers: Option<HeaderMap>,
-    ) -> Result<NewRequest, Error> {
+    ) -> Result<ResponseWrapped, Error> {
+        // TODO: use builder outside for this, so we don't need the 3 optionals
+
         let mut builder = self
             .client
             .request(method, url)
@@ -125,6 +124,6 @@ impl ClientRequestor {
         }
 
         let response = self.validate_response(builder.send().await).await?;
-        Ok(NewRequest { response: response })
+        Ok(ResponseWrapped(response))
     }
 }
