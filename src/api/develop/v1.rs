@@ -93,7 +93,7 @@ pub async fn assets(client: &mut Client, ids: &[u64]) -> Result<Vec<Asset>, Erro
         assets: Vec<Asset>,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)
@@ -126,7 +126,7 @@ pub async fn published_asset_versions(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<PublishedAssetVersions>(response)
@@ -144,6 +144,6 @@ pub async fn revert_asset_version(client: &mut Client, id: u64, version: u64) ->
         .send()
         .await;
 
-    client.validate_response(result).await?;
+    client.requestor.validate_response(result).await?;
     Ok(())
 }

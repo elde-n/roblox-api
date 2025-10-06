@@ -106,7 +106,7 @@ pub async fn user_details(client: &mut Client, id: u64) -> Result<UserDetails, E
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client.requestor.parse_json::<UserDetails>(response).await
 }
 
@@ -148,7 +148,7 @@ pub async fn user_username_history(
         previous_cursor: Option<String>,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     let result = client.requestor.parse_json::<Response>(response).await?;
 
     let names = result.names.iter().map(|x| x.name.clone()).collect();
@@ -190,7 +190,7 @@ pub async fn users_by_id(
         users: Vec<UserById>,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)
@@ -229,7 +229,7 @@ pub async fn users_by_name(
         names: Vec<UserByName>,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)
@@ -265,7 +265,7 @@ pub async fn search_by_keyword(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<UserSearchByKeyword>(response)
@@ -281,7 +281,7 @@ pub async fn authenticated_details(client: &mut Client) -> Result<ClientDetails,
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client.requestor.parse_json::<ClientDetails>(response).await
 }
 
@@ -300,7 +300,7 @@ pub async fn authenticated_age_bracket(client: &mut Client) -> Result<u64, Error
         age_bracket: u64,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)
@@ -323,7 +323,7 @@ pub async fn authenticated_country_code(client: &mut Client) -> Result<String, E
         country_code: String,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)
@@ -345,7 +345,7 @@ pub async fn authenticated_roles(client: &mut Client) -> Result<Vec<String>, Err
         roles: Vec<String>,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)
@@ -364,7 +364,7 @@ pub async fn authenticated_app_launch_info(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<ClientAppLaunchInfo>(response)
@@ -390,7 +390,7 @@ pub async fn birthdate(client: &mut Client) -> Result<DateTime, Error> {
         year: i32,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     let birthdate = client.requestor.parse_json::<Response>(response).await?;
 
     Ok(DateTime::from_ymd(
@@ -432,7 +432,7 @@ pub async fn set_birthdate(
         .send()
         .await;
 
-    client.validate_response(result).await?;
+    client.requestor.validate_response(result).await?;
     Ok(())
 }
 
@@ -451,7 +451,7 @@ pub async fn description(client: &mut Client) -> Result<String, Error> {
         value: String,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     let description = client.requestor.parse_json::<Response>(response).await?;
 
     Ok(description.value)
@@ -473,7 +473,7 @@ pub async fn set_description(client: &mut Client, description: &str) -> Result<(
         .send()
         .await;
 
-    client.validate_response(result).await?;
+    client.requestor.validate_response(result).await?;
     Ok(())
 }
 
@@ -492,7 +492,7 @@ pub async fn gender(client: &mut Client) -> Result<Gender, Error> {
         value: u8,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     let gender: Response = client.requestor.parse_json(response).await?;
 
     Ok(Gender::from_repr(gender.value).expect("failed to parse gender"))
@@ -516,7 +516,7 @@ pub async fn set_gender(client: &mut Client, gender: Gender) -> Result<(), Error
         .send()
         .await;
 
-    client.validate_response(result).await?;
+    client.requestor.validate_response(result).await?;
     Ok(())
 }
 
@@ -536,7 +536,7 @@ pub async fn validate_display_name(
         .send()
         .await;
 
-    client.validate_response(result).await?;
+    client.requestor.validate_response(result).await?;
     Ok(())
 }
 
@@ -558,7 +558,7 @@ pub async fn validate_display_name_by_id(
         .send()
         .await;
 
-    client.validate_response(result).await?;
+    client.requestor.validate_response(result).await?;
     Ok(())
 }
 
@@ -587,6 +587,6 @@ pub async fn set_display_name(
         .send()
         .await;
 
-    client.validate_response(result).await?;
+    client.requestor.validate_response(result).await?;
     Ok(())
 }

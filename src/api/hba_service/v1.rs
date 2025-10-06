@@ -11,7 +11,7 @@ pub async fn server_nonce(client: &mut Client) -> Result<String, Error> {
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
 
     let bytes = response.bytes().await;
     match bytes {

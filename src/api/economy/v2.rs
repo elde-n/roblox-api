@@ -108,7 +108,7 @@ pub async fn details(client: &mut Client, id: u64) -> Result<DetailsResponse, Er
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<DetailsResponse>(response)

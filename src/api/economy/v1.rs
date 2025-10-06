@@ -40,7 +40,7 @@ pub async fn purchase(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<PurchaseResponse>(response)
@@ -62,7 +62,7 @@ pub async fn currency(client: &mut Client) -> Result<u64, Error> {
         robux: u64,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     let response = client.requestor.parse_json::<Response>(response).await?;
 
     Ok(response.robux)
@@ -83,7 +83,7 @@ pub async fn currency_from_user_id(client: &mut Client, id: u64) -> Result<u64, 
         robux: u64,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)
@@ -106,7 +106,7 @@ pub async fn currency_from_group_id(client: &mut Client, id: u64) -> Result<u64,
         robux: u64,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)

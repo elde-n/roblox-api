@@ -77,7 +77,7 @@ pub async fn purchase(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<PurchaseResponse>(response)

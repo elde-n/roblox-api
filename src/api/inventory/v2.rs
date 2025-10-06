@@ -99,7 +99,7 @@ pub async fn asset_owners(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client.requestor.parse_json::<AssetOwners>(response).await
 }
 
@@ -131,7 +131,7 @@ pub async fn user_owned_assets(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<UserOwnedAssets>(response)

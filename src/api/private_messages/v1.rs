@@ -110,7 +110,7 @@ async fn generic_message_action(
         failed: Vec<u64>,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)
@@ -132,7 +132,7 @@ pub async fn unread_count(client: &mut Client) -> Result<u64, Error> {
         count: u64,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)
@@ -165,7 +165,7 @@ pub async fn messages(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client.requestor.parse_json::<Messages>(response).await
 }
 
@@ -178,7 +178,7 @@ pub async fn announcements(client: &mut Client) -> Result<Announcements, Error> 
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client.requestor.parse_json::<Announcements>(response).await
 }
 

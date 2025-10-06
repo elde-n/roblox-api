@@ -78,7 +78,7 @@ pub async fn can_view_inventory(client: &mut Client, user_id: u64) -> Result<boo
         can_view: bool,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)
@@ -109,7 +109,7 @@ pub async fn user_owns_assets(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<UserOwnsAssets>(response)
@@ -151,7 +151,7 @@ pub async fn user_owned_collectibles(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<UserOwnedCollectibles>(response)

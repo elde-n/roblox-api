@@ -43,7 +43,7 @@ pub async fn authenticator_verify(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     let result = client.requestor.parse_json::<Response>(response).await?;
 
     Ok(result.verification_token)

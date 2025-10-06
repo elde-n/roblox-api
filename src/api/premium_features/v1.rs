@@ -11,6 +11,6 @@ pub async fn is_premium(client: &mut Client, id: u64) -> Result<bool, Error> {
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client.requestor.parse_json::<bool>(response).await
 }

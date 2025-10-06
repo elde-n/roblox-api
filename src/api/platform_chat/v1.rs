@@ -143,7 +143,7 @@ pub async fn conversation_metadata(client: &mut Client) -> Result<ConversationMe
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<ConversationMetadata>(response)
@@ -185,7 +185,7 @@ pub async fn conversations_participant_metadata(
         metadata: HashMap<String, ParticipantsMetadata>,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     let response = client.requestor.parse_json::<Response>(response).await?;
 
     let mut metadata = Vec::new();
@@ -230,7 +230,7 @@ pub async fn conversations(client: &mut Client, ids: &[&str]) -> Result<Conversa
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client.requestor.parse_json::<Conversations>(response).await
 }
 
@@ -257,7 +257,7 @@ pub async fn user_conversations(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client.requestor.parse_json::<Conversations>(response).await
 }
 
@@ -274,7 +274,7 @@ pub async fn conversation_messages(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<ConversationMessages>(response)
@@ -313,7 +313,7 @@ pub async fn send_messages_in_conversation(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<ConversationMessages>(response)
@@ -344,7 +344,7 @@ pub async fn update_typing_status_in_conversation(
         status: String,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)
@@ -379,7 +379,7 @@ pub async fn add_users_to_conversation(
         status: String,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)
@@ -414,7 +414,7 @@ pub async fn remove_users_from_conversation(
         status: String,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)
@@ -462,7 +462,7 @@ pub async fn create_conversations(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client.requestor.parse_json::<Conversations>(response).await
 }
 
@@ -499,7 +499,7 @@ pub async fn rename_conversations(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client.requestor.parse_json::<Conversations>(response).await
 }
 
@@ -527,7 +527,7 @@ pub async fn mark_conversations_as_read(
         results: Vec<ConversationMarkedStatus>,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)

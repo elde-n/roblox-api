@@ -214,7 +214,7 @@ pub async fn batch_place_details(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<Vec<PlaceDetails>>(response)
@@ -250,7 +250,7 @@ pub async fn servers(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<ServersResponse>(response)
@@ -284,7 +284,7 @@ pub async fn private_servers(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<PrivateServersResponse>(response)
@@ -300,7 +300,7 @@ pub async fn private_server_info(client: &mut Client, id: u64) -> Result<Private
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<PrivateServerInfo>(response)
@@ -322,7 +322,7 @@ pub async fn universe_favorite_count(client: &mut Client, id: u64) -> Result<u64
         favorites: u64,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)
@@ -352,7 +352,7 @@ pub async fn universe_votes(client: &mut Client, ids: &[u64]) -> Result<Vec<Univ
         votes: Vec<UniverseVotes>,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)
@@ -385,7 +385,7 @@ pub async fn universe_gamepasses(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<UniverseGamepassesResponse>(response)

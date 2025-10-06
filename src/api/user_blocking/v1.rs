@@ -22,7 +22,7 @@ pub async fn is_blocked(client: &mut Client, id: u64) -> Result<bool, Error> {
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client.requestor.parse_json::<bool>(response).await
 }
 
@@ -53,7 +53,7 @@ pub async fn batch_check_reciprocal_block(
         users: Vec<UserBlockStatus>,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)

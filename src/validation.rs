@@ -9,7 +9,7 @@ use crate::{
         CHALLENGE_ID_HEADER, CHALLENGE_METADATA_HEADER, CHALLENGE_TYPE_HEADER, Challenge,
         ChallengeMetadata, ChallengeType, ChefChallengeMetadata,
     },
-    client::Client,
+    client::ClientRequestor,
     ratelimit::{
         RATELIMIT_LIMIT_HEADER, RATELIMIT_REMAINING_HEADER, RATELIMIT_RESET_HEADER, Ratelimit,
     },
@@ -102,21 +102,19 @@ fn challenge_from_headers(
     }
 }
 
-impl Client {
+impl ClientRequestor {
     fn set_token(&mut self, token: &str) {
-        self.requestor
-            .default_headers
+        self.default_headers
             .insert(TOKEN_HEADER, HeaderValue::from_str(token).unwrap());
     }
 
     // NOTE: this doesn't work on all apis, since some apis expect a custom token,
     // you'll know which ones are affected based on the `TokenValidation` error
-    pub async fn ensure_token(&mut self) -> Result<(), Error> {
+    pub(crate) async fn ensure_token(&mut self) -> Result<(), Error> {
         let result = self
-            .requestor
             .client
             .post(format!("{}//", auth::URL))
-            .headers(self.requestor.default_headers.clone())
+            .headers(self.default_headers.clone())
             .send()
             .await;
 
@@ -132,10 +130,6 @@ impl Client {
 
         Ok(())
     }
-
-    // TODO: test if account is terminated
-    // TODO: add reactivate account function
-    // pub async fn test_account_status() {}
 
     pub(crate) async fn validate_response(
         &mut self,

@@ -143,7 +143,7 @@ pub async fn login(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client.requestor.parse_json::<LoginResponse>(response).await
 }
 
@@ -173,7 +173,7 @@ pub async fn recommended_usernames_from_display_name(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<RecommendedUsernamesFromDisplayName>(response)

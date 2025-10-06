@@ -1,5 +1,5 @@
 use reqwest::Method;
-use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use serde::{Deserialize, Serialize};
 
 use crate::{DateTime, Error, Paging, client::Client};
 
@@ -118,43 +118,25 @@ pub struct FriendOnlineStatus {
     pub presence: UserPresence,
 }
 
-async fn generic_request<'a, R: Serialize, T: DeserializeOwned>(
-    client: &mut Client,
-    method: Method,
-    path: &str,
-    request: Option<&'a R>,
-    query: Option<&'a [(&'a str, &'a str)]>,
-) -> Result<T, Error> {
-    let mut builder = client
-        .requestor
-        .client
-        .request(method, format!("{URL}/{path}"))
-        .headers(client.requestor.default_headers.clone());
-
-    // Even though sending None works, it might get serialized as null in json, which is a waste of bytes
-    if let Some(request) = request {
-        builder = builder.json(&request);
-    }
-
-    if let Some(query) = query {
-        builder = builder.query(&query);
-    }
-
-    let response = client.validate_response(builder.send().await).await?;
-    client.requestor.parse_json::<T>(response).await
-}
-
 async fn generic_count(client: &mut Client, path: &str) -> Result<u16, Error> {
     #[derive(Debug, Deserialize)]
     struct Response {
         count: u16,
     }
 
-    Ok(
-        generic_request::<(), Response>(client, Method::GET, &format!("{path}/count"), None, None)
-            .await?
-            .count,
-    )
+    Ok(client
+        .requestor
+        .request::<()>(
+            Method::GET,
+            &format!("{URL}/{path}/count"),
+            None,
+            None,
+            None,
+        )
+        .await?
+        .json::<Response>()
+        .await?
+        .count)
 }
 
 pub async fn friend_requests_count(client: &mut Client) -> Result<u16, Error> {
@@ -193,15 +175,19 @@ pub async fn following_status(
         statuses: Vec<FollowingStatus>,
     }
 
-    Ok(generic_request::<Request, Response>(
-        client,
-        Method::POST,
-        "user/following-exists",
-        Some(&Request { user_ids: ids }),
-        None,
-    )
-    .await?
-    .statuses)
+    Ok(client
+        .requestor
+        .request::<Request>(
+            Method::POST,
+            &format!("{URL}/user/following-exists"),
+            Some(&Request { user_ids: ids }),
+            None,
+            None,
+        )
+        .await?
+        .json::<Response>()
+        .await?
+        .statuses)
 }
 
 pub async fn friend_requests(
@@ -211,36 +197,48 @@ pub async fn friend_requests(
     let limit = paging.limit.unwrap_or(18).to_string();
     let cursor = paging.cursor.unwrap_or("");
 
-    generic_request::<(), FriendRequests>(
-        client,
-        Method::GET,
-        "my/friends/requests",
-        None,
-        Some(&[("cursor", cursor), ("limit", &limit)]),
-    )
-    .await
+    client
+        .requestor
+        .request::<()>(
+            Method::GET,
+            &format!("{URL}/my/friends/requests"),
+            None,
+            Some(&[("cursor", cursor), ("limit", &limit)]),
+            None,
+        )
+        .await?
+        .json::<FriendRequests>()
+        .await
 }
 
 pub async fn user_followers(client: &mut Client, id: u64) -> Result<Followers, Error> {
-    generic_request::<(), Followers>(
-        client,
-        Method::GET,
-        &format!("users/{id}/followers"),
-        None,
-        None,
-    )
-    .await
+    client
+        .requestor
+        .request::<()>(
+            Method::GET,
+            &format!("{URL}/users/{id}/followers"),
+            None,
+            None,
+            None,
+        )
+        .await?
+        .json::<Followers>()
+        .await
 }
 
 pub async fn user_followings(client: &mut Client, id: u64) -> Result<Followers, Error> {
-    generic_request::<(), Followers>(
-        client,
-        Method::GET,
-        &format!("users/{id}/followings"),
-        None,
-        None,
-    )
-    .await
+    client
+        .requestor
+        .request::<()>(
+            Method::GET,
+            &format!("{URL}/users/{id}/followings"),
+            None,
+            None,
+            None,
+        )
+        .await?
+        .json::<Followers>()
+        .await
 }
 
 pub async fn user_friends_online(
@@ -253,15 +251,19 @@ pub async fn user_friends_online(
         online: Vec<FriendOnlineStatus>,
     }
 
-    Ok(generic_request::<(), Response>(
-        client,
-        Method::GET,
-        &format!("users/{id}/friends/online"),
-        None,
-        None,
-    )
-    .await?
-    .online)
+    Ok(client
+        .requestor
+        .request::<()>(
+            Method::GET,
+            &format!("{URL}/users/{id}/friends/online"),
+            None,
+            None,
+            None,
+        )
+        .await?
+        .json::<Response>()
+        .await?
+        .online)
 }
 
 pub async fn user_friends_find(
@@ -272,14 +274,18 @@ pub async fn user_friends_find(
     let limit = paging.limit.unwrap_or(18).to_string();
     let cursor = paging.cursor.unwrap_or("");
 
-    generic_request::<(), FriendsFind>(
-        client,
-        Method::GET,
-        &format!("users/{id}/friends/find"),
-        None,
-        Some(&[("cursor", cursor), ("limit", &limit), ("userSort", "1")]),
-    )
-    .await
+    client
+        .requestor
+        .request::<()>(
+            Method::GET,
+            &format!("{URL}/users/{id}/friends/find"),
+            None,
+            Some(&[("cursor", cursor), ("limit", &limit), ("userSort", "1")]),
+            None,
+        )
+        .await?
+        .json::<FriendsFind>()
+        .await
 }
 
 pub async fn user_friends_search(
@@ -291,14 +297,18 @@ pub async fn user_friends_search(
     let limit = paging.limit.unwrap_or(36).to_string();
     let cursor = paging.cursor.unwrap_or("");
 
-    generic_request::<(), FriendsFind>(
-        client,
-        Method::GET,
-        &format!("users/{id}/friends/search"),
-        None,
-        Some(&[("cursor", &cursor), ("limit", &limit), ("query", query)]),
-    )
-    .await
+    client
+        .requestor
+        .request::<()>(
+            Method::GET,
+            &format!("{URL}/users/{id}/friends/search"),
+            None,
+            Some(&[("cursor", &cursor), ("limit", &limit), ("query", query)]),
+            None,
+        )
+        .await?
+        .json::<FriendsFind>()
+        .await
 }
 
 pub async fn user_friend_statuses(
@@ -318,13 +328,17 @@ pub async fn user_friend_statuses(
         .collect::<Vec<String>>()
         .join(",");
 
-    Ok(generic_request::<(), Response>(
-        client,
-        Method::GET,
-        &format!("users/{id}/friends/statuses"),
-        None,
-        Some(&[("userIds", &ids)]),
-    )
-    .await?
-    .statuses)
+    Ok(client
+        .requestor
+        .request::<()>(
+            Method::GET,
+            &format!("{URL}/users/{id}/friends/statuses"),
+            None,
+            Some(&[("userIds", &ids)]),
+            None,
+        )
+        .await?
+        .json::<Response>()
+        .await?
+        .statuses)
 }

@@ -167,7 +167,7 @@ pub async fn unread_count(client: &mut Client) -> Result<NotificationUnreadCount
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<NotificationUnreadCount>(response)
@@ -190,7 +190,7 @@ pub async fn recent(client: &mut Client, paging: Paging<'_>) -> Result<Vec<Notif
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<Vec<Notification>>(response)
@@ -212,7 +212,7 @@ pub async fn clear_unread(client: &mut Client) -> Result<String, Error> {
         status_message: String,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)
@@ -237,7 +237,7 @@ pub async fn dismiss(client: &mut Client, id: String) -> Result<String, Error> {
         status_message: String,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)

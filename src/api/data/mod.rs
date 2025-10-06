@@ -72,7 +72,7 @@ pub async fn upload(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     let id: u64 = response.text().await.unwrap().parse().unwrap();
     Ok(id)
 }

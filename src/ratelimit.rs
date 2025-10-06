@@ -1,4 +1,4 @@
-use crate::client::Client;
+use crate::client::ClientRequestor;
 
 pub(crate) const RATELIMIT_LIMIT_HEADER: &str = "x-ratelimit-limit";
 pub(crate) const RATELIMIT_RESET_HEADER: &str = "x-ratelimit-reset";
@@ -11,8 +11,8 @@ pub struct Ratelimit {
     pub windows: Vec<(u32, u32)>, // Amount:seconds
 }
 
-impl Client {
-    pub async fn ratelimits(&self) -> Option<Ratelimit> {
+impl ClientRequestor {
+    pub(crate) async fn ratelimits(&self) -> Option<Ratelimit> {
         self.ratelimit.clone()
     }
 }

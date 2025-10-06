@@ -128,7 +128,7 @@ pub async fn details(client: &mut Client, id: u64) -> Result<GamepassDetails, Er
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<GamepassDetails>(response)
@@ -147,7 +147,7 @@ pub async fn product_information(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<GamepassProductInformation>(response)
@@ -181,7 +181,7 @@ pub async fn user_gamepasses(
         gamepasses: Vec<Gamepass>,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)

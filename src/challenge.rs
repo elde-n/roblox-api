@@ -2,7 +2,11 @@ use base64::{Engine, prelude::BASE64_STANDARD};
 use reqwest::header::HeaderValue;
 use serde::{Deserialize, Serialize};
 
-use crate::{Error, api::challenge, client::Client};
+use crate::{
+    Error,
+    api::challenge,
+    client::{Client, ClientRequestor},
+};
 
 pub(crate) const CHALLENGE_ID_HEADER: &str = "rblx-challenge-id";
 pub(crate) const CHALLENGE_TYPE_HEADER: &str = "rblx-challenge-type";
@@ -112,13 +116,28 @@ impl Client {
     ) -> Result<(), Error> {
         // the challenge requires this api call, otherwise it fails
         challenge::v1::continue_challenge(self, challenge, verification_token).await?;
+        self.requestor
+            .queue_challenge(challenge, verification_token)
+            .await
+    }
 
-        self.requestor.default_headers.insert(
+    pub(crate) fn remove_challenge(&mut self) {
+        self.requestor.remove_challenge();
+    }
+}
+
+impl ClientRequestor {
+    async fn queue_challenge(
+        &mut self,
+        challenge: &Challenge,
+        verification_token: &str,
+    ) -> Result<(), Error> {
+        self.default_headers.insert(
             CHALLENGE_ID_HEADER,
             HeaderValue::from_str(&challenge.id).unwrap(),
         );
 
-        self.requestor.default_headers.insert(
+        self.default_headers.insert(
             CHALLENGE_TYPE_HEADER,
             HeaderValue::from_str(&challenge.kind.to_string()).unwrap(),
         );
@@ -135,7 +154,7 @@ impl Client {
             .unwrap(),
         );
 
-        self.requestor.default_headers.insert(
+        self.default_headers.insert(
             CHALLENGE_METADATA_HEADER,
             HeaderValue::from_str(&metadata_b64).unwrap(),
         );
@@ -144,10 +163,8 @@ impl Client {
     }
 
     pub(crate) fn remove_challenge(&mut self) {
-        self.requestor.default_headers.remove(CHALLENGE_ID_HEADER);
-        self.requestor.default_headers.remove(CHALLENGE_TYPE_HEADER);
-        self.requestor
-            .default_headers
-            .remove(CHALLENGE_METADATA_HEADER);
+        self.default_headers.remove(CHALLENGE_ID_HEADER);
+        self.default_headers.remove(CHALLENGE_TYPE_HEADER);
+        self.default_headers.remove(CHALLENGE_METADATA_HEADER);
     }
 }

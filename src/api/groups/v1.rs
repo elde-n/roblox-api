@@ -234,7 +234,7 @@ pub async fn information(client: &mut Client, id: u64) -> Result<GroupInformatio
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<GroupInformation>(response)
@@ -256,7 +256,7 @@ pub async fn membership(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client.requestor.parse_json::<Membership>(response).await
 }
 
@@ -285,7 +285,7 @@ pub async fn name_history(client: &mut Client, id: u64) -> Result<NameHistory, E
         previous_cursor: Option<String>,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     let result = client.requestor.parse_json::<Response>(response).await?;
 
     let names: Vec<(String, DateTime)> = result
@@ -317,7 +317,7 @@ pub async fn pending_join_requests(client: &mut Client) -> Result<Vec<GroupInfor
         groups: Vec<GroupInformation>,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)
@@ -339,7 +339,7 @@ pub async fn roles(client: &mut Client, id: u64) -> Result<Vec<GroupRole>, Error
         roles: Vec<GroupRole>,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)
@@ -371,7 +371,7 @@ pub async fn user_roles(
         items: Vec<GroupAndRole>,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     let response = client.requestor.parse_json::<Response>(response).await?;
 
     let mut roles = Vec::new();
@@ -396,7 +396,7 @@ pub async fn roleset_permissions(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<RolePermissions>(response)
@@ -419,7 +419,7 @@ pub async fn role_permissions(client: &mut Client, id: u64) -> Result<Vec<RolePe
         items: Vec<RolePermissions>,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)
@@ -464,7 +464,7 @@ pub async fn users(client: &mut Client, id: u64, paging: Paging<'_>) -> Result<G
         previous_cursor: Option<String>,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     let response = client.requestor.parse_json::<Response>(response).await?;
 
     let mut users = Vec::new();
@@ -505,7 +505,7 @@ pub async fn wall_posts(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client.requestor.parse_json::<WallPosts>(response).await
 }
 
@@ -529,7 +529,7 @@ pub async fn join(client: &mut Client, id: u64) -> Result<(), Error> {
         .send()
         .await;
 
-    client.validate_response(result).await?;
+    client.requestor.validate_response(result).await?;
     Ok(())
 }
 
@@ -546,7 +546,7 @@ pub async fn remove_join_request(client: &mut Client, id: u64, user_id: u64) -> 
         .send()
         .await;
 
-    client.validate_response(result).await?;
+    client.requestor.validate_response(result).await?;
     Ok(())
 }
 
@@ -563,6 +563,6 @@ pub async fn remove(client: &mut Client, id: u64, user_id: u64) -> Result<(), Er
         .send()
         .await;
 
-    client.validate_response(result).await?;
+    client.requestor.validate_response(result).await?;
     Ok(())
 }

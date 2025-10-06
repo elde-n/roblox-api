@@ -21,7 +21,7 @@ pub async fn asset(client: &mut Client, id: u64) -> Result<Vec<u8>, Error> {
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
 
     let bytes = response.bytes().await;
     match bytes {

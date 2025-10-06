@@ -93,7 +93,7 @@ pub async fn asset(client: &mut Client, id: u64) -> Result<AssetInfo, Error> {
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client.requestor.parse_json::<AssetInfo>(response).await
 }
 
@@ -142,7 +142,7 @@ pub async fn upload(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<AssetUploadStatus>(response)
@@ -158,7 +158,7 @@ pub async fn status(client: &mut Client, operation_id: &str) -> Result<AssetUplo
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<AssetUploadStatus>(response)

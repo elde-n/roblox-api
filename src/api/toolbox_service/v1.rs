@@ -123,7 +123,7 @@ pub async fn item_details(client: &mut Client, ids: &[u64]) -> Result<Vec<ItemDe
         objects: Vec<ItemDetail>,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)
@@ -154,6 +154,6 @@ pub async fn creations(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client.requestor.parse_json::<Creations>(response).await
 }

@@ -90,7 +90,7 @@ async fn games_generic(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client.requestor.parse_json::<GamesResponse>(response).await
 }
 
@@ -114,7 +114,7 @@ pub async fn universe_media(
         media: Vec<UniverseMedia>,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)

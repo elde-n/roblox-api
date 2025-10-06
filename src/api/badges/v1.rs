@@ -125,7 +125,7 @@ async fn badges_generic<Response: DeserializeOwned>(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client.requestor.parse_json::<Response>(response).await
 }
 
@@ -138,7 +138,7 @@ pub async fn information(client: &mut Client, id: u64) -> Result<Badge, Error> {
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client.requestor.parse_json::<Badge>(response).await
 }
 
@@ -168,7 +168,7 @@ pub async fn remove(client: &mut Client, id: u64, user_id: u64) -> Result<(), Er
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client.requestor.parse_json::<()>(response).await
 }
 
@@ -181,6 +181,6 @@ pub async fn authenticated_remove(client: &mut Client, id: u64) -> Result<(), Er
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client.requestor.parse_json::<()>(response).await
 }

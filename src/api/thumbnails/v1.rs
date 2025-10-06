@@ -222,7 +222,7 @@ async fn generic_thumbnail_api(
         thumbnails: Vec<ThumbnailResponse>,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)
@@ -270,7 +270,7 @@ pub async fn asset_3d(
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<ThumbnailResponse>(response)
@@ -516,7 +516,7 @@ pub async fn avatar_3d(client: &mut Client, id: u64) -> Result<ThumbnailResponse
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<ThumbnailResponse>(response)
@@ -577,7 +577,7 @@ pub async fn outfit_3d(client: &mut Client, id: u64) -> Result<ThumbnailResponse
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<ThumbnailResponse>(response)
@@ -625,7 +625,7 @@ pub async fn batch(
         thumbnails: Vec<ThumbnailResponseFromBatch>,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)

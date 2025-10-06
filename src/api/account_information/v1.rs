@@ -22,7 +22,7 @@ pub async fn roblox_badges(client: &mut Client, id: u64) -> Result<Vec<RobloxBad
         .send()
         .await;
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     client
         .requestor
         .parse_json::<Vec<RobloxBadge>>(response)

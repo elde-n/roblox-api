@@ -1,5 +1,5 @@
 use reqwest::Method;
-use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString, FromRepr};
 
 use crate::{Error, Paging, client::Client};
@@ -156,41 +156,20 @@ pub struct UniverseAvatarSettings {
     pub allow_custom_animations: String, // TODO: cast to bool
 }
 
-async fn generic_request<'a, R: Serialize, T: DeserializeOwned>(
-    client: &mut Client,
-    method: Method,
-    path: &str,
-    request: Option<&'a R>,
-    query: Option<&'a [(&'a str, &'a str)]>,
-) -> Result<T, Error> {
-    let mut builder = client
-        .requestor
-        .client
-        .request(method, format!("{URL}/{path}"))
-        .headers(client.requestor.default_headers.clone());
-
-    if let Some(request) = request {
-        builder = builder.json(&request);
-    }
-
-    if let Some(query) = query {
-        builder = builder.query(&query);
-    }
-
-    let response = client.validate_response(builder.send().await).await?;
-    client.requestor.parse_json::<T>(response).await
-}
-
 /// Returns details about a specified user's avatar
 pub async fn user_avatar(client: &mut Client, id: u64) -> Result<AvatarResponse, Error> {
-    generic_request::<(), AvatarResponse>(
-        client,
-        Method::GET,
-        &format!("/users/{id}/avatar"),
-        None,
-        None,
-    )
-    .await
+    client
+        .requestor
+        .request::<()>(
+            Method::GET,
+            &format!("{URL}/users/{id}/avatar"),
+            None,
+            None,
+            None,
+        )
+        .await?
+        .json::<AvatarResponse>()
+        .await
 }
 
 /// Gets a list of asset ids that the user is currently wearing
@@ -201,15 +180,19 @@ pub async fn user_currently_wearing(client: &mut Client, id: u64) -> Result<Vec<
         ids: Vec<u64>,
     }
 
-    Ok(generic_request::<(), Response>(
-        client,
-        Method::GET,
-        &format!("/users/{id}/currently-wearing"),
-        None,
-        None,
-    )
-    .await?
-    .ids)
+    Ok(client
+        .requestor
+        .request::<()>(
+            Method::GET,
+            &format!("{URL}/users/{id}/currently-wearing"),
+            None,
+            None,
+            None,
+        )
+        .await?
+        .json::<Response>()
+        .await?
+        .ids)
 }
 
 /// Sets the avatar's current assets to the list - Flagged as obsolete, does not support layered clothing meta params.
@@ -232,15 +215,19 @@ pub async fn avatar_set_wearing_assets(
         pub success: bool,
     }
 
-    Ok(generic_request::<Request, Response>(
-        client,
-        Method::POST,
-        &format!("/avatar/set-wearing-assets"),
-        Some(&Request { asset_ids: &assets }),
-        None,
-    )
-    .await?
-    .success)
+    Ok(client
+        .requestor
+        .request::<Request>(
+            Method::POST,
+            &format!("{URL}/avatar/set-wearing-assets"),
+            Some(&Request { asset_ids: &assets }),
+            None,
+            None,
+        )
+        .await?
+        .json::<Response>()
+        .await?
+        .success)
 }
 
 /// Sets the authenticated user's player avatar type (e.g. R6 or R15).
@@ -256,15 +243,19 @@ pub async fn avatar_set_type(client: &mut Client, kind: AvatarType) -> Result<bo
         success: bool,
     }
 
-    Ok(generic_request::<Request, Response>(
-        client,
-        Method::POST,
-        &format!("/avatar/set-player-avatar-type"),
-        Some(&Request { avatar_type: kind }),
-        None,
-    )
-    .await?
-    .success)
+    Ok(client
+        .requestor
+        .request::<Request>(
+            Method::POST,
+            &format!("{URL}/avatar/set-player-avatar-type"),
+            Some(&Request { avatar_type: kind }),
+            None,
+            None,
+        )
+        .await?
+        .json::<Response>()
+        .await?
+        .success)
 }
 
 /// Sets the authenticated user's body colors.
@@ -277,15 +268,19 @@ pub async fn avatar_set_body_colors(
         success: bool,
     }
 
-    Ok(generic_request::<BodyColors, Response>(
-        client,
-        Method::POST,
-        &format!("/avatar/set-body-colors"),
-        Some(&colors),
-        None,
-    )
-    .await?
-    .success)
+    Ok(client
+        .requestor
+        .request::<BodyColors>(
+            Method::POST,
+            &format!("{URL}/avatar/set-body-colors"),
+            Some(&colors),
+            None,
+            None,
+        )
+        .await?
+        .json::<Response>()
+        .await?
+        .success)
 }
 
 /// Sets the authenticated user's body colors.
@@ -295,15 +290,19 @@ pub async fn avatar_set_scales(client: &mut Client, scales: AvatarScales) -> Res
         success: bool,
     }
 
-    Ok(generic_request::<AvatarScales, Response>(
-        client,
-        Method::POST,
-        &format!("/avatar/set-scales"),
-        Some(&scales),
-        None,
-    )
-    .await?
-    .success)
+    Ok(client
+        .requestor
+        .request::<AvatarScales>(
+            Method::POST,
+            &format!("{URL}/avatar/set-scales"),
+            Some(&scales),
+            None,
+            None,
+        )
+        .await?
+        .json::<Response>()
+        .await?
+        .success)
 }
 
 /// Deprecated, user v2. Gets a list of outfits for the specified user.
@@ -321,30 +320,38 @@ pub async fn user_outfits(
         None => "".to_string(),
     };
 
-    generic_request::<(), OutfitsResponse>(
-        client,
-        Method::GET,
-        &format!("/users/{id}/outfits"),
-        None,
-        Some(&[
-            ("page", cursor),
-            ("itemsPerPage", &limit),
-            ("isEditable", &is_editable),
-        ]),
-    )
-    .await
+    client
+        .requestor
+        .request::<()>(
+            Method::GET,
+            &format!("{URL}/users/{id}/outfits"),
+            None,
+            Some(&[
+                ("page", cursor),
+                ("itemsPerPage", &limit),
+                ("isEditable", &is_editable),
+            ]),
+            None,
+        )
+        .await?
+        .json::<OutfitsResponse>()
+        .await
 }
 
 /// Gets details about the contents of an outfit.
 pub async fn outfit_details(client: &mut Client, id: u64) -> Result<OutfitDetails, Error> {
-    generic_request::<(), OutfitDetails>(
-        client,
-        Method::GET,
-        &format!("/outfits/{id}/details"),
-        None,
-        None,
-    )
-    .await
+    client
+        .requestor
+        .request::<()>(
+            Method::GET,
+            &format!("{URL}/outfits/{id}/details"),
+            None,
+            None,
+            None,
+        )
+        .await?
+        .json::<OutfitDetails>()
+        .await
 }
 
 /// Deletes the outfit.
@@ -354,15 +361,19 @@ pub async fn remove_outfit(client: &mut Client, id: u64) -> Result<bool, Error> 
         success: bool,
     }
 
-    Ok(generic_request::<(), Response>(
-        client,
-        Method::POST,
-        &format!("/outfits/{id}/delete"),
-        None,
-        None,
-    )
-    .await?
-    .success)
+    Ok(client
+        .requestor
+        .request::<()>(
+            Method::POST,
+            &format!("{URL}/outfits/{id}/delete"),
+            None,
+            None,
+            None,
+        )
+        .await?
+        .json::<Response>()
+        .await?
+        .success)
 }
 
 /// The server will call this on game server start to request general information about the universe.
@@ -372,12 +383,16 @@ pub async fn universe_avatar_settings(
     client: &mut Client,
     id: u64,
 ) -> Result<UniverseAvatarSettings, Error> {
-    generic_request::<(), UniverseAvatarSettings>(
-        client,
-        Method::GET,
-        &format!("/users/{id}/avatar"),
-        None,
-        None,
-    )
-    .await
+    client
+        .requestor
+        .request::<()>(
+            Method::GET,
+            &format!("{URL}/users/{id}/avatar"),
+            None,
+            None,
+            None,
+        )
+        .await?
+        .json::<UniverseAvatarSettings>()
+        .await
 }

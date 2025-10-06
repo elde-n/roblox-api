@@ -46,7 +46,7 @@ pub async fn acceptances(
         results: Vec<AcceptanceResponse>,
     }
 
-    let response = client.validate_response(result).await?;
+    let response = client.requestor.validate_response(result).await?;
     Ok(client
         .requestor
         .parse_json::<Response>(response)

@@ -44,6 +44,6 @@ pub async fn continue_challenge(
         .send()
         .await;
 
-    client.validate_response(result).await?;
+    client.requestor.validate_response(result).await?;
     Ok(())
 }
