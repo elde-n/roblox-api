@@ -1,10 +1,11 @@
 use serde::{Deserialize, Serialize};
+use strum_macros::{Display, EnumString};
 
 use crate::{DateTime, Error, Paging, client::Client};
 
 pub const URL: &str = "https://apis.roblox.com/game-passes/v1";
 
-#[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Display, EnumString)]
 pub enum CreatorType {
     User,
     Group,
