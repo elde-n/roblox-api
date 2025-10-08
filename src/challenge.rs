@@ -120,10 +120,6 @@ impl Client {
             .queue_challenge(challenge, verification_token)
             .await
     }
-
-    pub(crate) fn remove_challenge(&mut self) {
-        self.requestor.remove_challenge();
-    }
 }
 
 impl ClientRequestor {
