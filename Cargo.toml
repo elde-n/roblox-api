@@ -11,7 +11,7 @@ license = "LGPL-3.0-only"
 [features]
 default = ["default-tls"]
 default-tls = ["reqwest/default-tls", "tungstenite?/native-tls"]
-rustls-tls = ["reqwest/rustls-tls", "tungstenite?/rustls-tls-native-roots"]
+rustls-tls = ["reqwest/rustls", "tungstenite?/rustls-tls-native-roots"]
 web-socket = ["dep:reqwest-websocket", "dep:futures-util"]
 
 [dependencies]
