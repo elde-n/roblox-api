@@ -37,7 +37,7 @@ pub struct FriendRequester {
     pub display_name: String,
     pub contact_name: Option<String>,
 
-    pub source_universe_id: u64,
+    pub source_universe_id: Option<u64>,
     pub origin_source_type: FriendRequestSourceType,
     pub sent_at: DateTime,
 }
