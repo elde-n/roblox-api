@@ -2,7 +2,7 @@
 name = "roblox-api"
 readme = "README.md"
 description = "Roblox web api bindings"
-repository = "https://github.com/elde-n/roblox-api"
+repository = "https://codeberg.org/roblox-tools/roblox-api"
 
 version = "0.1.6"
 edition = "2024"
