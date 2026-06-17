@@ -1,8 +1,8 @@
-use serde::{Deserialize, Serialize};
-
-use crate::{AssetTypeId, DateTime, Error, Paging, client::Client};
+use crate::{AssetTypeId, DateTime, Paging, endpoint};
 
 pub const URL: &str = "https://apis.roblox.com/toolbox-service/v1";
+
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CreationObject {
@@ -37,11 +37,6 @@ pub struct ItemDetailAsset {
     pub created: DateTime,
     #[serde(rename = "updatedUtc")]
     pub updated: DateTime,
-    //#[serde(rename = "assetSubTypes")]
-    //pub sub_types: Vec<String?>,
-    //#[serde(rename = "socialLinks")]
-    //pub social_links: Vec<String?>,
-    // pub model_technical_details: ModelTechnicalDetails?
     #[serde(rename = "assetGenres")]
     pub genres: Vec<String>,
 }
@@ -102,58 +97,26 @@ pub struct ItemDetail {
     pub fiat_product: FiatProduct,
 }
 
-pub async fn item_details(client: &mut Client, ids: &[u64]) -> Result<Vec<ItemDetail>, Error> {
-    let ids = ids
-        .iter()
-        .map(|x| x.to_string())
-        .collect::<Vec<String>>()
-        .join(",");
-
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/items/details?assetIds={ids}"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    #[derive(Clone, Debug, Deserialize, PartialEq)]
-    struct Response {
-        #[serde(rename = "data")]
-        objects: Vec<ItemDetail>,
+endpoint! {
+    item_details(ids: &[u64]) -> Vec<ItemDetail> {
+        GET "{URL}/items/details";
+        types {
+            Response {
+                data: Vec<ItemDetail>,
+            }
+        }
+        prelude {
+            let ids = ids.iter().map(|x| x.to_string()).collect::<Vec<_>>().join(",");
+        }
+        query { "assetIds" => &ids }
+        map |r: Response| r.data
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    Ok(client
-        .requestor
-        .parse_json::<Response>(response)
-        .await?
-        .objects)
-}
-
-pub async fn creations(
-    client: &mut Client,
-    id: u64,
-    asset_type: AssetTypeId,
-    paging: Paging<'_>,
-) -> Result<Creations, Error> {
-    let limit = paging.limit.unwrap_or(30);
-    let cursor = match paging.cursor {
-        Some(cursor) => format!("&cursor={cursor}"),
-        None => String::new(),
-    };
-
-    let result = client
-        .requestor
-        .client
-        .get(format!(
-            "{URL}/creations/user/{id}/{}?limit={limit}{cursor}",
-            asset_type as u8
-        ))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client.requestor.parse_json::<Creations>(response).await
+    creations(id: u64, asset_type: AssetTypeId, paging: Paging<'_>) -> Creations {
+        GET "{URL}/creations/user/{id}/{asset_type_id}";
+        paging_query { paging, limit = 30 }
+        prelude {
+            let asset_type_id = asset_type as u8;
+        }
+    }
 }

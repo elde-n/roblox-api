@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{AssetTypeId, Error, Paging, client::Client};
+use crate::{AssetTypeId, Paging, endpoint};
 
 pub const URL: &str = "https://inventory.roblox.com/v1";
 
@@ -63,97 +63,49 @@ pub struct UserOwnedCollectibles {
     pub assets: Vec<CollectibleInfo>,
 }
 
-pub async fn can_view_inventory(client: &mut Client, user_id: u64) -> Result<bool, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/users/{user_id}/can-view-inventory"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
+endpoint! {
+    can_view_inventory(user_id: u64) -> bool {
+        GET "{URL}/users/{user_id}/can-view-inventory";
 
-    #[derive(Clone, Debug, Deserialize)]
-    #[serde(rename_all = "camelCase")]
-    struct Response {
-        can_view: bool,
+        types {
+            Response {
+                can_view("canView"): bool,
+            }
+        }
+
+        map |r: Response| r.can_view
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    Ok(client
-        .requestor
-        .parse_json::<Response>(response)
-        .await?
-        .can_view)
-}
+    user_owns_assets(user_id: u64, id: u64, item_type: ItemType, paging: Paging<'_>) -> UserOwnsAssets {
+        GET "{URL}/users/{user_id}/items/{item_type_as_u8}/{id}";
 
-pub async fn user_owns_assets(
-    client: &mut Client,
-    user_id: u64,
-    id: u64,
-    item_type: ItemType,
-    paging: Paging<'_>,
-) -> Result<UserOwnsAssets, Error> {
-    let item_type = item_type as u8;
-
-    let cursor = match paging.cursor {
-        Some(cursor) => cursor.to_string(),
-        None => String::new(),
-    };
-
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/users/{user_id}/items/{item_type}/{id}"))
-        .query(&[("cursor", cursor)])
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client
-        .requestor
-        .parse_json::<UserOwnsAssets>(response)
-        .await
-}
-
-pub async fn user_owned_collectibles(
-    client: &mut Client,
-    user_id: u64,
-    asset_type_id: Option<AssetTypeId>,
-    paging: Paging<'_>,
-) -> Result<UserOwnedCollectibles, Error> {
-    let limit = paging.limit.unwrap_or(10).to_string();
-    let sort_order = paging.order.unwrap_or_default().to_string();
-    let cursor = match paging.cursor {
-        Some(cursor) => cursor.to_string(),
-        None => String::new(),
-    };
-
-    let asset_type = match asset_type_id {
-        Some(id) => {
-            let id = id as u8;
-            id.to_string()
+        prelude {
+            let item_type_as_u8 = item_type as u8;
+            let cursor = match paging.cursor {
+                Some(cursor) => cursor.to_string(),
+                None => String::new(),
+            };
         }
-        None => String::new(),
-    };
 
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/users/{user_id}/assets/collectibles"))
-        .query(&[
-            ("assetType", asset_type),
-            ("limit", limit),
-            ("sortOrder", sort_order),
-            ("cursor", cursor),
-        ])
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
+        query {
+            "cursor" => &cursor,
+        }
+    }
 
-    let response = client.requestor.validate_response(result).await?;
-    client
-        .requestor
-        .parse_json::<UserOwnedCollectibles>(response)
-        .await
+    user_owned_collectibles(user_id: u64, asset_type_id: Option<AssetTypeId>, paging: Paging<'_>) -> UserOwnedCollectibles {
+        GET "{URL}/users/{user_id}/assets/collectibles";
+
+        paging_query { paging, limit = 10 }
+
+        prelude {
+            let asset_type = match asset_type_id {
+                Some(id) => (id as u8).to_string(),
+                None => String::new(),
+            };
+        }
+
+        query {
+            "assetType" => &asset_type,
+        }
+    }
 }

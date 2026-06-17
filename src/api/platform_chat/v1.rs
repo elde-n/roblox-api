@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{DateTime, Error, Paging, client::Client};
+use crate::{DateTime, Paging, endpoint};
 
 pub const URL: &str = "https://apis.roblox.com/platform-chat-api/v1";
 
@@ -134,403 +134,160 @@ pub struct ConversationCreateRequest {
     pub users: Vec<u64>,
 }
 
-pub async fn conversation_metadata(client: &mut Client) -> Result<ConversationMetadata, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/get-conversation-metadata"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client
-        .requestor
-        .parse_json::<ConversationMetadata>(response)
-        .await
-}
-
-pub async fn conversations_participant_metadata(
-    client: &mut Client,
-    ids: &[&str],
-) -> Result<Vec<ConversationsParticipantMetadata>, Error> {
-    #[derive(Debug, Serialize)]
-    struct Request<'a> {
-        #[serde(rename = "conversation_ids")]
-        ids: &'a [&'a str],
+endpoint! {
+    conversation_metadata() -> ConversationMetadata {
+        GET "{URL}/get-conversation-metadata";
     }
 
-    let result = client
-        .requestor
-        .client
-        .post(format!("{URL}/get-conversations-participants-metadata"))
-        .json(&Request { ids })
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    #[derive(Debug, Deserialize)]
-    struct ParticipantPending {
-        is_pending: bool,
-    }
-
-    #[derive(Debug, Deserialize)]
-    struct ParticipantsMetadata {
-        participants_metadata: HashMap<String, ParticipantPending>,
-    }
-
-    #[derive(Debug, Deserialize)]
-    struct Response {
-        #[serde(rename = "conversation_participants_metadata")]
-        metadata: HashMap<String, ParticipantsMetadata>,
-    }
-
-    let response = client.requestor.validate_response(result).await?;
-    let response = client.requestor.parse_json::<Response>(response).await?;
-
-    let mut metadata = Vec::new();
-    for (k, v) in &response.metadata {
-        let mut participants = Vec::new();
-        for (k, v) in &v.participants_metadata {
-            participants.push(ParticipantMetadata {
-                id: k.parse().unwrap(),
-                is_pending: v.is_pending,
-            });
+    conversations_participant_metadata(ids: &[&str]) -> Vec<ConversationsParticipantMetadata> {
+        POST "{URL}/get-conversations-participants-metadata";
+        types {
+            Request<'a> { ids("conversation_ids"): &'a [&'a str] }
+            Response { metadata("conversation_participants_metadata"): HashMap<String, ParticipantsMetadata> }
+            ParticipantsMetadata { participants_metadata: HashMap<String, ParticipantPending> }
+            ParticipantPending { is_pending: bool }
         }
-
-        metadata.push(ConversationsParticipantMetadata {
-            id: k.to_owned(),
-            participants,
-        })
+        body_serialize { Request { ids } }
+        map |r: Response| {
+            let mut metadata = Vec::new();
+            for (conv_id, v) in &r.metadata {
+                let mut participants = Vec::new();
+                for (user_id, pending) in &v.participants_metadata {
+                    participants.push(ParticipantMetadata {
+                        id: user_id.parse().unwrap(),
+                        is_pending: pending.is_pending,
+                    });
+                }
+                metadata.push(ConversationsParticipantMetadata {
+                    id: conv_id.to_owned(),
+                    participants,
+                });
+            }
+            metadata
+        }
     }
 
-    Ok(metadata)
-}
-
-pub async fn conversations(client: &mut Client, ids: &[&str]) -> Result<Conversations, Error> {
-    #[derive(Debug, Serialize)]
-    struct Request<'a> {
-        ids: &'a [&'a str],
-        include_messages: bool,
-        include_user_data: bool,
-        include_participants: bool,
+    conversations(ids: &[&str]) -> Conversations {
+        POST "{URL}/get-conversations";
+        types {
+            Request<'a> {
+                ids: &'a [&'a str],
+                include_messages: bool,
+                include_user_data: bool,
+                include_participants: bool,
+            }
+        }
+        body_serialize {
+            Request { ids, include_messages: true, include_user_data: true, include_participants: true }
+        }
     }
 
-    let result = client
-        .requestor
-        .client
-        .post(format!("{URL}/get-conversations"))
-        .json(&Request {
-            ids,
-            include_messages: true,
-            include_user_data: true,
-            include_participants: true,
-        })
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client.requestor.parse_json::<Conversations>(response).await
-}
-
-pub async fn user_conversations(
-    client: &mut Client,
-    paging: Paging<'_>,
-) -> Result<Conversations, Error> {
-    let limit = paging.limit.unwrap_or(20).to_string();
-    let cursor = match paging.cursor {
-        Some(cursor) => cursor.to_string(),
-        None => String::new(),
-    };
-
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/get-user-conversations"))
-        .query(&[
-            ("cursor", cursor),
-            ("include_user_data", true.to_string()),
-            ("pageSize", limit),
-        ])
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client.requestor.parse_json::<Conversations>(response).await
-}
-
-pub async fn conversation_messages(
-    client: &mut Client,
-    id: &str,
-) -> Result<ConversationMessages, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/get-conversation-messages"))
-        .query(&[("conversation_id", id)])
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client
-        .requestor
-        .parse_json::<ConversationMessages>(response)
-        .await
-}
-
-/// Apparently you can only send 1 message at a time, but it's a vector in case roblox decides to change this behavior
-pub async fn send_messages_in_conversation(
-    client: &mut Client,
-    id: &str,
-    messages: &[&str],
-) -> Result<ConversationMessages, Error> {
-    #[derive(Debug, Serialize)]
-    struct MessageToPost<'a> {
-        content: &'a str,
+    user_conversations(paging: Paging<'_>) -> Conversations {
+        GET "{URL}/get-user-conversations";
+        prelude {
+            let limit = paging.limit.unwrap_or(20).to_string();
+            let cursor_str = match paging.cursor {
+                Some(c) => c.to_string(),
+                None => String::new(),
+            };
+        }
+        query {
+            "cursor" => &cursor_str,
+            "include_user_data" => "true",
+            "pageSize" => &limit,
+        }
     }
 
-    #[derive(Debug, Serialize)]
-    struct Request<'a> {
-        #[serde(rename = "conversation_id")]
-        id: &'a str,
-        messages: &'a [MessageToPost<'a>],
+    conversation_messages(id: &str) -> ConversationMessages {
+        GET "{URL}/get-conversation-messages";
+        query { "conversation_id" => id }
     }
 
-    let messages = &messages
-        .iter()
-        .map(|x| MessageToPost { content: x })
-        .collect::<Vec<_>>();
-
-    let result = client
-        .requestor
-        .client
-        .post(format!("{URL}/send-messages"))
-        .json(&Request { id, messages })
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client
-        .requestor
-        .parse_json::<ConversationMessages>(response)
-        .await
-}
-
-pub async fn update_typing_status_in_conversation(
-    client: &mut Client,
-    id: &str,
-) -> Result<String, Error> {
-    #[derive(Debug, Serialize)]
-    struct Request<'a> {
-        #[serde(rename = "conversation_id")]
-        id: &'a str,
+    /// Apparently you can only send 1 message at a time, but it's a vector in case roblox decides to change this behavior
+    send_messages_in_conversation(id: &str, messages: &[&str]) -> ConversationMessages {
+        POST "{URL}/send-messages";
+        types {
+            MessageToPost { content: String }
+            Request<'a> { id("conversation_id"): &'a str, messages: &'a [MessageToPost] }
+        }
+        prelude {
+            let msgs: Vec<MessageToPost> = messages.iter().map(|x| MessageToPost { content: x.to_string() }).collect();
+        }
+        body_serialize { Request { id, messages: &msgs } }
     }
 
-    let result = client
-        .requestor
-        .client
-        .post(format!("{URL}/update-typing-status"))
-        .json(&Request { id })
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    #[derive(Debug, Deserialize)]
-    struct Response {
-        status: String,
+    update_typing_status_in_conversation(id: &str) -> String {
+        POST "{URL}/update-typing-status";
+        types {
+            Request<'a> { id("conversation_id"): &'a str }
+            Response { status: String }
+        }
+        body_serialize { Request { id } }
+        map |r: Response| r.status
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    Ok(client
-        .requestor
-        .parse_json::<Response>(response)
-        .await?
-        .status)
-}
-
-pub async fn add_users_to_conversation(
-    client: &mut Client,
-    id: &str,
-    users: &[u64],
-) -> Result<String, Error> {
-    #[derive(Debug, Serialize)]
-    struct Request<'a> {
-        #[serde(rename = "conversation_id")]
-        id: &'a str,
-        #[serde(rename = "user_ids")]
-        users: &'a [u64],
+    add_users_to_conversation(id: &str, users: &[u64]) -> String {
+        POST "{URL}/add-users";
+        types {
+            Request<'a> { id("conversation_id"): &'a str, users("user_ids"): &'a [u64] }
+            Response { status: String }
+        }
+        body_serialize { Request { id, users } }
+        map |r: Response| r.status
     }
 
-    let result = client
-        .requestor
-        .client
-        .post(format!("{URL}/add-users"))
-        .json(&Request { id, users })
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    #[derive(Debug, Deserialize)]
-    struct Response {
-        status: String,
+    remove_users_from_conversation(id: &str, users: &[u64]) -> String {
+        POST "{URL}/remove-users";
+        types {
+            Request<'a> { id("conversation_id"): &'a str, users("user_ids"): &'a [u64] }
+            Response { status: String }
+        }
+        body_serialize { Request { id, users } }
+        map |r: Response| r.status
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    Ok(client
-        .requestor
-        .parse_json::<Response>(response)
-        .await?
-        .status)
-}
-
-pub async fn remove_users_from_conversation(
-    client: &mut Client,
-    id: &str,
-    users: &[u64],
-) -> Result<String, Error> {
-    #[derive(Debug, Serialize)]
-    struct Request<'a> {
-        #[serde(rename = "conversation_id")]
-        id: &'a str,
-        #[serde(rename = "user_ids")]
-        users: &'a [u64],
+    create_conversations(conversations: &[ConversationCreateRequest]) -> Conversations {
+        POST "{URL}/create-conversations";
+        types {
+            ConversationToCreate {
+                name: String,
+                kind("type"): String,
+                users("participant_user_ids"): Vec<u64>,
+            }
+            Request<'a> { conversations: &'a [ConversationToCreate], include_user_data: bool }
+        }
+        prelude {
+            let convs: Vec<ConversationToCreate> = conversations.iter().map(|x| ConversationToCreate {
+                name: x.name.clone(),
+                kind: "group".to_string(),
+                users: x.users.clone(),
+            }).collect();
+        }
+        body_serialize { Request { conversations: &convs, include_user_data: true } }
     }
 
-    let result = client
-        .requestor
-        .client
-        .post(format!("{URL}/remove-users"))
-        .json(&Request { id, users })
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    #[derive(Debug, Deserialize)]
-    struct Response {
-        status: String,
+    rename_conversations(ids: &[&str], names: &[&str]) -> Conversations {
+        POST "{URL}/update-conversations";
+        types {
+            ConversationToUpdate { id: String, name: String }
+            Request<'a> { conversations: &'a [ConversationToUpdate] }
+        }
+        prelude {
+            let updates: Vec<ConversationToUpdate> = ids.iter()
+                .zip(names.iter())
+                .map(|(id, name)| ConversationToUpdate { id: id.to_string(), name: name.to_string() })
+                .collect();
+        }
+        body_serialize { Request { conversations: &updates } }
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    Ok(client
-        .requestor
-        .parse_json::<Response>(response)
-        .await?
-        .status)
-}
-
-pub async fn create_conversations(
-    client: &mut Client,
-    conversations: &[ConversationCreateRequest],
-) -> Result<Conversations, Error> {
-    #[derive(Debug, Serialize)]
-    struct ConversationToCreate<'a> {
-        name: &'a str,
-        #[serde(rename = "type")]
-        kind: &'a str,
-        #[serde(rename = "participant_user_ids")]
-        users: &'a [u64],
+    mark_conversations_as_read(ids: &[&str]) -> Vec<ConversationMarkedStatus> {
+        POST "{URL}/mark-conversations";
+        types {
+            Request<'a> { ids("conversation_ids"): &'a [&'a str] }
+            Response { results: Vec<ConversationMarkedStatus> }
+        }
+        body_serialize { Request { ids } }
+        map |r: Response| r.results
     }
-
-    #[derive(Debug, Serialize)]
-    struct Request<'a> {
-        conversations: &'a [ConversationToCreate<'a>],
-        include_user_data: bool,
-    }
-
-    let conversations = &conversations
-        .iter()
-        .map(|x| ConversationToCreate {
-            name: &x.name,
-            kind: "group",
-            users: &x.users,
-        })
-        .collect::<Vec<_>>();
-
-    let result = client
-        .requestor
-        .client
-        .post(format!("{URL}/create-conversations"))
-        .json(&Request {
-            conversations,
-            include_user_data: true,
-        })
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client.requestor.parse_json::<Conversations>(response).await
-}
-
-pub async fn rename_conversations(
-    client: &mut Client,
-    ids: &[&str],
-    names: &[&str],
-) -> Result<Conversations, Error> {
-    #[derive(Debug, Serialize)]
-    struct ConversationToUpdate<'a> {
-        id: &'a str,
-        name: &'a str,
-    }
-
-    #[derive(Debug, Serialize)]
-    struct Request<'a> {
-        conversations: &'a [ConversationToUpdate<'a>],
-    }
-
-    let conversations = &ids
-        .iter()
-        .zip(names.into_iter())
-        .collect::<Vec<_>>()
-        .iter()
-        .map(|(id, name)| ConversationToUpdate { id, name })
-        .collect::<Vec<_>>();
-
-    let result = client
-        .requestor
-        .client
-        .post(format!("{URL}/update-conversations"))
-        .json(&Request { conversations })
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client.requestor.parse_json::<Conversations>(response).await
-}
-
-pub async fn mark_conversations_as_read(
-    client: &mut Client,
-    ids: &[&str],
-) -> Result<Vec<ConversationMarkedStatus>, Error> {
-    #[derive(Debug, Serialize)]
-    struct Request<'a> {
-        #[serde(rename = "conversation_ids")]
-        ids: &'a [&'a str],
-    }
-
-    let result = client
-        .requestor
-        .client
-        .post(format!("{URL}/mark-conversations"))
-        .json(&Request { ids })
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    #[derive(Debug, Deserialize)]
-    struct Response {
-        results: Vec<ConversationMarkedStatus>,
-    }
-
-    let response = client.requestor.validate_response(result).await?;
-    Ok(client
-        .requestor
-        .parse_json::<Response>(response)
-        .await?
-        .results)
 }

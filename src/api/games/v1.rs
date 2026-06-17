@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{DateTime, Error, Paging, client::Client};
+use crate::{DateTime, Paging, endpoint};
 
 pub const URL: &str = "https://games.roblox.com/v1";
 
@@ -195,199 +195,80 @@ pub struct UniverseGamepassesResponse {
     pub previous_cursor: Option<String>,
 }
 
-pub async fn batch_place_details(
-    client: &mut Client,
-    ids: &[u64],
-) -> Result<Vec<PlaceDetails>, Error> {
-    let ids = ids
-        .iter()
-        .map(|x| x.to_string())
-        .collect::<Vec<String>>()
-        .join(",");
-
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/games/multiget-place-details"))
-        .query(&[("placeIds", ids)])
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client
-        .requestor
-        .parse_json::<Vec<PlaceDetails>>(response)
-        .await
-}
-
-/// Set server_kind to 0, if you want a valid response
-pub async fn servers(
-    client: &mut Client,
-    id: u64,
-    server_kind: u8,
-    exclude_full_games: bool,
-    paging: Paging<'_>,
-) -> Result<ServersResponse, Error> {
-    let limit = paging.limit.unwrap_or(10).to_string();
-    let sort_order = paging.order.unwrap_or_default().to_string();
-    let cursor = match paging.cursor {
-        Some(cursor) => cursor.to_string(),
-        None => String::new(),
-    };
-
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/games/{id}/servers/{server_kind}"))
-        .query(&[
-            ("excludeFullGames", exclude_full_games.to_string()),
-            ("limit", limit),
-            ("sortOrder", sort_order),
-            ("cursor", cursor),
-        ])
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client
-        .requestor
-        .parse_json::<ServersResponse>(response)
-        .await
-}
-
-pub async fn private_servers(
-    client: &mut Client,
-    id: u64,
-    exclude_friend_servers: bool,
-    paging: Paging<'_>,
-) -> Result<PrivateServersResponse, Error> {
-    let limit = paging.limit.unwrap_or(10).to_string();
-    let sort_order = paging.order.unwrap_or_default().to_string();
-    let cursor = match paging.cursor {
-        Some(cursor) => cursor.to_string(),
-        None => String::new(),
-    };
-
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/games/{id}/private-servers"))
-        .query(&[
-            ("excludeFriendServers", exclude_friend_servers.to_string()),
-            ("limit", limit),
-            ("sortOrder", sort_order),
-            ("cursor", cursor),
-        ])
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client
-        .requestor
-        .parse_json::<PrivateServersResponse>(response)
-        .await
-}
-
-pub async fn private_server_info(client: &mut Client, id: u64) -> Result<PrivateServerInfo, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/vip-servers/{id}"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client
-        .requestor
-        .parse_json::<PrivateServerInfo>(response)
-        .await
-}
-
-pub async fn universe_favorite_count(client: &mut Client, id: u64) -> Result<u64, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/games/{id}/favorites/count"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    #[derive(Debug, Deserialize)]
-    struct Response {
-        #[serde(rename = "favoritesCount")]
-        favorites: u64,
+endpoint! {
+    batch_place_details(ids: &[u64]) -> Vec<PlaceDetails> {
+        GET "{URL}/games/multiget-place-details";
+        prelude {
+            let joined_ids = ids
+                .iter()
+                .map(|x| x.to_string())
+                .collect::<Vec<String>>()
+                .join(",");
+        }
+        query {
+            "placeIds" => &joined_ids,
+        }
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    Ok(client
-        .requestor
-        .parse_json::<Response>(response)
-        .await?
-        .favorites)
-}
-
-pub async fn universe_votes(client: &mut Client, ids: &[u64]) -> Result<Vec<UniverseVotes>, Error> {
-    let ids = ids
-        .iter()
-        .map(|x| x.to_string())
-        .collect::<Vec<String>>()
-        .join(",");
-
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/games/votes"))
-        .query(&[("universeIds", ids)])
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    #[derive(Debug, Deserialize)]
-    struct Response {
-        #[serde(rename = "data")]
-        votes: Vec<UniverseVotes>,
+    /// Set server_kind to 0, if you want a valid response
+    servers(id: u64, server_kind: u8, exclude_full_games: bool, paging: Paging<'_>) -> ServersResponse {
+        GET "{URL}/games/{id}/servers/{server_kind}";
+        paging_query { paging, limit = 10 }
+        prelude {
+            let exclude_full_games = exclude_full_games.to_string();
+        }
+        query {
+            "excludeFullGames" => &exclude_full_games,
+        }
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    Ok(client
-        .requestor
-        .parse_json::<Response>(response)
-        .await?
-        .votes)
-}
+    private_servers(id: u64, exclude_friend_servers: bool, paging: Paging<'_>) -> PrivateServersResponse {
+        GET "{URL}/games/{id}/private-servers";
+        paging_query { paging, limit = 10 }
+        prelude {
+            let exclude_friend_servers = exclude_friend_servers.to_string();
+        }
+        query {
+            "excludeFriendServers" => &exclude_friend_servers,
+        }
+    }
 
-pub async fn universe_gamepasses(
-    client: &mut Client,
-    id: u64,
-    paging: Paging<'_>,
-) -> Result<UniverseGamepassesResponse, Error> {
-    let limit = paging.limit.unwrap_or(10).to_string();
-    let sort_order = paging.order.unwrap_or_default().to_string();
-    let cursor = match paging.cursor {
-        Some(cursor) => cursor.to_string(),
-        None => String::new(),
-    };
+    private_server_info(id: u64) -> PrivateServerInfo {
+        GET "{URL}/vip-servers/{id}";
+    }
 
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/games/{id}/game-passes"))
-        .query(&[
-            ("limit", limit),
-            ("sortOrder", sort_order),
-            ("cursor", cursor),
-        ])
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
+    universe_favorite_count(id: u64) -> u64 {
+        GET "{URL}/games/{id}/favorites/count";
+        types {
+            Response {
+                favorites("favoritesCount"): u64,
+            }
+        }
+        map |r: Response| r.favorites
+    }
 
-    let response = client.requestor.validate_response(result).await?;
-    client
-        .requestor
-        .parse_json::<UniverseGamepassesResponse>(response)
-        .await
+    universe_votes(ids: &[u64]) -> Vec<UniverseVotes> {
+        GET "{URL}/games/votes";
+        types {
+            Response {
+                votes("data"): Vec<UniverseVotes>,
+            }
+        }
+        prelude {
+            let joined_ids = ids
+                .iter()
+                .map(|x| x.to_string())
+                .collect::<Vec<String>>()
+                .join(",");
+        }
+        query {
+            "universeIds" => &joined_ids,
+        }
+        map |r: Response| r.votes
+    }
+
+    universe_gamepasses(id: u64, paging: Paging<'_>) -> UniverseGamepassesResponse {
+        GET "{URL}/games/{id}/game-passes";
+        paging_query { paging, limit = 10 }
+    }
 }

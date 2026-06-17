@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{DateTime, Error, Paging, client::Client};
+use crate::{DateTime, Paging, endpoint};
 
 pub const URL: &str = "https://develop.roblox.com/v1";
 
@@ -72,78 +72,34 @@ pub struct Asset {
     pub creator: AssetCreator,
 }
 
-pub async fn assets(client: &mut Client, ids: &[u64]) -> Result<Vec<Asset>, Error> {
-    let ids = ids
-        .iter()
-        .map(|x| x.to_string())
-        .collect::<Vec<String>>()
-        .join(",");
+#[derive(Deserialize)]
+struct AssetsResponse {
+    #[serde(rename = "data")]
+    assets: Vec<Asset>,
+}
 
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/assets?assetIds={ids}"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    #[derive(Deserialize)]
-    struct Response {
-        #[serde(rename = "data")]
-        assets: Vec<Asset>,
+endpoint! {
+    assets(ids: &[u64]) -> Vec<Asset> {
+        GET "{URL}/assets";
+        prelude {
+            let ids = ids
+                .iter()
+                .map(|x| x.to_string())
+                .collect::<Vec<String>>()
+                .join(",");
+        }
+        query {
+            "assetIds" => &ids,
+        }
+        map |r: AssetsResponse| r.assets
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    Ok(client
-        .requestor
-        .parse_json::<Response>(response)
-        .await?
-        .assets)
-}
+    published_asset_versions(id: u64, paging: Paging<'_>) -> PublishedAssetVersions {
+        GET "{URL}/assets/{id}/published-versions";
+        paging_query { paging, limit = 10 }
+    }
 
-pub async fn published_asset_versions(
-    client: &mut Client,
-    id: u64,
-    paging: Paging<'_>,
-) -> Result<PublishedAssetVersions, Error> {
-    let limit = paging.limit.unwrap_or(10).to_string();
-    let sort_order = paging.order.unwrap_or_default().to_string();
-    let cursor = match paging.cursor {
-        Some(cursor) => cursor.to_string(),
-        None => String::new(),
-    };
-
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/assets/{id}/published-versions"))
-        .query(&[
-            ("limit", limit),
-            ("sortOrder", sort_order),
-            ("cursor", cursor),
-        ])
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client
-        .requestor
-        .parse_json::<PublishedAssetVersions>(response)
-        .await
-}
-
-pub async fn revert_asset_version(client: &mut Client, id: u64, version: u64) -> Result<(), Error> {
-    let result = client
-        .requestor
-        .client
-        .post(format!(
-            "{URL}/assets/{id}/revert-version?assetVersionNumber={version}"
-        ))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    client.requestor.validate_response(result).await?;
-    Ok(())
+    revert_asset_version(id: u64, version: u64) -> () {
+        POST "{URL}/assets/{id}/revert-version?assetVersionNumber={version}";
+    }
 }

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{DateTime, Error, client::Client};
+use crate::{DateTime, endpoint};
 
 pub const URL: &str = "https://economy.roblox.com/v2";
 
@@ -99,18 +99,8 @@ pub struct DetailsResponse {
     pub collectible_details: CollectibleDetails,
 }
 
-pub async fn details(client: &mut Client, id: u64) -> Result<DetailsResponse, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/assets/{id}/details"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client
-        .requestor
-        .parse_json::<DetailsResponse>(response)
-        .await
+endpoint! {
+    details(id: u64) -> DetailsResponse {
+        GET "{URL}/assets/{id}/details";
+    }
 }

@@ -1,17 +1,8 @@
-use serde::{Deserialize, Serialize};
-use strum_macros::{Display, EnumString, FromRepr};
-
-use crate::{DateTime, Error, Paging, client::Client};
+use crate::{DateTime, Gender, Paging, endpoint};
 
 pub const URL: &str = "https://users.roblox.com/v1";
 
-#[repr(u8)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Display, EnumString, FromRepr)]
-pub enum Gender {
-    None = 1,
-    Male = 2,
-    Female = 3,
-}
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -97,496 +88,222 @@ pub struct UserSearchByKeyword {
     pub previous_cursor: Option<String>,
 }
 
-pub async fn user_details(client: &mut Client, id: u64) -> Result<UserDetails, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/users/{id}"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client.requestor.parse_json::<UserDetails>(response).await
-}
-
-pub async fn user_username_history(
-    client: &mut Client,
-    id: u64,
-    paging: Paging<'_>,
-) -> Result<NameHistory, Error> {
-    let limit = paging.limit.unwrap_or(10);
-    let sort_order = paging.order.unwrap_or_default().to_string();
-    let cursor = match paging.cursor {
-        Some(cursor) => format!("&cursor={cursor}"),
-        None => String::new(),
-    };
-
-    let result = client
-        .requestor
-        .client
-        .get(format!(
-            "{URL}/users/{id}/username-history?limit={limit}&sortOrder={sort_order}{cursor}"
-        ))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    // no they don't have anything else in here
-    #[derive(Debug, Deserialize)]
-    struct Username {
-        name: String,
+endpoint! {
+    user_details(id: u64) -> UserDetails {
+        GET "{URL}/users/{id}";
     }
 
-    #[derive(Debug, Deserialize)]
-    struct Response {
-        #[serde(rename = "data")]
-        names: Vec<Username>,
-        #[serde(rename = "nextPageCursor")]
-        next_cursor: Option<String>,
-        #[serde(rename = "previousPageCursor")]
-        previous_cursor: Option<String>,
+    user_username_history(id: u64, paging: Paging<'_>) -> NameHistory {
+        GET "{URL}/users/{id}/username-history";
+        paging_query { paging, limit = 10 }
+        types {
+            Username {
+                name: String,
+            }
+            Response {
+                data: Vec<Username>,
+                next_cursor("nextPageCursor"): Option<String>,
+                previous_cursor("previousPageCursor"): Option<String>,
+            }
+        }
+        map |r: Response| {
+            let names = r.data.iter().map(|x| x.name.clone()).collect();
+            NameHistory {
+                names,
+                next_cursor: r.next_cursor,
+                previous_cursor: r.previous_cursor,
+            }
+        }
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    let result = client.requestor.parse_json::<Response>(response).await?;
-
-    let names = result.names.iter().map(|x| x.name.clone()).collect();
-    Ok(NameHistory {
-        names,
-        next_cursor: result.next_cursor,
-        previous_cursor: result.previous_cursor,
-    })
-}
-
-pub async fn users_by_id(
-    client: &mut Client,
-    ids: &[u64],
-    exclude_terminated: bool,
-) -> Result<Vec<UserById>, Error> {
-    #[derive(Debug, Serialize)]
-    struct Request<'a> {
-        #[serde(rename = "userIds")]
-        ids: &'a [u64],
-        #[serde(rename = "excludeBannedUsers")]
-        exclude_terminated: bool,
+    users_by_id(ids: &[u64], exclude_terminated: bool) -> Vec<UserById> {
+        POST "{URL}/users";
+        types {
+            Request<'a> {
+                ids("userIds"): &'a [u64],
+                exclude_terminated("excludeBannedUsers"): bool,
+            }
+            Response {
+                data: Vec<UserById>,
+            }
+        }
+        body_serialize { Request { ids, exclude_terminated } }
+        map |r: Response| r.data
     }
 
-    let result = client
-        .requestor
-        .client
-        .post(format!("{URL}/users"))
-        .headers(client.requestor.default_headers.clone())
-        .json(&Request {
-            ids,
-            exclude_terminated,
-        })
-        .send()
-        .await;
-
-    #[derive(Debug, Deserialize)]
-    struct Response {
-        #[serde(rename = "data")]
-        users: Vec<UserById>,
+    users_by_name(names: &[&str], exclude_terminated: bool) -> Vec<UserByName> {
+        POST "{URL}/usernames/users";
+        types {
+            Request<'a> {
+                names("usernames"): &'a [&'a str],
+                exclude_terminated("excludeBannedUsers"): bool,
+            }
+            Response {
+                data: Vec<UserByName>,
+            }
+        }
+        body_serialize { Request { names, exclude_terminated } }
+        map |r: Response| r.data
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    Ok(client
-        .requestor
-        .parse_json::<Response>(response)
-        .await?
-        .users)
-}
-
-pub async fn users_by_name(
-    client: &mut Client,
-    names: &[&str],
-    exclude_terminated: bool,
-) -> Result<Vec<UserByName>, Error> {
-    #[derive(Debug, Serialize)]
-    struct Request<'a> {
-        #[serde(rename = "usernames")]
-        names: &'a [&'a str],
-        #[serde(rename = "excludeBannedUsers")]
-        exclude_terminated: bool,
+    // this api seems to be dysfunctional, try using search::omni instead
+    search_by_keyword(keyword: &str,session_id: Option<&str>,paging: Paging<'_>) -> UserSearchByKeyword {
+        GET "{URL}/users/search";
+        paging_query { paging, limit = 10 }
+        prelude {
+            let session_id_str = session_id.map(|s| s.to_string()).unwrap_or_default();
+        }
+        query {
+            "keyword" => keyword,
+            "sessionId" => &session_id_str,
+        }
     }
 
-    let result = client
-        .requestor
-        .client
-        .post(format!("{URL}/usernames/users"))
-        .headers(client.requestor.default_headers.clone())
-        .json(&Request {
-            names,
-            exclude_terminated,
-        })
-        .send()
-        .await;
-
-    #[derive(Debug, Deserialize)]
-    struct Response {
-        #[serde(rename = "data")]
-        names: Vec<UserByName>,
+    authenticated_details() -> ClientDetails {
+        GET "{URL}/users/authenticated";
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    Ok(client
-        .requestor
-        .parse_json::<Response>(response)
-        .await?
-        .names)
-}
-
-// this api seems to be dysfunctional, try using search::omni instead
-pub async fn search_by_keyword(
-    client: &mut Client,
-    keyword: &str,
-    session_id: Option<&str>,
-    paging: Paging<'_>,
-) -> Result<UserSearchByKeyword, Error> {
-    let limit = paging.limit.unwrap_or(10);
-    let cursor = match paging.cursor {
-        Some(cursor) => format!("&cursor={cursor}"),
-        None => String::new(),
-    };
-
-    let session_id = match session_id {
-        Some(session_id) => format!("&session_id={session_id}"),
-        None => String::new(),
-    };
-
-    let result = client
-        .requestor
-        .client
-        .get(format!(
-            "{URL}/users/search?keyword={keyword}&limit={limit}{cursor}{session_id}"
-        ))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client
-        .requestor
-        .parse_json::<UserSearchByKeyword>(response)
-        .await
-}
-
-pub async fn authenticated_details(client: &mut Client) -> Result<ClientDetails, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/users/authenticated"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client.requestor.parse_json::<ClientDetails>(response).await
-}
-
-pub async fn authenticated_age_bracket(client: &mut Client) -> Result<u64, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/users/authenticated/age-bracket"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    #[derive(Debug, Deserialize)]
-    #[serde(rename_all = "camelCase")]
-    struct Response {
-        age_bracket: u64,
+    authenticated_age_bracket() -> u64 {
+        GET "{URL}/users/authenticated/age-bracket";
+        types {
+            Response {
+                age_bracket("ageBracket"): u64,
+            }
+        }
+        map |r: Response| r.age_bracket
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    Ok(client
-        .requestor
-        .parse_json::<Response>(response)
-        .await?
-        .age_bracket)
-}
-
-pub async fn authenticated_country_code(client: &mut Client) -> Result<String, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/users/authenticated/country-code"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    #[derive(Debug, Deserialize)]
-    #[serde(rename_all = "camelCase")]
-    struct Response {
-        country_code: String,
+    authenticated_country_code() -> String {
+        GET "{URL}/users/authenticated/country-code";
+        types {
+            Response {
+                country_code("countryCode"): String,
+            }
+        }
+        map |r: Response| r.country_code
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    Ok(client
-        .requestor
-        .parse_json::<Response>(response)
-        .await?
-        .country_code)
-}
-
-pub async fn authenticated_roles(client: &mut Client) -> Result<Vec<String>, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/users/authenticated/roles"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    #[derive(Debug, Deserialize)]
-    struct Response {
-        roles: Vec<String>,
+    authenticated_roles() -> Vec<String> {
+        GET "{URL}/users/authenticated/roles";
+        types {
+            Response {
+                roles: Vec<String>,
+            }
+        }
+        map |r: Response| r.roles
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    Ok(client
-        .requestor
-        .parse_json::<Response>(response)
-        .await?
-        .roles)
-}
-
-pub async fn authenticated_app_launch_info(
-    client: &mut Client,
-) -> Result<ClientAppLaunchInfo, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/users/authenticated/app-launch-info"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client
-        .requestor
-        .parse_json::<ClientAppLaunchInfo>(response)
-        .await
-}
-
-pub async fn birthdate(client: &mut Client) -> Result<DateTime, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/birthdate"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    #[derive(Debug, Deserialize)]
-    struct Response {
-        #[serde(rename = "birthDay")]
-        day: u8,
-        #[serde(rename = "birthMonth")]
-        month: u8,
-        #[serde(rename = "birthYear")]
-        year: i32,
+    authenticated_app_launch_info() -> ClientAppLaunchInfo {
+        GET "{URL}/users/authenticated/app-launch-info";
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    let birthdate = client.requestor.parse_json::<Response>(response).await?;
-
-    Ok(DateTime::from_ymd(
-        birthdate.year,
-        birthdate.month,
-        birthdate.day,
-    ))
-}
-
-// According to documentation there's supposed to be a password,
-// yet the roblox website doesn't use it..
-pub async fn set_birthdate(
-    client: &mut Client,
-    birthdate: DateTime,
-    //password: &str,
-) -> Result<(), Error> {
-    #[derive(Debug, Serialize)]
-    struct Request {
-        #[serde(rename = "birthDay")]
-        day: u8,
-        #[serde(rename = "birthMonth")]
-        month: u8,
-        #[serde(rename = "birthYear")]
-        year: i32,
-        //pub password: &'a str,
+    birthdate() -> DateTime {
+        GET "{URL}/birthdate";
+        types {
+            Response {
+                day("birthDay"): u8,
+                month("birthMonth"): u8,
+                year("birthYear"): i32,
+            }
+        }
+        map |b: Response| DateTime::from_ymd(b.year, b.month, b.day)
     }
 
-    let result = client
-        .requestor
-        .client
-        .post(format!("{URL}/birthdate"))
-        .headers(client.requestor.default_headers.clone())
-        .json(&Request {
-            day: birthdate.day(),
-            month: birthdate.month(),
-            year: birthdate.year(),
-            //password,
-        })
-        .send()
-        .await;
-
-    client.requestor.validate_response(result).await?;
-    Ok(())
-}
-
-pub async fn description(client: &mut Client) -> Result<String, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/description"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    #[derive(Debug, Deserialize)]
-    struct Response {
-        #[serde(rename = "description")]
-        value: String,
+    // According to documentation there's supposed to be a password,
+    // yet the roblox website doesn't use it..
+    set_birthdate(birthdate: DateTime) -> () {
+        POST "{URL}/birthdate";
+        types {
+            Request {
+                day("birthDay"): u8,
+                month("birthMonth"): u8,
+                year("birthYear"): i32,
+            }
+        }
+        prelude {
+            let day = birthdate.day();
+            let month = birthdate.month();
+            let year = birthdate.year();
+        }
+        body_serialize { Request { day, month, year } }
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    let description = client.requestor.parse_json::<Response>(response).await?;
-
-    Ok(description.value)
-}
-
-pub async fn set_description(client: &mut Client, description: &str) -> Result<(), Error> {
-    #[derive(Debug, Serialize)]
-    struct Request<'a> {
-        #[serde(rename = "description")]
-        value: &'a str,
+    description() -> String {
+        GET "{URL}/description";
+        types {
+            Response {
+                value("description"): String,
+            }
+        }
+        map |r: Response| r.value
     }
 
-    let result = client
-        .requestor
-        .client
-        .post(format!("{URL}/description"))
-        .headers(client.requestor.default_headers.clone())
-        .json(&Request { value: description })
-        .send()
-        .await;
-
-    client.requestor.validate_response(result).await?;
-    Ok(())
-}
-
-pub async fn gender(client: &mut Client) -> Result<Gender, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/gender"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    #[derive(Debug, Deserialize)]
-    struct Response {
-        #[serde(rename = "gender")]
-        value: u8,
+    set_description(description: &str) -> () {
+        POST "{URL}/description";
+        types {
+            Request<'a> {
+                value("description"): &'a str,
+            }
+        }
+        body_serialize { Request { value: description } }
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    let gender: Response = client.requestor.parse_json(response).await?;
-
-    Ok(Gender::from_repr(gender.value).expect("failed to parse gender"))
-}
-
-pub async fn set_gender(client: &mut Client, gender: Gender) -> Result<(), Error> {
-    #[derive(Debug, Serialize)]
-    struct Request {
-        #[serde(rename = "gender")]
-        value: u8,
+    gender() -> Gender {
+        GET "{URL}/gender";
+        types {
+            Response {
+                value("gender"): u8,
+            }
+        }
+        map |g: Response| Gender::from_repr(g.value).expect("failed to parse gender")
     }
 
-    let result = client
-        .requestor
-        .client
-        .post(format!("{URL}/gender"))
-        .headers(client.requestor.default_headers.clone())
-        .json(&Request {
-            value: gender as u8,
-        })
-        .send()
-        .await;
+    set_gender(gender: Gender) -> () {
+        POST "{URL}/gender";
+         types {
+            SetGenderRequest {
+                value("gender"): u8,
+            }
+        }
+        prelude {
+            let value = gender as u8;
+        }
+        body_serialize { SetGenderRequest { value } }
 
-    client.requestor.validate_response(result).await?;
-    Ok(())
-}
-
-pub async fn validate_display_name(
-    client: &mut Client,
-    display_name: &str,
-    birthdate: DateTime,
-) -> Result<(), Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!(
-            "{URL}/display-names/validate?displayName={display_name}&birthdate={}",
-            birthdate
-        ))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    client.requestor.validate_response(result).await?;
-    Ok(())
-}
-
-// TODO: I don't know what `id` is for, as this api only seems to be used for the client only,
-// there's also currently no way to require id from Client, perhaps we should authenticate
-// on from_cookie method, and store the ClientDetails in the Client
-pub async fn validate_display_name_by_id(
-    client: &mut Client,
-    id: u64,
-    display_name: &str,
-) -> Result<(), Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!(
-            "{URL}/users/{id}/display-names/validate?displayName={display_name}"
-        ))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    client.requestor.validate_response(result).await?;
-    Ok(())
-}
-
-// TODO: I don't know what `id` is for, as this api only seems to be used for the client only,
-// there's also currently no way to require id from Client, perhaps we should authenticate
-// on from_cookie method, and store the ClientDetails in the Client
-pub async fn set_display_name(
-    client: &mut Client,
-    id: u64,
-    display_name: &str,
-) -> Result<(), Error> {
-    #[derive(Debug, Serialize)]
-    struct Request<'a> {
-        #[serde(rename = "newDisplayName")]
-        display_name: &'a str,
     }
 
-    let result = client
-        .requestor
-        .client
-        .patch(format!(
-            "{URL}/users/{id}/display-names?displayName={display_name}"
-        ))
-        .headers(client.requestor.default_headers.clone())
-        .json(&Request { display_name })
-        .send()
-        .await;
+    validate_display_name(display_name: &str, birthdate: DateTime) -> () {
+        GET "{URL}/display-names/validate";
+        prelude {
+            let birthdate = birthdate.to_string();
+        }
+        query {
+            "displayName" => display_name,
+            "birthdate" => &birthdate,
+        }
+    }
 
-    client.requestor.validate_response(result).await?;
-    Ok(())
+    // TODO: I don't know what `id` is for, as this api only seems to be used for the client only,
+    // there's also currently no way to require id from Client, perhaps we should authenticate
+    // on from_cookie method, and store the ClientDetails in the Client
+    validate_display_name_by_id(id: u64, display_name: &str) -> () {
+        GET "{URL}/users/{id}/display-names/validate";
+        query {
+            "displayName" => display_name,
+        }
+        void
+    }
+
+    // TODO: I don't know what `id` is for, as this api only seems to be used for the client only,
+    // there's also currently no way to require id from Client, perhaps we should authenticate
+    // on from_cookie method, and store the ClientDetails in the Client
+    set_display_name(id: u64, display_name: &str) -> () {
+        PATCH "{URL}/users/{id}/display-names";
+        types {
+            Request<'a> {
+                display_name("newDisplayName"): &'a str,
+            }
+        }
+        body_serialize { Request { display_name } }
+    }
 }

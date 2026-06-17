@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize, Serializer};
 use strum::{EnumIter, IntoEnumIterator};
 use strum_macros::{Display, EnumString};
 
-use crate::{Error, client::Client};
+use crate::endpoint;
 
 pub const URL: &str = "https://thumbnails.roblox.com/v1";
 
@@ -169,468 +169,360 @@ impl ThumbnailFormat {
     }
 }
 
-async fn generic_thumbnail_api(
-    client: &mut Client,
-    ids: &[u64],
-    asset_name: &str,
-    domain: &str,
-    size: ThumbnailSize,
-    format: ThumbnailFormat,
-    circular: bool,
-    return_policy: Option<ReturnPolicy>,
-    count_per_universe: Option<u32>,
-    defaults: Option<bool>,
-) -> Result<Vec<ThumbnailResponse>, Error> {
-    let ids = ids
-        .iter()
-        .map(|x| x.to_string())
-        .collect::<Vec<String>>()
-        .join(",");
-
-    let asset_ids_key = format!("{asset_name}Ids");
-    let mut query = vec![
-        (asset_ids_key.as_str(), ids),
-        ("size", size.to_string()),
-        ("format", format.to_string()),
-        ("isCircular", circular.to_string()),
-    ];
-
-    if let Some(return_policy) = return_policy {
-        query.push(("returnPolicy", return_policy.to_string()));
+endpoint! {
+    /// Returns thumbnail URLs for a list of asset ids.
+    assets(ids: &[u64], size: ThumbnailSize, format: ThumbnailFormat, return_policy: ReturnPolicy, circular: bool) -> Vec<ThumbnailResponse> {
+        GET "{URL}/assets";
+        types {
+            Response { data("data"): Vec<ThumbnailResponse> }
+        }
+        prelude {
+            let joined_ids = ids.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
+            let size = size.to_string();
+            let format = format.to_string();
+            let return_policy = return_policy.to_string();
+            let circular = circular.to_string();
+        }
+        query {
+            "assetIds" => &joined_ids,
+            "size" => &size,
+            "format" => &format,
+            "returnPolicy" => &return_policy,
+            "isCircular" => &circular,
+        }
+        map |r: Response| r.data
     }
 
-    if let Some(count_per_universe) = count_per_universe {
-        query.push(("countPerUniverse", count_per_universe.to_string()));
+    /// Returns a 3D thumbnail of an asset.
+    asset_3d(id: u64, encode_gltf: bool) -> ThumbnailResponse {
+        GET "{URL}/assets-thumbnail-3d";
+        prelude {
+            let id = id.to_string();
+            let encode_gltf = encode_gltf.to_string();
+        }
+        query {
+            "assetId" => &id,
+            "useGltf" => &encode_gltf,
+        }
     }
 
-    if let Some(defaults) = defaults {
-        query.push(("defaults", defaults.to_string()));
+    /// Returns thumbnail URLs for a list of badge ids.
+    badge_icons(ids: &[u64], size: ThumbnailSize, format: ThumbnailFormat, circular: bool) -> Vec<ThumbnailResponse> {
+        GET "{URL}/badges/icons";
+        types {
+            Response { data("data"): Vec<ThumbnailResponse> }
+        }
+        prelude {
+            let joined_ids = ids.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
+            let size = size.to_string();
+            let format = format.to_string();
+            let circular = circular.to_string();
+        }
+        query {
+            "badgeIds" => &joined_ids,
+            "size" => &size,
+            "format" => &format,
+            "isCircular" => &circular,
+        }
+        map |r: Response| r.data
     }
 
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/{domain}"))
-        .query(&query)
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    #[derive(Clone, Debug, Deserialize)]
-    struct Response {
-        #[serde(rename = "data")]
-        thumbnails: Vec<ThumbnailResponse>,
+    /// Returns thumbnail URLs for a list of bundle ids.
+    bundles(ids: &[u64], size: ThumbnailSize, format: ThumbnailFormat, circular: bool) -> Vec<ThumbnailResponse> {
+        GET "{URL}/bundles/thumbnails";
+        types {
+            Response { data("data"): Vec<ThumbnailResponse> }
+        }
+        prelude {
+            let joined_ids = ids.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
+            let size = size.to_string();
+            let format = format.to_string();
+            let circular = circular.to_string();
+        }
+        query {
+            "bundleIds" => &joined_ids,
+            "size" => &size,
+            "format" => &format,
+            "isCircular" => &circular,
+        }
+        map |r: Response| r.data
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    Ok(client
-        .requestor
-        .parse_json::<Response>(response)
-        .await?
-        .thumbnails)
-}
-
-pub async fn assets(
-    client: &mut Client,
-    ids: &[u64],
-    size: ThumbnailSize,
-    format: ThumbnailFormat,
-    return_policy: ReturnPolicy,
-    circular: bool,
-) -> Result<Vec<ThumbnailResponse>, Error> {
-    generic_thumbnail_api(
-        client,
-        ids,
-        "asset",
-        "assets",
-        size,
-        format,
-        circular,
-        Some(return_policy),
-        None,
-        None,
-    )
-    .await
-}
-
-pub async fn asset_3d(
-    client: &mut Client,
-    id: u64,
-    encode_gltf: bool,
-) -> Result<ThumbnailResponse, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/assets-thumbnail-3d"))
-        .query(&[
-            ("assetId", id.to_string()),
-            ("useGltf", encode_gltf.to_string()),
-        ])
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client
-        .requestor
-        .parse_json::<ThumbnailResponse>(response)
-        .await
-}
-
-pub async fn badge_icons(
-    client: &mut Client,
-    ids: &[u64],
-    size: ThumbnailSize,
-    format: ThumbnailFormat,
-    circular: bool,
-) -> Result<Vec<ThumbnailResponse>, Error> {
-    generic_thumbnail_api(
-        client,
-        ids,
-        "badge",
-        "badges/icons",
-        size,
-        format,
-        circular,
-        None,
-        None,
-        None,
-    )
-    .await
-}
-
-pub async fn bundles(
-    client: &mut Client,
-    ids: &[u64],
-    size: ThumbnailSize,
-    format: ThumbnailFormat,
-    circular: bool,
-) -> Result<Vec<ThumbnailResponse>, Error> {
-    generic_thumbnail_api(
-        client,
-        ids,
-        "bundle",
-        "bundles/thumbnails",
-        size,
-        format,
-        circular,
-        None,
-        None,
-        None,
-    )
-    .await
-}
-
-pub async fn developer_prodcuts(
-    client: &mut Client,
-    ids: &[u64],
-    size: ThumbnailSize,
-    format: ThumbnailFormat,
-    circular: bool,
-) -> Result<Vec<ThumbnailResponse>, Error> {
-    generic_thumbnail_api(
-        client,
-        ids,
-        "developerProduct",
-        "developer-products/icons",
-        size,
-        format,
-        circular,
-        None,
-        None,
-        None,
-    )
-    .await
-}
-
-pub async fn gamepasses(
-    client: &mut Client,
-    ids: &[u64],
-    size: ThumbnailSize,
-    format: ThumbnailFormat,
-    circular: bool,
-) -> Result<Vec<ThumbnailResponse>, Error> {
-    generic_thumbnail_api(
-        client,
-        ids,
-        "gamePass",
-        "game-passes",
-        size,
-        format,
-        circular,
-        None,
-        None,
-        None,
-    )
-    .await
-}
-
-// what the fuck does this even mean?
-/// Fetches game thumbnail URLs for a list of universes' thumbnail ids. Ids that do not correspond to a valid thumbnail will be filtered out.
-pub async fn universe_thumbnails(
-    client: &mut Client,
-    universe_id: u64,
-    ids: &[u64],
-    size: ThumbnailSize,
-    format: ThumbnailFormat,
-    return_policy: ReturnPolicy,
-    circular: bool,
-) -> Result<Vec<ThumbnailResponse>, Error> {
-    generic_thumbnail_api(
-        client,
-        ids,
-        "thumbnail",
-        &format!("games/{universe_id}/thumbnails"),
-        size,
-        format,
-        circular,
-        Some(return_policy),
-        None,
-        None,
-    )
-    .await
-}
-
-pub async fn games(
-    client: &mut Client,
-    ids: &[u64],
-    size: ThumbnailSize,
-    format: ThumbnailFormat,
-    return_policy: ReturnPolicy,
-    circular: bool,
-    defaults: bool,          // defaults (if any) should be returned if no media exists
-    count_per_universe: u32, // max number of thumbnails to return per universe
-) -> Result<Vec<ThumbnailResponse>, Error> {
-    generic_thumbnail_api(
-        client,
-        ids,
-        "universe",
-        "games/multiget/thumbnails",
-        size,
-        format,
-        circular,
-        Some(return_policy),
-        Some(count_per_universe),
-        Some(defaults),
-    )
-    .await
-}
-
-pub async fn game_icons(
-    client: &mut Client,
-    ids: &[u64],
-    size: ThumbnailSize,
-    format: ThumbnailFormat,
-    return_policy: ReturnPolicy,
-    circular: bool,
-) -> Result<Vec<ThumbnailResponse>, Error> {
-    generic_thumbnail_api(
-        client,
-        ids,
-        "universe",
-        "games/icons",
-        size,
-        format,
-        circular,
-        Some(return_policy),
-        None,
-        None,
-    )
-    .await
-}
-
-pub async fn group_icons(
-    client: &mut Client,
-    ids: &[u64],
-    size: ThumbnailSize,
-    format: ThumbnailFormat,
-    circular: bool,
-) -> Result<Vec<ThumbnailResponse>, Error> {
-    generic_thumbnail_api(
-        client,
-        ids,
-        "group",
-        "groups/icons",
-        size,
-        format,
-        circular,
-        None,
-        None,
-        None,
-    )
-    .await
-}
-
-pub async fn place_icons(
-    client: &mut Client,
-    ids: &[u64],
-    size: ThumbnailSize,
-    format: ThumbnailFormat,
-    return_policy: ReturnPolicy,
-    circular: bool,
-) -> Result<Vec<ThumbnailResponse>, Error> {
-    generic_thumbnail_api(
-        client,
-        ids,
-        "place",
-        "places/gameicons",
-        size,
-        format,
-        circular,
-        Some(return_policy),
-        None,
-        None,
-    )
-    .await
-}
-
-pub async fn avatars(
-    client: &mut Client,
-    ids: &[u64],
-    size: ThumbnailSize,
-    format: ThumbnailFormat,
-    circular: bool,
-) -> Result<Vec<ThumbnailResponse>, Error> {
-    generic_thumbnail_api(
-        client,
-        ids,
-        "user",
-        "users/avatar",
-        size,
-        format,
-        circular,
-        None,
-        None,
-        None,
-    )
-    .await
-}
-
-pub async fn avatar_3d(client: &mut Client, id: u64) -> Result<ThumbnailResponse, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/avatar-3d"))
-        .query(&[("userId", id)])
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client
-        .requestor
-        .parse_json::<ThumbnailResponse>(response)
-        .await
-}
-
-pub async fn avatar_busts(
-    client: &mut Client,
-    ids: &[u64],
-    size: ThumbnailSize,
-    format: ThumbnailFormat,
-    circular: bool,
-) -> Result<Vec<ThumbnailResponse>, Error> {
-    generic_thumbnail_api(
-        client,
-        ids,
-        "user",
-        "users/avatar-bust",
-        size,
-        format,
-        circular,
-        None,
-        None,
-        None,
-    )
-    .await
-}
-
-pub async fn avatar_headshots(
-    client: &mut Client,
-    ids: &[u64],
-    size: ThumbnailSize,
-    format: ThumbnailFormat,
-    circular: bool,
-) -> Result<Vec<ThumbnailResponse>, Error> {
-    generic_thumbnail_api(
-        client,
-        ids,
-        "user",
-        "users/avatar-headshot",
-        size,
-        format,
-        circular,
-        None,
-        None,
-        None,
-    )
-    .await
-}
-
-pub async fn outfit_3d(client: &mut Client, id: u64) -> Result<ThumbnailResponse, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/outfit-3d"))
-        .query(&[("outfitId", id)])
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client
-        .requestor
-        .parse_json::<ThumbnailResponse>(response)
-        .await
-}
-
-pub async fn outfits(
-    client: &mut Client,
-    ids: &[u64],
-    size: ThumbnailSize,
-    format: ThumbnailFormat,
-    circular: bool,
-) -> Result<Vec<ThumbnailResponse>, Error> {
-    generic_thumbnail_api(
-        client,
-        ids,
-        "userOutfit",
-        "users/outfits",
-        size,
-        format,
-        circular,
-        None,
-        None,
-        None,
-    )
-    .await
-}
-
-pub async fn batch(
-    client: &mut Client,
-    requests: Vec<ThumbnailBatchRequest<'_>>,
-) -> Result<Vec<ThumbnailResponseFromBatch>, Error> {
-    let result = client
-        .requestor
-        .client
-        .post(format!("{URL}/batch"))
-        .headers(client.requestor.default_headers.clone())
-        .json(&requests)
-        .send()
-        .await;
-
-    #[derive(Clone, Debug, Deserialize)]
-    struct Response {
-        #[serde(rename = "data")]
-        thumbnails: Vec<ThumbnailResponseFromBatch>,
+    /// Returns thumbnail URLs for a list of developer product ids.
+    developer_products(ids: &[u64], size: ThumbnailSize, format: ThumbnailFormat, circular: bool) -> Vec<ThumbnailResponse> {
+        GET "{URL}/developer-products/icons";
+        types {
+            Response { data("data"): Vec<ThumbnailResponse> }
+        }
+        prelude {
+            let joined_ids = ids.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
+            let size = size.to_string();
+            let format = format.to_string();
+            let circular = circular.to_string();
+        }
+        query {
+            "developerProductIds" => &joined_ids,
+            "size" => &size,
+            "format" => &format,
+            "isCircular" => &circular,
+        }
+        map |r: Response| r.data
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    Ok(client
-        .requestor
-        .parse_json::<Response>(response)
-        .await?
-        .thumbnails)
+    /// Returns thumbnail URLs for a list of game pass ids.
+    gamepasses(ids: &[u64], size: ThumbnailSize, format: ThumbnailFormat, circular: bool) -> Vec<ThumbnailResponse> {
+        GET "{URL}/game-passes";
+        types {
+            Response { data("data"): Vec<ThumbnailResponse> }
+        }
+        prelude {
+            let joined_ids = ids.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
+            let size = size.to_string();
+            let format = format.to_string();
+            let circular = circular.to_string();
+        }
+        query {
+            "gamePassIds" => &joined_ids,
+            "size" => &size,
+            "format" => &format,
+            "isCircular" => &circular,
+        }
+        map |r: Response| r.data
+    }
+
+    /// Fetches game thumbnail URLs for a list of universes' thumbnail ids.
+    /// Ids that do not correspond to a valid thumbnail will be filtered out.
+    universe_thumbnails(universe_id: u64, ids: &[u64], size: ThumbnailSize, format: ThumbnailFormat, return_policy: ReturnPolicy, circular: bool) -> Vec<ThumbnailResponse> {
+        GET "{URL}/games/{universe_id}/thumbnails";
+        types {
+            Response { data("data"): Vec<ThumbnailResponse> }
+        }
+        prelude {
+            let joined_ids = ids.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
+            let size = size.to_string();
+            let format = format.to_string();
+            let return_policy = return_policy.to_string();
+            let circular = circular.to_string();
+        }
+        query {
+            "thumbnailIds" => &joined_ids,
+            "size" => &size,
+            "format" => &format,
+            "returnPolicy" => &return_policy,
+            "isCircular" => &circular,
+        }
+        map |r: Response| r.data
+    }
+
+    /// Returns thumbnail URLs for a list of universe ids.
+    games(ids: &[u64], size: ThumbnailSize, format: ThumbnailFormat, return_policy: ReturnPolicy, circular: bool, defaults: bool, count_per_universe: u32) -> Vec<ThumbnailResponse> {
+        GET "{URL}/games/multiget/thumbnails";
+        types {
+            Response { data("data"): Vec<ThumbnailResponse> }
+        }
+        prelude {
+            let joined_ids = ids.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
+            let size = size.to_string();
+            let format = format.to_string();
+            let return_policy = return_policy.to_string();
+            let circular = circular.to_string();
+            let defaults = defaults.to_string();
+            let count_per_universe = count_per_universe.to_string();
+        }
+        query {
+            "universeIds" => &joined_ids,
+            "size" => &size,
+            "format" => &format,
+            "returnPolicy" => &return_policy,
+            "isCircular" => &circular,
+            "defaults" => &defaults,
+            "countPerUniverse" => &count_per_universe,
+        }
+        map |r: Response| r.data
+    }
+
+    /// Returns game icon URLs for a list of universe ids.
+    game_icons(ids: &[u64], size: ThumbnailSize, format: ThumbnailFormat, return_policy: ReturnPolicy, circular: bool) -> Vec<ThumbnailResponse> {
+        GET "{URL}/games/icons";
+        types {
+            Response { data("data"): Vec<ThumbnailResponse> }
+        }
+        prelude {
+            let joined_ids = ids.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
+            let size = size.to_string();
+            let format = format.to_string();
+            let return_policy = return_policy.to_string();
+            let circular = circular.to_string();
+        }
+        query {
+            "universeIds" => &joined_ids,
+            "size" => &size,
+            "format" => &format,
+            "returnPolicy" => &return_policy,
+            "isCircular" => &circular,
+        }
+        map |r: Response| r.data
+    }
+
+    /// Returns thumbnail URLs for a list of group ids.
+    group_icons(ids: &[u64], size: ThumbnailSize, format: ThumbnailFormat, circular: bool) -> Vec<ThumbnailResponse> {
+        GET "{URL}/groups/icons";
+        types {
+            Response { data("data"): Vec<ThumbnailResponse> }
+        }
+        prelude {
+            let joined_ids = ids.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
+            let size = size.to_string();
+            let format = format.to_string();
+            let circular = circular.to_string();
+        }
+        query {
+            "groupIds" => &joined_ids,
+            "size" => &size,
+            "format" => &format,
+            "isCircular" => &circular,
+        }
+        map |r: Response| r.data
+    }
+
+    /// Returns place icon URLs for a list of place ids.
+    place_icons(ids: &[u64], size: ThumbnailSize, format: ThumbnailFormat, return_policy: ReturnPolicy, circular: bool) -> Vec<ThumbnailResponse> {
+        GET "{URL}/places/gameicons";
+        types {
+            Response { data("data"): Vec<ThumbnailResponse> }
+        }
+        prelude {
+            let joined_ids = ids.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
+            let size = size.to_string();
+            let format = format.to_string();
+            let return_policy = return_policy.to_string();
+            let circular = circular.to_string();
+        }
+        query {
+            "placeIds" => &joined_ids,
+            "size" => &size,
+            "format" => &format,
+            "returnPolicy" => &return_policy,
+            "isCircular" => &circular,
+        }
+        map |r: Response| r.data
+    }
+
+    /// Returns avatar thumbnail URLs for a list of user ids.
+    avatars(ids: &[u64], size: ThumbnailSize, format: ThumbnailFormat, circular: bool) -> Vec<ThumbnailResponse> {
+        GET "{URL}/users/avatar";
+        types {
+            Response { data("data"): Vec<ThumbnailResponse> }
+        }
+        prelude {
+            let joined_ids = ids.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
+            let size = size.to_string();
+            let format = format.to_string();
+            let circular = circular.to_string();
+        }
+        query {
+            "userIds" => &joined_ids,
+            "size" => &size,
+            "format" => &format,
+            "isCircular" => &circular,
+        }
+        map |r: Response| r.data
+    }
+
+    /// Returns a 3D avatar thumbnail for a user id.
+    avatar_3d(id: u64) -> ThumbnailResponse {
+        GET "{URL}/avatar-3d";
+        prelude {
+            let id = id.to_string();
+        }
+        query {
+            "userId" => &id,
+        }
+    }
+
+    /// Returns avatar bust thumbnail URLs for a list of user ids.
+    avatar_busts(ids: &[u64], size: ThumbnailSize, format: ThumbnailFormat, circular: bool) -> Vec<ThumbnailResponse> {
+        GET "{URL}/users/avatar-bust";
+        types {
+            Response { data("data"): Vec<ThumbnailResponse> }
+        }
+        prelude {
+            let joined_ids = ids.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
+            let size = size.to_string();
+            let format = format.to_string();
+            let circular = circular.to_string();
+        }
+        query {
+            "userIds" => &joined_ids,
+            "size" => &size,
+            "format" => &format,
+            "isCircular" => &circular,
+        }
+        map |r: Response| r.data
+    }
+
+    /// Returns avatar headshot thumbnail URLs for a list of user ids.
+    avatar_headshots(ids: &[u64], size: ThumbnailSize, format: ThumbnailFormat, circular: bool) -> Vec<ThumbnailResponse> {
+        GET "{URL}/users/avatar-headshot";
+        types {
+            Response { data("data"): Vec<ThumbnailResponse> }
+        }
+        prelude {
+            let joined_ids = ids.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
+            let size = size.to_string();
+            let format = format.to_string();
+            let circular = circular.to_string();
+        }
+        query {
+            "userIds" => &joined_ids,
+            "size" => &size,
+            "format" => &format,
+            "isCircular" => &circular,
+        }
+        map |r: Response| r.data
+    }
+
+    /// Returns a 3D outfit thumbnail for an outfit id.
+    outfit_3d(id: u64) -> ThumbnailResponse {
+        GET "{URL}/outfit-3d";
+        prelude {
+            let id = id.to_string();
+        }
+        query {
+            "outfitId" => &id,
+        }
+    }
+
+    /// Returns outfit thumbnail URLs for a list of user outfit ids.
+    outfits(ids: &[u64], size: ThumbnailSize, format: ThumbnailFormat, circular: bool) -> Vec<ThumbnailResponse> {
+        GET "{URL}/users/outfits";
+        types {
+            Response { data("data"): Vec<ThumbnailResponse> }
+        }
+        prelude {
+            let joined_ids = ids.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
+            let size = size.to_string();
+            let format = format.to_string();
+            let circular = circular.to_string();
+        }
+        query {
+            "userOutfitIds" => &joined_ids,
+            "size" => &size,
+            "format" => &format,
+            "isCircular" => &circular,
+        }
+        map |r: Response| r.data
+    }
+
+    /// Returns batch thumbnail results for multiple requests of varying types and sizes.
+    batch(requests: Vec<ThumbnailBatchRequest<'_>>) -> Vec<ThumbnailResponseFromBatch> {
+        POST "{URL}/batch";
+        types {
+            Response { data("data"): Vec<ThumbnailResponseFromBatch> }
+        }
+        body_serialize { &requests }
+        map |r: Response| r.data
+    }
 }
 
 // TODO: measurements api

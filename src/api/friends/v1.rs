@@ -1,7 +1,6 @@
-use reqwest::Method;
 use serde::{Deserialize, Serialize};
 
-use crate::{DateTime, Error, Paging, client::Client};
+use crate::{DateTime, Paging, endpoint};
 
 pub const URL: &str = "https://friends.roblox.com/v1";
 
@@ -118,227 +117,114 @@ pub struct FriendOnlineStatus {
     pub presence: UserPresence,
 }
 
-async fn generic_count(client: &mut Client, path: &str) -> Result<u16, Error> {
-    #[derive(Debug, Deserialize)]
-    struct Response {
-        count: u16,
+#[derive(Debug, Deserialize)]
+struct CountResponse {
+    count: u16,
+}
+
+endpoint! {
+    friend_requests_count() -> u16 {
+        GET "{URL}/user/friend-requests/count";
+        map |r: CountResponse| r.count
     }
 
-    Ok(client
-        .requestor
-        .request::<()>(
-            Method::GET,
-            &format!("{URL}/{path}/count"),
-            None,
-            None,
-            None,
-        )
-        .await?
-        .json::<Response>()
-        .await?
-        .count)
-}
-
-pub async fn friend_requests_count(client: &mut Client) -> Result<u16, Error> {
-    generic_count(client, "user/friend-requests").await
-}
-
-pub async fn new_friend_requests_count(client: &mut Client) -> Result<u16, Error> {
-    generic_count(client, "my/new-friend-requests").await
-}
-
-pub async fn user_friends_count(client: &mut Client, id: u64) -> Result<u16, Error> {
-    generic_count(client, &format!("users/{id}/friends")).await
-}
-
-pub async fn user_followings_count(client: &mut Client, id: u64) -> Result<u16, Error> {
-    generic_count(client, &format!("users/{id}/followings")).await
-}
-
-pub async fn user_followers_count(client: &mut Client, id: u64) -> Result<u16, Error> {
-    generic_count(client, &format!("users/{id}/followers")).await
-}
-
-pub async fn following_status(
-    client: &mut Client,
-    ids: &[u64],
-) -> Result<Vec<FollowingStatus>, Error> {
-    #[derive(Debug, Serialize)]
-    struct Request<'a> {
-        #[serde(rename = "targetUserIds")]
-        user_ids: &'a [u64],
+    new_friend_requests_count() -> u16 {
+        GET "{URL}/my/new-friend-requests/count";
+        map |r: CountResponse| r.count
     }
 
-    #[derive(Debug, Deserialize)]
-    struct Response {
-        #[serde(rename = "followings")]
-        statuses: Vec<FollowingStatus>,
+    user_friends_count(id: u64) -> u16 {
+        GET "{URL}/users/{id}/friends/count";
+        map |r: CountResponse| r.count
     }
 
-    Ok(client
-        .requestor
-        .request::<Request>(
-            Method::POST,
-            &format!("{URL}/user/following-exists"),
-            Some(&Request { user_ids: ids }),
-            None,
-            None,
-        )
-        .await?
-        .json::<Response>()
-        .await?
-        .statuses)
-}
-
-pub async fn friend_requests(
-    client: &mut Client,
-    paging: Paging<'_>,
-) -> Result<FriendRequests, Error> {
-    let limit = paging.limit.unwrap_or(18).to_string();
-    let cursor = paging.cursor.unwrap_or("");
-
-    client
-        .requestor
-        .request::<()>(
-            Method::GET,
-            &format!("{URL}/my/friends/requests"),
-            None,
-            Some(&[("cursor", cursor), ("limit", &limit)]),
-            None,
-        )
-        .await?
-        .json::<FriendRequests>()
-        .await
-}
-
-pub async fn user_followers(client: &mut Client, id: u64) -> Result<Followers, Error> {
-    client
-        .requestor
-        .request::<()>(
-            Method::GET,
-            &format!("{URL}/users/{id}/followers"),
-            None,
-            None,
-            None,
-        )
-        .await?
-        .json::<Followers>()
-        .await
-}
-
-pub async fn user_followings(client: &mut Client, id: u64) -> Result<Followers, Error> {
-    client
-        .requestor
-        .request::<()>(
-            Method::GET,
-            &format!("{URL}/users/{id}/followings"),
-            None,
-            None,
-            None,
-        )
-        .await?
-        .json::<Followers>()
-        .await
-}
-
-pub async fn user_friends_online(
-    client: &mut Client,
-    id: u64,
-) -> Result<Vec<FriendOnlineStatus>, Error> {
-    #[derive(Debug, Deserialize)]
-    struct Response {
-        #[serde(rename = "data")]
-        online: Vec<FriendOnlineStatus>,
+    user_followings_count(id: u64) -> u16 {
+        GET "{URL}/users/{id}/followings/count";
+        map |r: CountResponse| r.count
     }
 
-    Ok(client
-        .requestor
-        .request::<()>(
-            Method::GET,
-            &format!("{URL}/users/{id}/friends/online"),
-            None,
-            None,
-            None,
-        )
-        .await?
-        .json::<Response>()
-        .await?
-        .online)
-}
-
-pub async fn user_friends_find(
-    client: &mut Client,
-    id: u64,
-    paging: Paging<'_>,
-) -> Result<FriendsFind, Error> {
-    let limit = paging.limit.unwrap_or(18).to_string();
-    let cursor = paging.cursor.unwrap_or("");
-
-    client
-        .requestor
-        .request::<()>(
-            Method::GET,
-            &format!("{URL}/users/{id}/friends/find"),
-            None,
-            Some(&[("cursor", cursor), ("limit", &limit), ("userSort", "1")]),
-            None,
-        )
-        .await?
-        .json::<FriendsFind>()
-        .await
-}
-
-pub async fn user_friends_search(
-    client: &mut Client,
-    id: u64,
-    query: &str,
-    paging: Paging<'_>,
-) -> Result<FriendsFind, Error> {
-    let limit = paging.limit.unwrap_or(36).to_string();
-    let cursor = paging.cursor.unwrap_or("");
-
-    client
-        .requestor
-        .request::<()>(
-            Method::GET,
-            &format!("{URL}/users/{id}/friends/search"),
-            None,
-            Some(&[("cursor", &cursor), ("limit", &limit), ("query", query)]),
-            None,
-        )
-        .await?
-        .json::<FriendsFind>()
-        .await
-}
-
-pub async fn user_friend_statuses(
-    client: &mut Client,
-    id: u64,
-    friends: &[u64],
-) -> Result<Vec<FriendStatus>, Error> {
-    #[derive(Debug, Deserialize)]
-    struct Response {
-        #[serde(rename = "data")]
-        statuses: Vec<FriendStatus>,
+    user_followers_count(id: u64) -> u16 {
+        GET "{URL}/users/{id}/followers/count";
+        map |r: CountResponse| r.count
     }
 
-    let ids = friends
-        .iter()
-        .map(|x| x.to_string())
-        .collect::<Vec<String>>()
-        .join(",");
+    following_status(ids: &[u64]) -> Vec<FollowingStatus> {
+        POST "{URL}/user/following-exists";
+        types {
+            Request<'a> {
+                user_ids("targetUserIds"): &'a [u64],
+            }
+            Response {
+                statuses("followings"): Vec<FollowingStatus>,
+            }
+        }
+        body_serialize {
+            &Request { user_ids: ids }
+        }
+        map |r: Response| r.statuses
+    }
 
-    Ok(client
-        .requestor
-        .request::<()>(
-            Method::GET,
-            &format!("{URL}/users/{id}/friends/statuses"),
-            None,
-            Some(&[("userIds", &ids)]),
-            None,
-        )
-        .await?
-        .json::<Response>()
-        .await?
-        .statuses)
+    friend_requests(paging: Paging<'_>) -> FriendRequests {
+        GET "{URL}/my/friends/requests";
+        paging_query { paging, limit = 18 }
+    }
+
+    user_followers(id: u64) -> Followers {
+        GET "{URL}/users/{id}/followers";
+    }
+
+    user_followings(id: u64) -> Followers {
+        GET "{URL}/users/{id}/followings";
+    }
+
+    user_friends_online(id: u64) -> Vec<FriendOnlineStatus> {
+        GET "{URL}/users/{id}/friends/online";
+        types {
+            Response {
+                online("data"): Vec<FriendOnlineStatus>,
+            }
+        }
+        map |r: Response| r.online
+    }
+
+    user_friends_find(id: u64, paging: Paging<'_>) -> FriendsFind {
+        GET "{URL}/users/{id}/friends/find";
+        prelude {
+            let limit = paging.limit.unwrap_or(18).to_string();
+            let cursor = paging.cursor.unwrap_or("");
+        }
+        query {
+            "cursor" => cursor,
+            "limit" => &limit,
+            "userSort" => "1",
+        }
+    }
+
+    user_friends_search(id: u64, query: &str, paging: Paging<'_>) -> FriendsFind {
+        GET "{URL}/users/{id}/friends/search";
+        paging_query { paging, limit = 36 }
+        query {
+            "query" => query,
+        }
+    }
+
+    user_friend_statuses(id: u64, friends: &[u64]) -> Vec<FriendStatus> {
+        GET "{URL}/users/{id}/friends/statuses";
+        types {
+            Response {
+                statuses("data"): Vec<FriendStatus>,
+            }
+        }
+        prelude {
+            let ids = friends
+                .iter()
+                .map(|x| x.to_string())
+                .collect::<Vec<String>>()
+                .join(",");
+        }
+        query {
+            "userIds" => &ids,
+        }
+        map |r: Response| r.statuses
+    }
 }

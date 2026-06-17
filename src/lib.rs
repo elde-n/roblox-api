@@ -4,6 +4,9 @@ pub mod client;
 pub mod ratelimit;
 pub mod validation;
 
+#[macro_use]
+mod endpoint;
+
 use challenge::Challenge;
 use chrono::{Datelike, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
@@ -36,6 +39,14 @@ impl DateTime {
             .unwrap()
             .year()
     }
+}
+
+#[repr(u8)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Display, EnumString, FromRepr)]
+pub enum Gender {
+    None = 1,
+    Male = 2,
+    Female = 3,
 }
 
 #[derive(Debug)]

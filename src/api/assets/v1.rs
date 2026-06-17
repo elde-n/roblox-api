@@ -6,7 +6,7 @@ use reqwest::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::{AssetTypeId, DateTime, Error, client::Client};
+use crate::{AssetTypeId, DateTime, Error, client::Client, endpoint};
 
 pub const URL: &str = "https://apis.roblox.com/assets/user-auth/v1";
 
@@ -84,20 +84,17 @@ pub struct AssetUploadStatus {
     pub response: Option<AssetUploadResponse>,
 }
 
-pub async fn asset(client: &mut Client, id: u64) -> Result<AssetInfo, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/assets/{id}"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
+endpoint! {
+    asset(id: u64) -> AssetInfo {
+        GET "{URL}/assets/{id}";
+    }
 
-    let response = client.requestor.validate_response(result).await?;
-    client.requestor.parse_json::<AssetInfo>(response).await
+    status(operation_id: &str) -> AssetUploadStatus {
+        GET "{URL}/operations/{operation_id}";
+    }
 }
 
-// this api also takes in a patch request to update an exists asset "{URL}/assets/{id}"
+// TODO: this api also takes in a patch request to update an exists asset "{URL}/assets/{id}"
 pub async fn upload(
     client: &mut Client,
     path: impl AsRef<Path>,
@@ -139,22 +136,6 @@ pub async fn upload(
                 .await
                 .unwrap(),
         )
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client
-        .requestor
-        .parse_json::<AssetUploadStatus>(response)
-        .await
-}
-
-pub async fn status(client: &mut Client, operation_id: &str) -> Result<AssetUploadStatus, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/operations/{operation_id}"))
-        .headers(client.requestor.default_headers.clone())
         .send()
         .await;
 

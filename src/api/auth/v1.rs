@@ -8,7 +8,7 @@ use p256::{
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
-use crate::{DateTime, Error, api::hba_service, client::Client};
+use crate::{DateTime, Error, api::hba_service, client::Client, endpoint};
 
 pub const URL: &str = "https://auth.roblox.com/v1";
 
@@ -109,73 +109,41 @@ async fn authentication_intent(client: &mut Client) -> Result<AuthenticationInte
     })
 }
 
-pub async fn login(
-    client: &mut Client,
-    login: &str,
-    key: &str,
-    login_type: LoginType,
-) -> Result<LoginResponse, Error> {
-    #[derive(Serialize)]
-    struct Request<'a> {
-        #[serde(rename = "ctype")]
-        login_type: LoginType,
-        #[serde(rename = "cvalue")]
-        login: &'a str,
-        #[serde(rename = "password")]
-        key: &'a str,
-
-        #[serde(rename = "secureAuthenticationIntent")]
-        authentication_intent: AuthenticationIntent,
+endpoint! {
+    /// Logs in with the given credentials and returns a session token.
+    login(client, login: &str, key: &str, login_type: LoginType) -> LoginResponse {
+        POST "{URL}/login" ;
+        types {
+            Request<'a> {
+                login_type("ctype"): LoginType,
+                login("cvalue"): &'a str,
+                key("password"): &'a str,
+                authentication_intent("secureAuthenticationIntent"): AuthenticationIntent,
+            }
+        }
+        prelude {
+            let intent = authentication_intent(client).await?;
+        }
+        body_serialize {
+            &Request { login_type, login, key, authentication_intent: intent }
+        }
     }
 
-    let authentication_intent = authentication_intent(client).await?;
-    let result = client
-        .requestor
-        .client
-        .post(format!("{URL}/login"))
-        .headers(client.requestor.default_headers.clone())
-        .json(&Request {
-            login_type,
-            login,
-            key,
-            authentication_intent,
-        })
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client.requestor.parse_json::<LoginResponse>(response).await
-}
-
-pub async fn recommended_usernames_from_display_name(
-    client: &mut Client,
-    display_name: &str,
-    birthday: DateTime,
-) -> Result<RecommendedUsernamesFromDisplayName, Error> {
-    #[derive(Serialize)]
-    #[serde(rename_all = "camelCase")]
-    struct Request<'a> {
-        display_name: &'a str,
-        birthday: &'a str,
+    recommended_usernames_from_display_name(
+        display_name: &str, birthday: DateTime
+    ) -> RecommendedUsernamesFromDisplayName {
+        POST "{URL}/validators/recommendedUsernameFromDisplayName" ;
+        types {
+            Request<'a> {
+                display_name("displayName"): &'a str,
+                birthday: String,
+            }
+        }
+        body_serialize {
+            &Request {
+                display_name,
+                birthday: birthday.to_string(),
+            }
+        }
     }
-
-    let result = client
-        .requestor
-        .client
-        .post(format!(
-            "{URL}/validators/recommendedUsernameFromDisplayName"
-        ))
-        .headers(client.requestor.default_headers.clone())
-        .json(&Request {
-            display_name,
-            birthday: birthday.to_string().as_str(),
-        })
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client
-        .requestor
-        .parse_json::<RecommendedUsernamesFromDisplayName>(response)
-        .await
 }

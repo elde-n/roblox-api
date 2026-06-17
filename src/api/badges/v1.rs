@@ -1,8 +1,7 @@
-use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 
-use crate::{DateTime, Error, Paging, client::Client};
+use crate::{DateTime, Paging, endpoint};
 
 pub const URL: &str = "https://badges.roblox.com/v1";
 
@@ -93,94 +92,32 @@ pub struct BadgesResponse {
     pub previous_cursor: Option<String>,
 }
 
-async fn badges_generic<Response: DeserializeOwned>(
-    client: &mut Client,
-    path: &str,
-    sort_by: Option<BadgeSortBy>,
-    paging: Paging<'_>,
-) -> Result<Response, Error> {
-    let limit = paging.limit.unwrap_or(10).to_string();
-    let sort_order = paging.order.unwrap_or_default().to_string();
-    let cursor = match paging.cursor {
-        Some(cursor) => cursor.to_string(),
-        None => String::new(),
-    };
+endpoint! {
+    information(id: u64) -> Badge {
+        GET "{URL}/badges/{id}";
+    }
 
-    let sort_by = match sort_by {
-        Some(sort_by) => sort_by.to_string(),
-        None => String::new(),
-    };
+    universe_badges(id: u64, sort_by: Option<BadgeSortBy>, paging: Paging<'_>) -> BadgesResponse {
+        GET "{URL}/universes/{id}/badges";
+        paging_query { paging, limit = 10 }
+        prelude {
+            let sort_by_lower = sort_by.as_ref().map(|s| s.to_string().to_lowercase());
+        }
+        query {
+            "sortBy" => sort_by_lower.as_deref().unwrap_or(""),
+        }
+    }
 
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/{path}/badges"))
-        .query(&[
-            ("sortBy", sort_by),
-            ("limit", limit),
-            ("sortOrder", sort_order),
-            ("cursor", cursor),
-        ])
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
+    user_badges(id: u64, paging: Paging<'_>) -> BadgesResponse {
+        GET "{URL}/users/{id}/badges";
+        paging_query { paging, limit = 10 }
+    }
 
-    let response = client.requestor.validate_response(result).await?;
-    client.requestor.parse_json::<Response>(response).await
-}
+    remove(id: u64, user_id: u64) -> () {
+        DELETE "{URL}/user/{user_id}/badges/{id}";
+    }
 
-pub async fn information(client: &mut Client, id: u64) -> Result<Badge, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/badges/{id}"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client.requestor.parse_json::<Badge>(response).await
-}
-
-pub async fn universe_badges(
-    client: &mut Client,
-    id: u64,
-    sort_by: Option<BadgeSortBy>,
-    paging: Paging<'_>,
-) -> Result<BadgesResponse, Error> {
-    badges_generic::<BadgesResponse>(client, &format!("universes/{id}"), sort_by, paging).await
-}
-
-pub async fn user_badges(
-    client: &mut Client,
-    id: u64,
-    paging: Paging<'_>,
-) -> Result<BadgesResponse, Error> {
-    badges_generic::<BadgesResponse>(client, &format!("users/{id}"), None, paging).await
-}
-
-pub async fn remove(client: &mut Client, id: u64, user_id: u64) -> Result<(), Error> {
-    let result = client
-        .requestor
-        .client
-        .delete(format!("{URL}/user/{user_id}/badges/{id}"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client.requestor.parse_json::<()>(response).await
-}
-
-pub async fn authenticated_remove(client: &mut Client, id: u64) -> Result<(), Error> {
-    let result = client
-        .requestor
-        .client
-        .delete(format!("{URL}/user/badges/{id}"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client.requestor.parse_json::<()>(response).await
+    authenticated_remove(id: u64) -> () {
+        DELETE "{URL}/user/badges/{id}";
+    }
 }

@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 
-use crate::{DateTime, Error, Paging, client::Client};
+use crate::{DateTime, Paging, endpoint};
 
 pub const URL: &str = "https://apis.roblox.com/game-passes/v1";
 
@@ -120,72 +120,38 @@ pub struct GamepassProductInformation {
     pub minimum_membership_level: u8,
 }
 
-pub async fn details(client: &mut Client, id: u64) -> Result<GamepassDetails, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/game-passes/{id}/details"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client
-        .requestor
-        .parse_json::<GamepassDetails>(response)
-        .await
-}
-
-pub async fn product_information(
-    client: &mut Client,
-    id: u64,
-) -> Result<GamepassProductInformation, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/game-passes/{id}/product-info"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client
-        .requestor
-        .parse_json::<GamepassProductInformation>(response)
-        .await
-}
-
-/// The cursor is the gamepass_id you want to start from
-pub async fn user_gamepasses(
-    client: &mut Client,
-    id: u64,
-    paging: Paging<'_>,
-) -> Result<Vec<Gamepass>, Error> {
-    let limit = paging.limit.unwrap_or(100).to_string();
-    let cursor = match paging.cursor {
-        Some(cursor) => cursor.to_string(),
-        None => String::new(),
-    };
-
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/users/{id}/game-passes"))
-        .query(&[("count", limit), ("exclusiveStartId", cursor)])
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    #[derive(Debug, Deserialize)]
-    struct Response {
-        #[serde(rename = "gamePasses")]
-        gamepasses: Vec<Gamepass>,
+endpoint! {
+    details(id: u64) -> GamepassDetails {
+        GET "{URL}/game-passes/{id}/details";
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    Ok(client
-        .requestor
-        .parse_json::<Response>(response)
-        .await?
-        .gamepasses)
+    product_information(id: u64) -> GamepassProductInformation {
+        GET "{URL}/game-passes/{id}/product-info";
+    }
+
+    /// The cursor is the gamepass_id you want to start from
+    user_gamepasses(id: u64, paging: Paging<'_>) -> Vec<Gamepass> {
+        GET "{URL}/users/{id}/game-passes";
+
+        types {
+            Response {
+                gamepasses("gamePasses"): Vec<Gamepass>,
+            }
+        }
+
+        prelude {
+            let count = paging.limit.unwrap_or(100).to_string();
+            let cursor = match paging.cursor {
+                Some(cursor) => cursor.to_string(),
+                None => String::new(),
+            };
+        }
+
+        query {
+            "count" => &count,
+            "exclusiveStartId" => &cursor,
+        }
+
+        map |r: Response| r.gamepasses
+    }
 }

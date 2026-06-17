@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{DateTime, Error, Paging, client::Client};
+use crate::{DateTime, Paging, endpoint};
 
 pub const URL: &str = "https://groups.roblox.com/v1";
 
@@ -225,344 +225,141 @@ pub struct GroupUsers {
     pub previous_cursor: Option<String>,
 }
 
-pub async fn information(client: &mut Client, id: u64) -> Result<GroupInformation, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/groups/{id}"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client
-        .requestor
-        .parse_json::<GroupInformation>(response)
-        .await
-}
-
-/// Gets group membership information in the context of the authenticated user
-pub async fn membership(
-    client: &mut Client,
-    id: u64,
-    notification_preferences: bool,
-) -> Result<Membership, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/groups/{id}/membership"))
-        .query(&[("includeNotificationPreferences", notification_preferences)])
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client.requestor.parse_json::<Membership>(response).await
-}
-
-/// Gets the Group's name change history
-pub async fn name_history(client: &mut Client, id: u64) -> Result<NameHistory, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/groups/{id}/name-history"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    #[derive(Debug, Deserialize)]
-    struct NameHistoryItem {
-        name: String,
-        created: DateTime,
+endpoint! {
+    information(id: u64) -> GroupInformation {
+        GET "{URL}/groups/{id}" ;
     }
 
-    #[derive(Debug, Deserialize)]
-    #[serde(rename_all = "camelCase")]
-    struct Response {
-        #[serde(rename = "data")]
-        items: Vec<NameHistoryItem>,
-        next_cursor: Option<String>,
-        previous_cursor: Option<String>,
+    /// Gets group membership information in the context of the authenticated user
+    membership(id: u64, notification_preferences: bool) -> Membership {
+        GET "{URL}/groups/{id}/membership" ;
+        prelude {
+            let notification_preferences = notification_preferences.to_string();
+        }
+        query {
+            "includeNotificationPreferences" => &notification_preferences,
+        }
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    let result = client.requestor.parse_json::<Response>(response).await?;
-
-    let names: Vec<(String, DateTime)> = result
-        .items
-        .into_iter()
-        .map(|x| (x.name, x.created))
-        .collect();
-
-    Ok(NameHistory {
-        names,
-        next_cursor: result.next_cursor,
-        previous_cursor: result.previous_cursor,
-    })
-}
-
-/// Gets groups that the authenticated user has requested to join
-pub async fn pending_join_requests(client: &mut Client) -> Result<Vec<GroupInformation>, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/user/groups/pending"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    #[derive(Clone, Debug, Deserialize)]
-    struct Response {
-        #[serde(rename = "data")]
-        groups: Vec<GroupInformation>,
+    /// Gets the Group's name change history
+    name_history(id: u64) -> NameHistory {
+        GET "{URL}/groups/{id}/name-history" ;
+        types {
+            NameHistoryItem {
+                name: String,
+                created: DateTime,
+            }
+            Response {
+                items("data"): Vec<NameHistoryItem>,
+                next_cursor("nextPageCursor"): Option<String>,
+                previous_cursor("previousPageCursor"): Option<String>,
+            }
+        }
+        map |r: Response| NameHistory {
+            names: r.items.into_iter().map(|x| (x.name, x.created)).collect(),
+            next_cursor: r.next_cursor,
+            previous_cursor: r.previous_cursor,
+        }
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    Ok(client
-        .requestor
-        .parse_json::<Response>(response)
-        .await?
-        .groups)
-}
-
-pub async fn roles(client: &mut Client, id: u64) -> Result<Vec<GroupRole>, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/groups/{id}/roles"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    #[derive(Clone, Debug, Deserialize)]
-    struct Response {
-        roles: Vec<GroupRole>,
+    /// Gets groups that the authenticated user has requested to join
+    pending_join_requests() -> Vec<GroupInformation> {
+        GET "{URL}/user/groups/pending" ;
+        types {
+            Response {
+                groups("data"): Vec<GroupInformation>,
+            }
+        }
+        map |r: Response| r.groups
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    Ok(client
-        .requestor
-        .parse_json::<Response>(response)
-        .await?
-        .roles)
-}
-
-pub async fn user_roles(
-    client: &mut Client,
-    id: u64,
-) -> Result<Vec<(GroupInformation, GroupRole)>, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/users/{id}/groups/roles"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    #[derive(Clone, Debug, Deserialize)]
-    struct GroupAndRole {
-        group: GroupInformation,
-        role: GroupRole,
+    roles(id: u64) -> Vec<GroupRole> {
+        GET "{URL}/groups/{id}/roles" ;
+        types {
+            Response {
+                roles: Vec<GroupRole>,
+            }
+        }
+        map |r: Response| r.roles
     }
 
-    #[derive(Clone, Debug, Deserialize)]
-    struct Response {
-        #[serde(rename = "data")]
-        items: Vec<GroupAndRole>,
+    user_roles(id: u64) -> Vec<(GroupInformation, GroupRole)> {
+        GET "{URL}/users/{id}/groups/roles" ;
+        types {
+            GroupAndRole {
+                group: GroupInformation,
+                role: GroupRole,
+            }
+            Response {
+                items("data"): Vec<GroupAndRole>,
+            }
+        }
+        map |r: Response| r.items.into_iter().map(|x| (x.group, x.role)).collect()
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    let response = client.requestor.parse_json::<Response>(response).await?;
-
-    let mut roles = Vec::new();
-    for item in &response.items {
-        roles.push((item.group.clone(), item.role.clone()));
+    /// Gets the permissions for a group's roleset. The authorized user must either be the group owner or the roleset being requested, except for guest roles, which can be viewed by all (members and guests).
+    roleset_permissions(id: u64, roleset_id: u64) -> RolePermissions {
+        GET "{URL}/groups/{id}/roles/{roleset_id}/permissions" ;
     }
 
-    Ok(roles)
-}
-
-/// Gets the permissions for a group's roleset. The authorized user must either be the group owner or the roleset being requested, except for guest roles, which can be viewed by all (members and guests).
-pub async fn roleset_permissions(
-    client: &mut Client,
-    id: u64,
-    roleset_id: u64,
-) -> Result<RolePermissions, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/groups/{id}/roles/{roleset_id}/permissions"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client
-        .requestor
-        .parse_json::<RolePermissions>(response)
-        .await
-}
-
-/// Gets all permissions for each role
-pub async fn role_permissions(client: &mut Client, id: u64) -> Result<Vec<RolePermissions>, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/groups/{id}/roles/permissions"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    #[derive(Debug, Deserialize)]
-    struct Response {
-        #[serde(rename = "data")]
-        items: Vec<RolePermissions>,
+    /// Gets all permissions for each role
+    role_permissions(id: u64) -> Vec<RolePermissions> {
+        GET "{URL}/groups/{id}/roles/permissions" ;
+        types {
+            Response {
+                items("data"): Vec<RolePermissions>,
+            }
+        }
+        map |r: Response| r.items
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    Ok(client
-        .requestor
-        .parse_json::<Response>(response)
-        .await?
-        .items)
-}
-
-pub async fn users(client: &mut Client, id: u64, paging: Paging<'_>) -> Result<GroupUsers, Error> {
-    let limit = paging.limit.unwrap_or(10).to_string();
-    let sort_order = paging.order.unwrap_or_default().to_string();
-    let cursor = match paging.cursor {
-        Some(cursor) => cursor.to_string(),
-        None => String::new(),
-    };
-
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/groups/{id}/users"))
-        .query(&[
-            ("limit", limit),
-            ("sortOrder", sort_order),
-            ("cursor", cursor),
-        ])
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    #[derive(Clone, Debug, Deserialize)]
-    struct User {
-        user: GroupUser,
-        role: GroupRole,
+    users(id: u64, paging: Paging<'_>) -> GroupUsers {
+        GET "{URL}/groups/{id}/users" ;
+        paging_query { paging, limit = 10 }
+        types {
+            User {
+                user: GroupUser,
+                role: GroupRole,
+            }
+            Response {
+                users("data"): Vec<User>,
+                next_cursor("nextPageCursor"): Option<String>,
+                previous_cursor("previousPageCursor"): Option<String>,
+            }
+        }
+        map |r: Response| GroupUsers {
+            users: r.users.into_iter().map(|u| (u.user, u.role)).collect(),
+            next_cursor: r.next_cursor,
+            previous_cursor: r.previous_cursor,
+        }
     }
 
-    #[derive(Clone, Debug, Deserialize)]
-    struct Response {
-        #[serde(rename = "data")]
-        users: Vec<User>,
-        #[serde(rename = "nextPageCursor")]
-        next_cursor: Option<String>,
-        #[serde(rename = "previousPageCursor")]
-        previous_cursor: Option<String>,
+    /// Gets a list of group wall posts
+    wall_posts(id: u64, paging: Paging<'_>) -> WallPosts {
+        GET "{URL}/groups/{id}/wall/posts" ;
+        paging_query { paging, limit = 10 }
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    let response = client.requestor.parse_json::<Response>(response).await?;
-
-    let mut users = Vec::new();
-    for user in response.users {
-        users.push((user.user, user.role))
+    join(id: u64) -> () {
+        POST "{URL}/groups/{id}/users" ;
+        types {
+            Request<'a> {
+                session_id: &'a str,
+                redemption_token: &'a str,
+            }
+        }
+        body_serialize { Request { session_id: "", redemption_token: "" } }
     }
 
-    Ok(GroupUsers {
-        users,
-        next_cursor: response.next_cursor,
-        previous_cursor: response.previous_cursor,
-    })
-}
-
-/// Gets a list of group wall posts
-pub async fn wall_posts(
-    client: &mut Client,
-    id: u64,
-    paging: Paging<'_>,
-) -> Result<WallPosts, Error> {
-    let limit = paging.limit.unwrap_or(10).to_string();
-    let sort_order = paging.order.unwrap_or_default().to_string();
-    let cursor = match paging.cursor {
-        Some(cursor) => cursor.to_string(),
-        None => String::new(),
-    };
-
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/groups/{id}/wall/posts"))
-        .query(&[
-            ("limit", limit),
-            ("sortOrder", sort_order),
-            ("cursor", cursor),
-        ])
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client.requestor.parse_json::<WallPosts>(response).await
-}
-
-pub async fn join(client: &mut Client, id: u64) -> Result<(), Error> {
-    #[derive(Serialize)]
-    #[serde(rename_all = "camelCase")]
-    struct Request<'a> {
-        session_id: &'a str,
-        redemption_token: &'a str,
+    remove_join_request(id: u64, user_id: u64) -> () {
+        DELETE "{URL}/groups/{id}/join-requests/users/{user_id}" ;
+        types { Request {} }
+        body_serialize { Request {} }
     }
 
-    let result = client
-        .requestor
-        .client
-        .post(format!("{URL}/groups/{id}/users"))
-        .headers(client.requestor.default_headers.clone())
-        .json(&Request {
-            session_id: "",
-            redemption_token: "",
-        })
-        .send()
-        .await;
-
-    client.requestor.validate_response(result).await?;
-    Ok(())
-}
-
-pub async fn remove_join_request(client: &mut Client, id: u64, user_id: u64) -> Result<(), Error> {
-    #[derive(Serialize)]
-    struct Request {}
-
-    let result = client
-        .requestor
-        .client
-        .delete(format!("{URL}/groups/{id}/join-requests/users/{user_id}"))
-        .json(&Request {})
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    client.requestor.validate_response(result).await?;
-    Ok(())
-}
-
-pub async fn remove(client: &mut Client, id: u64, user_id: u64) -> Result<(), Error> {
-    #[derive(Serialize)]
-    struct Request {}
-
-    let result = client
-        .requestor
-        .client
-        .delete(format!("{URL}/groups/{id}/users/{user_id}"))
-        .headers(client.requestor.default_headers.clone())
-        .json(&Request {})
-        .send()
-        .await;
-
-    client.requestor.validate_response(result).await?;
-    Ok(())
+    remove(id: u64, user_id: u64) -> () {
+        DELETE "{URL}/groups/{id}/users/{user_id}" ;
+        types { Request {} }
+        body_serialize { Request {} }
+    }
 }

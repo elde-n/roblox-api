@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{Error, client::Client};
+use crate::endpoint;
 
 pub const URL: &str = "https://apis.roblox.com/user-blocking-api/v1";
 
@@ -13,50 +13,28 @@ pub struct UserBlockStatus {
     pub is_blocking_viewer: bool,
 }
 
-pub async fn is_blocked(client: &mut Client, id: u64) -> Result<bool, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/users/{id}/is-blocked"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client.requestor.parse_json::<bool>(response).await
-}
-
-pub async fn batch_check_reciprocal_block(
-    client: &mut Client,
-    requester_id: u64,
-    ids: &[u64],
-) -> Result<Vec<UserBlockStatus>, Error> {
-    #[derive(Debug, Serialize)]
-    struct Request<'a> {
-        #[serde(rename = "requesterUserId")]
-        requester_id: u64,
-        #[serde(rename = "userIds")]
-        ids: &'a [u64],
+endpoint! {
+    is_blocked(id: u64) -> bool {
+        GET "{URL}/users/{id}/is-blocked";
     }
 
-    let result = client
-        .requestor
-        .client
-        .post(format!("{URL}/users/batch-check-reciprocal-block"))
-        .json(&Request { requester_id, ids })
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
+    batch_check_reciprocal_block(requester_id: u64, ids: &[u64]) -> Vec<UserBlockStatus> {
+        POST "{URL}/users/batch-check-reciprocal-block";
 
-    #[derive(Debug, Deserialize)]
-    struct Response {
-        users: Vec<UserBlockStatus>,
+        types {
+            Request<'a> {
+                requester_id("requesterUserId"): u64,
+                ids("userIds"): &'a [u64],
+            }
+            Response {
+                users: Vec<UserBlockStatus>,
+            }
+        }
+
+        body_serialize {
+            Request { requester_id, ids }
+        }
+
+        map |res: Response| res.users
     }
-
-    let response = client.requestor.validate_response(result).await?;
-    Ok(client
-        .requestor
-        .parse_json::<Response>(response)
-        .await?
-        .users)
 }

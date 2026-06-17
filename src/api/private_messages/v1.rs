@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{DateTime, Error, Paging, client::Client};
+use crate::{DateTime, Paging, endpoint};
 
 pub const URL: &str = "https://privatemessages.roblox.com/v1";
 
@@ -84,116 +84,69 @@ impl std::fmt::Display for MessageTab {
     }
 }
 
-async fn generic_message_action(
-    client: &mut Client,
-    path: &str,
-    ids: &[u64],
-) -> Result<Vec<u64>, Error> {
-    #[derive(Debug, Serialize)]
-    struct Request<'a> {
-        #[serde(rename = "messageIds")]
-        ids: &'a [u64],
+endpoint! {
+    unread_count() -> u64 {
+        GET "{URL}/messages/unread/count";
+        types { CountResponse { count: u64 } }
+        map |r: CountResponse| r.count
     }
 
-    let result = client
-        .requestor
-        .client
-        .post(format!("{URL}/messages/{path}"))
-        .json(&Request { ids })
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    #[derive(Debug, Deserialize)]
-    struct Response {
-        #[serde(rename = "failedMessages")]
-        failed: Vec<u64>,
+    /// The paging cursor is a page number
+    messages(tab: MessageTab, paging: Paging<'_>) -> Messages {
+        GET "{URL}/messages";
+        prelude {
+            let tab = tab.to_string();
+            let limit = paging.limit.unwrap_or(100).to_string();
+            let cursor = paging.cursor.map_or(String::new(), |c| c.to_string());
+        }
+        query {
+            "messageTab" => &tab,
+            "pageNumber" => &cursor,
+            "pageSize" => &limit
+        }
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    Ok(client
-        .requestor
-        .parse_json::<Response>(response)
-        .await?
-        .failed)
-}
-
-pub async fn unread_count(client: &mut Client) -> Result<u64, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/messages/unread/count"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    #[derive(Debug, Deserialize)]
-    struct Response {
-        count: u64,
+    announcements() -> Announcements {
+        GET "{URL}/announcements";
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    Ok(client
-        .requestor
-        .parse_json::<Response>(response)
-        .await?
-        .count)
-}
+    archive(ids: &[u64]) -> Vec<u64> {
+        POST "{URL}/messages/archive";
+        types {
+            Request<'a> { message_ids("messageIds"): &'a [u64] }
+            ActionResponse { failed("failedMessages"): Vec<u64> }
+        }
+        body_serialize { Request { message_ids: ids } }
+        map |r: ActionResponse| r.failed
+    }
 
-/// The paging cursor is a page number
-pub async fn messages(
-    client: &mut Client,
-    tab: MessageTab,
-    paging: Paging<'_>,
-) -> Result<Messages, Error> {
-    let limit = paging.limit.unwrap_or(100).to_string();
-    let cursor = match paging.cursor {
-        Some(cursor) => cursor.to_string(),
-        None => String::new(),
-    };
+    unarchive(ids: &[u64]) -> Vec<u64> {
+        POST "{URL}/messages/unarchive";
+        types {
+            Request<'a> { message_ids("messageIds"): &'a [u64] }
+            ActionResponse { failed("failedMessages"): Vec<u64> }
+        }
+        body_serialize { Request { message_ids: ids } }
+        map |r: ActionResponse| r.failed
+    }
 
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/messages"))
-        .query(&[
-            ("messageTab", tab.to_string()),
-            ("pageNumber", cursor),
-            ("pageSize", limit),
-        ])
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
+    mark_as_read(ids: &[u64]) -> Vec<u64> {
+        POST "{URL}/messages/mark-read";
+        types {
+            Request<'a> { message_ids("messageIds"): &'a [u64] }
+            ActionResponse { failed("failedMessages"): Vec<u64> }
+        }
+        body_serialize { Request { message_ids: ids } }
+        map |r: ActionResponse| r.failed
+    }
 
-    let response = client.requestor.validate_response(result).await?;
-    client.requestor.parse_json::<Messages>(response).await
-}
-
-pub async fn announcements(client: &mut Client) -> Result<Announcements, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/announcements"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client.requestor.parse_json::<Announcements>(response).await
-}
-
-pub async fn archive(client: &mut Client, ids: &[u64]) -> Result<Vec<u64>, Error> {
-    generic_message_action(client, "archive", ids).await
-}
-
-pub async fn unarchive(client: &mut Client, ids: &[u64]) -> Result<Vec<u64>, Error> {
-    generic_message_action(client, "unarchive", ids).await
-}
-
-pub async fn mark_as_read(client: &mut Client, ids: &[u64]) -> Result<Vec<u64>, Error> {
-    generic_message_action(client, "mark-read", ids).await
-}
-
-pub async fn mark_as_unread(client: &mut Client, ids: &[u64]) -> Result<Vec<u64>, Error> {
-    generic_message_action(client, "mark-unread", ids).await
+    mark_as_unread(ids: &[u64]) -> Vec<u64> {
+        POST "{URL}/messages/mark-unread";
+        types {
+            Request<'a> { message_ids("messageIds"): &'a [u64] }
+            ActionResponse { failed("failedMessages"): Vec<u64> }
+        }
+        body_serialize { Request { message_ids: ids } }
+        map |r: ActionResponse| r.failed
+    }
 }

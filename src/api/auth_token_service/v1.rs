@@ -1,7 +1,6 @@
-use reqwest::Method;
 use serde::{Deserialize, Serialize};
 
-use crate::{DateTime, Error, client::Client};
+use crate::{DateTime, endpoint};
 
 pub const URL: &str = "https://apis.roblox.com/auth-token-service/v1";
 
@@ -39,118 +38,66 @@ pub struct InspectionInfo {
     pub device_info: String,
 }
 
-pub async fn login_create(client: &mut Client) -> Result<LoginToken, Error> {
-    client
-        .requestor
-        .request::<()>(
-            Method::POST,
-            &format!("{URL}/login/create"),
-            None,
-            None,
-            None,
-        )
-        .await?
-        .json::<LoginToken>()
-        .await
-}
-
-pub async fn login_cancel(client: &mut Client, code: &str) -> Result<(), Error> {
-    #[derive(Serialize)]
-    struct Request<'a> {
-        code: &'a str,
+endpoint! {
+    login_create() -> LoginToken {
+        POST "{URL}/login/create";
     }
 
-    client
-        .requestor
-        .request::<Request>(
-            Method::POST,
-            &format!("{URL}/login/cancel"),
-            Some(&Request { code }),
-            None,
-            None,
-        )
-        .await?;
-
-    Ok(())
-}
-
-pub async fn login_status(
-    client: &mut Client,
-    code: &str,
-    key: &str,
-) -> Result<LoginTokenStatus, Error> {
-    #[derive(Serialize)]
-    struct Request<'a> {
-        code: &'a str,
-        #[serde(rename = "privateKey")]
-        key: &'a str,
+    login_cancel(code: &str) -> () {
+        POST "{URL}/login/cancel";
+        types {
+            Request<'a> {
+                code: &'a str,
+            }
+        }
+        body_serialize {
+            &Request { code }
+        }
     }
 
-    client
-        .requestor
-        .request::<Request>(
-            Method::POST,
-            &format!("{URL}/login/status"),
-            Some(&Request { code, key }),
-            None,
-            None,
-        )
-        .await?
-        .json::<LoginTokenStatus>()
-        .await
-}
-
-pub async fn inspect_code(client: &mut Client, code: &str) -> Result<InspectionInfo, Error> {
-    #[derive(Serialize)]
-    struct Request<'a> {
-        code: &'a str,
+    login_status(code: &str, key: &str) -> LoginTokenStatus {
+        POST "{URL}/login/status";
+        types {
+            Request<'a> {
+                code: &'a str,
+                key("privateKey"): &'a str,
+            }
+        }
+        body_serialize {
+            &Request { code, key }
+        }
     }
 
-    client
-        .requestor
-        .request::<Request>(
-            Method::POST,
-            &format!("{URL}/login/enterCode"),
-            Some(&Request { code }),
-            None,
-            None,
-        )
-        .await?
-        .json::<InspectionInfo>()
-        .await
-}
-
-pub async fn validate_code(client: &mut Client, code: &str) -> Result<(), Error> {
-    #[derive(Serialize)]
-    struct Request<'a> {
-        code: &'a str,
+    inspect_code(code: &str) -> InspectionInfo {
+        POST "{URL}/login/enterCode";
+        types {
+            Request<'a> {
+                code: &'a str,
+            }
+        }
+        body_serialize {
+            &Request { code }
+        }
     }
 
-    client
-        .requestor
-        .request::<Request>(
-            Method::POST,
-            &format!("{URL}/login/validateCode"),
-            Some(&Request { code }),
-            None,
-            None,
-        )
-        .await?;
+    validate_code(code: &str) -> () {
+        POST "{URL}/login/validateCode";
+        types {
+            Request<'a> {
+                code: &'a str,
+            }
+        }
+        body_serialize {
+            &Request { code }
+        }
+    }
 
-    Ok(())
-}
-
-pub async fn qr_code_image(client: &mut Client, key: &str, code: &str) -> Result<Vec<u8>, Error> {
-    client
-        .requestor
-        .request::<()>(
-            Method::GET,
-            &format!("{URL}/login/qr-code-image"),
-            None,
-            Some(&[("key", key), ("code", code)]),
-            None,
-        )
-        .await?
-        .bytes()
-        .await
+    qr_code_image(key: &str, code: &str) -> Vec<u8> {
+        GET "{URL}/login/qr-code-image";
+        query {
+            "key" => key,
+            "code" => code,
+        }
+        raw_bytes
+    }
 }

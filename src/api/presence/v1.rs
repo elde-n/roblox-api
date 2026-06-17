@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{Error, client::Client};
+use crate::endpoint;
 
 pub const URL: &str = "https://presence.roblox.com/v1";
 
@@ -21,32 +21,18 @@ pub struct UserPresence {
     pub job_id: Option<String>,
 }
 
-pub async fn presence(client: &mut Client, ids: &[u64]) -> Result<Vec<UserPresence>, Error> {
-    #[derive(Serialize)]
-    struct Request<'a> {
-        #[serde(rename = "userIds")]
-        users: &'a [u64],
+endpoint! {
+    presence(ids: &[u64]) -> Vec<UserPresence> {
+        POST "{URL}/presence/users";
+        types {
+            Request<'a> {
+                users("userIds"): &'a [u64],
+            }
+            Response {
+                presences("userPresences"): Vec<UserPresence>,
+            }
+        }
+        body_serialize { Request { users: ids } }
+        map |r: Response| r.presences
     }
-
-    let result = client
-        .requestor
-        .client
-        .post(format!("{URL}/presence/users"))
-        .headers(client.requestor.default_headers.clone())
-        .json(&Request { users: ids })
-        .send()
-        .await;
-
-    #[derive(Debug, Deserialize)]
-    struct Response {
-        #[serde(rename = "userPresences")]
-        presences: Vec<UserPresence>,
-    }
-
-    let response = client.requestor.validate_response(result).await?;
-    Ok(client
-        .requestor
-        .parse_json::<Response>(response)
-        .await?
-        .presences)
 }

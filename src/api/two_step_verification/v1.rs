@@ -1,50 +1,48 @@
 use serde::{Deserialize, Serialize};
+use strum_macros::{Display, EnumString};
 
-use crate::{Error, challenge::ActionType, client::Client};
+use crate::endpoint;
 
 pub const URL: &str = "https://twostepverification.roblox.com/v1";
 
-// TODO: I don't know what `user_id` is for, as this api only seems to be used for the client only,
-// there's also currently no way to require id from Client, perhaps we should authenticate
-// on from_cookie method, and store the ClientDetails in the Client
-pub async fn authenticator_verify(
-    client: &mut Client,
-    user_id: u64,
-    code: &str,
-    action_type: ActionType,
-    server_challenge_id: &str,
-) -> Result<String, Error> {
-    #[derive(Serialize)]
-    #[serde(rename_all = "camelCase")]
-    struct Request<'a> {
-        action_type: &'a str,
-        challenge_id: &'a str,
-        code: &'a str,
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Display, EnumString)]
+#[serde(rename_all = "lowercase")]
+pub enum TwoStepMethodType {
+    Authenticator,
+    Email,
+    #[serde(rename = "cross-device")]
+    CrossDevice,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct TwoStepMethods {
+    pub is_user_verified: bool,
+    pub primary: Option<TwoStepMethodType>,
+    pub methods: Vec<TwoStepMethodType>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct TwoStepVerify {
+    pub is_two_step_verification_enabled: bool,
+    pub ticket: Option<String>,
+}
+
+endpoint! {
+    authenticator_verify(id: u64, code: &str, challenge_id: &str, method: &str) -> TwoStepVerify {
+        POST "{URL}/users/{id}/channels/authenticator/verify";
+
+        types {
+            Request<'a> {
+                code("code"): &'a str,
+                challenge_id("challengeId"): &'a str,
+                method("verificationMethod"): &'a str,
+            }
+        }
+
+        body_serialize {
+            Request { code, challenge_id, method }
+        }
     }
-
-    #[derive(Deserialize)]
-    #[serde(rename_all = "camelCase")]
-    struct Response {
-        verification_token: String,
-    }
-
-    let result = client
-        .requestor
-        .client
-        .post(format!(
-            "{URL}/users/{user_id}/challenges/authenticator/verify"
-        ))
-        .headers(client.requestor.default_headers.clone())
-        .json(&Request {
-            action_type: &action_type.to_string(),
-            challenge_id: server_challenge_id,
-            code,
-        })
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    let result = client.requestor.parse_json::<Response>(response).await?;
-
-    Ok(result.verification_token)
 }

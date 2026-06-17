@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{DateTime, Error, Paging, client::Client};
+use crate::{DateTime, Paging, endpoint};
 
 pub const URL: &str = "https://notifications.roblox.com/v2";
 
@@ -158,89 +158,39 @@ pub struct Notification {
     pub content: NotificationContent,
 }
 
-pub async fn unread_count(client: &mut Client) -> Result<NotificationUnreadCount, Error> {
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/stream-notifications/unread-count"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client
-        .requestor
-        .parse_json::<NotificationUnreadCount>(response)
-        .await
-}
-
-pub async fn recent(client: &mut Client, paging: Paging<'_>) -> Result<Vec<Notification>, Error> {
-    let limit = paging.limit.unwrap_or(20).to_string();
-    let cursor = match paging.cursor {
-        Some(cursor) => cursor.to_string(),
-        None => String::new(),
-    };
-
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/stream-notifications/get-recent"))
-        .query(&[("maxRows", limit), ("startIndex", cursor)])
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client
-        .requestor
-        .parse_json::<Vec<Notification>>(response)
-        .await
-}
-
-pub async fn clear_unread(client: &mut Client) -> Result<String, Error> {
-    let result = client
-        .requestor
-        .client
-        .post(format!("{URL}/stream-notifications/clear-unread"))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    #[derive(Debug, Deserialize)]
-    #[serde(rename_all = "camelCase")]
-    struct Response {
-        status_message: String,
+endpoint! {
+    unread_count() -> NotificationUnreadCount {
+        GET "{URL}/stream-notifications/unread-count";
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    Ok(client
-        .requestor
-        .parse_json::<Response>(response)
-        .await?
-        .status_message)
-}
-
-pub async fn dismiss(client: &mut Client, id: String) -> Result<String, Error> {
-    let result = client
-        .requestor
-        .client
-        .post(format!(
-            "{URL}/stream-notifications/clear-unread/action/{id}/SpecialItemIgnoreAction"
-        ))
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    #[derive(Debug, Deserialize)]
-    #[serde(rename_all = "camelCase")]
-    struct Response {
-        status_message: String,
+    recent(paging: Paging<'_>) -> Vec<Notification> {
+        GET "{URL}/stream-notifications/get-recent";
+        prelude {
+            let limit = paging.limit.unwrap_or(20).to_string();
+            let cursor = match paging.cursor {
+                Some(c) => c.to_string(),
+                None => String::new(),
+            };
+        }
+        query {
+            "maxRows" => &limit,
+            "startIndex" => &cursor,
+        }
     }
 
-    let response = client.requestor.validate_response(result).await?;
-    Ok(client
-        .requestor
-        .parse_json::<Response>(response)
-        .await?
-        .status_message)
+    clear_unread() -> String {
+        POST "{URL}/stream-notifications/clear-unread";
+        types {
+            Response { status_message("statusMessage"): String }
+        }
+        map |r: Response| r.status_message
+    }
+
+    dismiss(id: &str) -> String {
+        POST "{URL}/stream-notifications/clear-unread/action/{id}/SpecialItemIgnoreAction";
+        types {
+            Response { status_message("statusMessage"): String }
+        }
+        map |r: Response| r.status_message
+    }
 }

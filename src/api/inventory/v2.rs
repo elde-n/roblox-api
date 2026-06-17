@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{AssetTypeId, DateTime, Error, Paging, client::Client};
+use crate::{AssetTypeId, DateTime, Paging, endpoint};
 
 pub const URL: &str = "https://inventory.roblox.com/v2";
 
@@ -55,16 +55,6 @@ pub struct UserOwnedAssetInfo {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct UserOwnedAssets {
-    #[serde(rename = "nextPageCursor")]
-    pub next_cursor: Option<String>,
-    #[serde(rename = "previousPageCursor")]
-    pub previous_cursor: Option<String>,
-    #[serde(rename = "data")]
-    pub assets: Vec<UserOwnedAssetInfo>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AssetOwners {
     #[serde(rename = "nextPageCursor")]
     pub next_cursor: String,
@@ -74,66 +64,27 @@ pub struct AssetOwners {
     pub assets: Vec<FromOwnerAssetInfo>,
 }
 
-pub async fn asset_owners(
-    client: &mut Client,
-    id: u64,
-    paging: Paging<'_>,
-) -> Result<AssetOwners, Error> {
-    let limit = paging.limit.unwrap_or(10).to_string();
-    let sort_order = paging.order.unwrap_or_default().to_string();
-    let cursor = match paging.cursor {
-        Some(cursor) => cursor.to_string(),
-        None => String::new(),
-    };
-
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/assets/{id}/owners"))
-        .query(&[
-            ("limit", limit),
-            ("sortOrder", sort_order),
-            ("cursor", cursor),
-        ])
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client.requestor.parse_json::<AssetOwners>(response).await
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct UserOwnedAssets {
+    #[serde(rename = "nextPageCursor")]
+    pub next_cursor: Option<String>,
+    #[serde(rename = "previousPageCursor")]
+    pub previous_cursor: Option<String>,
+    #[serde(rename = "data")]
+    pub assets: Vec<UserOwnedAssetInfo>,
 }
 
-pub async fn user_owned_assets(
-    client: &mut Client,
-    user_id: u64,
-    asset_type_id: AssetTypeId,
-    paging: Paging<'_>,
-) -> Result<UserOwnedAssets, Error> {
-    let asset_type_id = asset_type_id as u8;
+endpoint! {
+    asset_owners(id: u64, paging: Paging<'_>) -> AssetOwners {
+        GET "{URL}/assets/{id}/owners";
+        paging_query { paging, limit = 10 }
+    }
 
-    let limit = paging.limit.unwrap_or(10).to_string();
-    let sort_order = paging.order.unwrap_or_default().to_string();
-    let cursor = match paging.cursor {
-        Some(cursor) => cursor.to_string(),
-        None => String::new(),
-    };
-
-    let result = client
-        .requestor
-        .client
-        .get(format!("{URL}/users/{user_id}/inventory/{asset_type_id}"))
-        .query(&[
-            ("limit", limit),
-            ("sortOrder", sort_order),
-            ("cursor", cursor),
-        ])
-        .headers(client.requestor.default_headers.clone())
-        .send()
-        .await;
-
-    let response = client.requestor.validate_response(result).await?;
-    client
-        .requestor
-        .parse_json::<UserOwnedAssets>(response)
-        .await
+    user_owned_assets(user_id: u64, asset_type_id: AssetTypeId, paging: Paging<'_>) -> UserOwnedAssets {
+        GET "{URL}/users/{user_id}/inventory/{__aid}";
+        paging_query { paging, limit = 10 }
+        prelude {
+            let __aid = asset_type_id as u8;
+        }
+    }
 }
