@@ -62,13 +62,6 @@ pub enum ThumbnailState {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Display, EnumString)]
-pub enum ThumbnailVersion {
-    TN3,
-    #[serde(rename = "TN3.5")]
-    TN3_5,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Display, EnumString)]
 pub enum ThumbnailRequestType {
     Avatar = 1,
     AvatarHeadShot,
@@ -97,7 +90,7 @@ pub struct ThumbnailResponse {
     #[serde(rename = "targetId")]
     pub id: u64,
     pub image_url: String,
-    pub version: ThumbnailVersion,
+    pub version: String,
     pub state: ThumbnailState,
 }
 
@@ -108,7 +101,7 @@ pub struct ThumbnailResponseFromBatch {
     pub id: u64,
     pub request_id: String,
     pub image_url: String,
-    pub version: ThumbnailVersion,
+    pub version: String,
     pub state: ThumbnailState,
     #[serde(rename = "errorMessage")]
     pub error: String,
