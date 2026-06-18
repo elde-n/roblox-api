@@ -65,7 +65,7 @@ pub struct GamesResponse {
 
 endpoint! {
     universe_media(id: u64, all_experiences: bool) -> Vec<UniverseMedia> {
-        GET "{URL}/games/{id}/media" ;
+        GET "{URL}/games/{id}/media";
         types {
             Response {
                 media("data"): Vec<UniverseMedia>,
@@ -83,7 +83,7 @@ endpoint! {
     /// Apparently this API only works on owned groups, use v2 instead
     /// Set `access_filter` to 1, if you want a valid response
     group_games(id: u64, access_filter: u8, paging: Paging<'_>) -> GamesResponse {
-        GET "{URL}/groups/{id}/games" ;
+        GET "{URL}/groups/{id}/games";
         paging_query { paging, limit = 10 }
         prelude {
             let access_filter = access_filter.to_string();
@@ -95,7 +95,7 @@ endpoint! {
 
     /// Set `access_filter` to 1, if you want a valid response
     group_games_v2(id: u64, access_filter: u8, paging: Paging<'_>) -> GamesResponse {
-        GET "{URL}/groups/{id}/gamesV2" ;
+        GET "{URL}/groups/{id}/gamesV2";
         paging_query { paging, limit = 10 }
         prelude {
             let access_filter = access_filter.to_string();
@@ -107,7 +107,7 @@ endpoint! {
 
     /// Set `access_filter` to 2, if you want a valid response
     user_games(id: u64, access_filter: u8, paging: Paging<'_>) -> GamesResponse {
-        GET "{URL}/users/{id}/games" ;
+        GET "{URL}/users/{id}/games";
         paging_query { paging, limit = 10 }
         prelude {
             let access_filter = access_filter.to_string();
@@ -119,7 +119,7 @@ endpoint! {
 
     /// Set `access_filter` to 2, if you want a valid response
     user_favorited_games(id: u64, access_filter: u8, paging: Paging<'_>) -> GamesResponse {
-        GET "{URL}/users/{id}/favorite/games" ;
+        GET "{URL}/users/{id}/favorite/games";
         paging_query { paging, limit = 10 }
         prelude {
             let access_filter = access_filter.to_string();

@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     ApiError, Currency, Error,
-    api::auth,
     challenge::{
         CHALLENGE_ID_HEADER, CHALLENGE_METADATA_HEADER, CHALLENGE_TYPE_HEADER, Challenge,
         ChallengeMetadata, ChallengeType, ChefChallengeMetadata,
@@ -106,29 +105,6 @@ impl ClientRequestor {
     fn set_token(&mut self, token: &str) {
         self.default_headers
             .insert(TOKEN_HEADER, HeaderValue::from_str(token).unwrap());
-    }
-
-    // NOTE: this doesn't work on all apis, since some apis expect a custom token,
-    // you'll know which ones are affected based on the `TokenValidation` error
-    pub(crate) async fn ensure_token(&mut self) -> Result<(), Error> {
-        let result = self
-            .client
-            .post(format!("{}//", auth::URL))
-            .headers(self.default_headers.clone())
-            .send()
-            .await;
-
-        let result = self.validate_response(result).await;
-
-        if let Err(Error::ApiError(ApiError::TokenValidation)) = result {
-            return Ok(());
-        }
-
-        if result.is_err() {
-            return Err(result.err().unwrap());
-        }
-
-        Ok(())
     }
 
     pub(crate) async fn validate_response(

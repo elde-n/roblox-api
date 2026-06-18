@@ -12,12 +12,9 @@ async fn login_create() {
 #[tokio::test]
 async fn login_status() {
     let mut client = Client::default();
-
     let token = auth_token_service::v1::login_create(&mut client)
         .await
         .unwrap();
-
-    client.ensure_token().await.unwrap();
     auth_token_service::v1::login_status(&mut client, &token.code, &token.private_key)
         .await
         .unwrap();
@@ -26,11 +23,9 @@ async fn login_status() {
 #[tokio::test]
 async fn login_cancel() {
     let mut client = Client::default();
-
     let token = auth_token_service::v1::login_create(&mut client)
         .await
         .unwrap();
-
     auth_token_service::v1::login_cancel(&mut client, &token.code)
         .await
         .unwrap();
@@ -42,8 +37,6 @@ async fn inspect_code() {
     let token = auth_token_service::v1::login_create(&mut client)
         .await
         .unwrap();
-
-    client.ensure_token().await.unwrap();
     auth_token_service::v1::inspect_code(&mut client, &token.code)
         .await
         .unwrap();
@@ -55,14 +48,10 @@ async fn validate_code() {
     let token = auth_token_service::v1::login_create(&mut client)
         .await
         .unwrap();
-
     let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-    client.ensure_token().await.unwrap();
-
     auth_token_service::v1::inspect_code(&mut client, &token.code)
         .await
         .unwrap();
-
     auth_token_service::v1::validate_code(&mut client, &token.code)
         .await
         .unwrap();
@@ -74,10 +63,9 @@ async fn qr_code_image() {
     let token = auth_token_service::v1::login_create(&mut client)
         .await
         .unwrap();
-
-    let bytes = auth_token_service::v1::qr_code_image(&mut client, &token.private_key, &token.code)
-        .await
-        .unwrap();
-
-    assert!(bytes.len() > 0);
+    let bytes =
+        auth_token_service::v1::qr_code_image(&mut client, &token.private_key, &token.code)
+            .await
+            .unwrap();
+    assert!(!bytes.is_empty());
 }

@@ -64,6 +64,8 @@ pub enum ThumbnailState {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Display, EnumString)]
 pub enum ThumbnailVersion {
     TN3,
+    #[serde(rename = "TN3.5")]
+    TN3_5,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Display, EnumString)]

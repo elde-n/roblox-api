@@ -53,6 +53,8 @@ endpoint! {
         body_serialize {
             &Request { code }
         }
+
+        void
     }
 
     login_status(code: &str, key: &str) -> LoginTokenStatus {
@@ -90,6 +92,8 @@ endpoint! {
         body_serialize {
             &Request { code }
         }
+
+        void
     }
 
     qr_code_image(key: &str, code: &str) -> Vec<u8> {

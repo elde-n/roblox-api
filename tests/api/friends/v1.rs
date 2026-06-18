@@ -1,112 +1,20 @@
-use dotenvy_macro::dotenv;
-use roblox_api::{Paging, api::friends, client::Client};
+use roblox_api::Paging;
 
 const USER_ID: u64 = 3139503587;
 
-#[tokio::test]
-async fn friend_requests_count() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-    friends::v1::friend_requests_count(&mut client)
-        .await
-        .unwrap();
-}
+test_endpoint!(friend_requests_count, [friends::v1], friend_requests_count);
+test_endpoint!(new_friend_requests_count, [friends::v1], new_friend_requests_count);
+test_endpoint!(user_friends_count, [friends::v1], user_friends_count(USER_ID));
+test_endpoint!(user_followings_count, [friends::v1], user_followings_count(USER_ID));
+test_endpoint!(user_followers_count, [friends::v1], user_followers_count(USER_ID));
+test_endpoint!(following_status, [friends::v1], following_status(&[USER_ID]));
+test_endpoint!(friend_requests, [friends::v1], friend_requests(Paging::default()));
+test_endpoint!(user_followers, [friends::v1], user_followers(USER_ID));
+test_endpoint!(user_followings, [friends::v1], user_followings(USER_ID));
+test_endpoint!(user_friends_online, [friends::v1], user_friends_online(USER_ID));
+test_endpoint!(user_friends_find, [friends::v1], user_friends_find(USER_ID, Paging::default()));
+test_endpoint!(user_friends_search, [friends::v1], user_friends_search(USER_ID, "Roblox", Paging::default()));
 
-#[tokio::test]
-async fn new_friend_requests_count() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-    friends::v1::new_friend_requests_count(&mut client)
-        .await
-        .unwrap();
-}
-
-#[tokio::test]
-async fn user_friends_count() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-    friends::v1::user_friends_count(&mut client, USER_ID)
-        .await
-        .unwrap();
-}
-
-#[tokio::test]
-async fn user_followings_count() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-    friends::v1::user_followings_count(&mut client, USER_ID)
-        .await
-        .unwrap();
-}
-
-#[tokio::test]
-async fn user_followers_count() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-    friends::v1::user_followers_count(&mut client, USER_ID)
-        .await
-        .unwrap();
-}
-
-#[tokio::test]
-async fn following_status() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-
-    client.ensure_token().await.unwrap();
-    friends::v1::following_status(&mut client, &[USER_ID])
-        .await
-        .unwrap();
-}
-
-#[tokio::test]
-async fn friend_requests() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-    friends::v1::friend_requests(&mut client, Paging::default())
-        .await
-        .unwrap();
-}
-
-#[tokio::test]
-async fn user_followers() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-    friends::v1::user_followers(&mut client, USER_ID)
-        .await
-        .unwrap();
-}
-
-#[tokio::test]
-async fn user_followings() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-    friends::v1::user_followings(&mut client, USER_ID)
-        .await
-        .unwrap();
-}
-
-#[tokio::test]
-async fn user_friends_online() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-    friends::v1::user_friends_online(&mut client, USER_ID)
-        .await
-        .unwrap();
-}
-
-#[tokio::test]
-async fn user_friends_find() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-    friends::v1::user_friends_find(&mut client, USER_ID, Paging::default())
-        .await
-        .unwrap();
-}
-
-#[tokio::test]
-async fn user_friends_search() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-    friends::v1::user_friends_search(&mut client, USER_ID, "Roblox", Paging::default())
-        .await
-        .unwrap();
-}
-
-#[tokio::test]
-async fn user_friend_statuses() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-    let statuses = friends::v1::user_friend_statuses(&mut client, USER_ID, &[1])
-        .await
-        .unwrap();
-
-    assert_eq!(statuses.first().unwrap().id, 1);
-}
+test_endpoint!(user_friend_statuses, [friends::v1], user_friend_statuses(USER_ID, &[1u64]) => |statuses| {
+    assert!(!statuses.is_empty());
+});

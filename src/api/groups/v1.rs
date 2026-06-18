@@ -227,12 +227,12 @@ pub struct GroupUsers {
 
 endpoint! {
     information(id: u64) -> GroupInformation {
-        GET "{URL}/groups/{id}" ;
+        GET "{URL}/groups/{id}";
     }
 
     /// Gets group membership information in the context of the authenticated user
     membership(id: u64, notification_preferences: bool) -> Membership {
-        GET "{URL}/groups/{id}/membership" ;
+        GET "{URL}/groups/{id}/membership";
         prelude {
             let notification_preferences = notification_preferences.to_string();
         }
@@ -243,7 +243,7 @@ endpoint! {
 
     /// Gets the Group's name change history
     name_history(id: u64) -> NameHistory {
-        GET "{URL}/groups/{id}/name-history" ;
+        GET "{URL}/groups/{id}/name-history";
         types {
             NameHistoryItem {
                 name: String,
@@ -264,7 +264,7 @@ endpoint! {
 
     /// Gets groups that the authenticated user has requested to join
     pending_join_requests() -> Vec<GroupInformation> {
-        GET "{URL}/user/groups/pending" ;
+        GET "{URL}/user/groups/pending";
         types {
             Response {
                 groups("data"): Vec<GroupInformation>,
@@ -274,7 +274,7 @@ endpoint! {
     }
 
     roles(id: u64) -> Vec<GroupRole> {
-        GET "{URL}/groups/{id}/roles" ;
+        GET "{URL}/groups/{id}/roles";
         types {
             Response {
                 roles: Vec<GroupRole>,
@@ -284,7 +284,7 @@ endpoint! {
     }
 
     user_roles(id: u64) -> Vec<(GroupInformation, GroupRole)> {
-        GET "{URL}/users/{id}/groups/roles" ;
+        GET "{URL}/users/{id}/groups/roles";
         types {
             GroupAndRole {
                 group: GroupInformation,
@@ -299,12 +299,12 @@ endpoint! {
 
     /// Gets the permissions for a group's roleset. The authorized user must either be the group owner or the roleset being requested, except for guest roles, which can be viewed by all (members and guests).
     roleset_permissions(id: u64, roleset_id: u64) -> RolePermissions {
-        GET "{URL}/groups/{id}/roles/{roleset_id}/permissions" ;
+        GET "{URL}/groups/{id}/roles/{roleset_id}/permissions";
     }
 
     /// Gets all permissions for each role
     role_permissions(id: u64) -> Vec<RolePermissions> {
-        GET "{URL}/groups/{id}/roles/permissions" ;
+        GET "{URL}/groups/{id}/roles/permissions";
         types {
             Response {
                 items("data"): Vec<RolePermissions>,
@@ -314,7 +314,7 @@ endpoint! {
     }
 
     users(id: u64, paging: Paging<'_>) -> GroupUsers {
-        GET "{URL}/groups/{id}/users" ;
+        GET "{URL}/groups/{id}/users";
         paging_query { paging, limit = 10 }
         types {
             User {
@@ -336,12 +336,12 @@ endpoint! {
 
     /// Gets a list of group wall posts
     wall_posts(id: u64, paging: Paging<'_>) -> WallPosts {
-        GET "{URL}/groups/{id}/wall/posts" ;
+        GET "{URL}/groups/{id}/wall/posts";
         paging_query { paging, limit = 10 }
     }
 
     join(id: u64) -> () {
-        POST "{URL}/groups/{id}/users" ;
+        POST "{URL}/groups/{id}/users";
         types {
             Request<'a> {
                 session_id: &'a str,
@@ -352,13 +352,13 @@ endpoint! {
     }
 
     remove_join_request(id: u64, user_id: u64) -> () {
-        DELETE "{URL}/groups/{id}/join-requests/users/{user_id}" ;
+        DELETE "{URL}/groups/{id}/join-requests/users/{user_id}";
         types { Request {} }
         body_serialize { Request {} }
     }
 
     remove(id: u64, user_id: u64) -> () {
-        DELETE "{URL}/groups/{id}/users/{user_id}" ;
+        DELETE "{URL}/groups/{id}/users/{user_id}";
         types { Request {} }
         body_serialize { Request {} }
     }

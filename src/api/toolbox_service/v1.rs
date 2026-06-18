@@ -60,7 +60,7 @@ pub struct ItemDetailVotes {
     pub dislikes: u32,
     #[serde(rename = "voteCount")]
     pub votes: u32,
-    #[serde(rename = "votePercent")]
+    #[serde(rename = "upVotePercent")]
     pub like_ratio: f32,
     pub show_votes: bool,
     pub can_vote: bool,
@@ -93,7 +93,8 @@ pub struct FiatProduct {
 pub struct ItemDetail {
     pub asset: ItemDetailAsset,
     pub creator: ItemDetailCreator,
-    pub votes: ItemDetailVotes,
+    #[serde(default, rename = "voting")]
+    pub votes: Option<ItemDetailVotes>,
     pub fiat_product: FiatProduct,
 }
 

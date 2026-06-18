@@ -1,28 +1,9 @@
-use dotenvy_macro::dotenv;
-use roblox_api::{
-    Paging,
-    api::inventory::{self, v1::ItemType},
-    client::Client,
-};
+use roblox_api::{Paging, api::inventory::v1::ItemType};
 
-#[tokio::test]
-async fn user_owns_assets() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-    inventory::v1::user_owns_assets(
-        &mut client,
-        3139503587,
-        4391384843,
-        ItemType::Asset,
-        Paging::default(),
-    )
-    .await
-    .unwrap();
-}
+test_endpoint!(user_owns_assets, [inventory::v1], user_owns_assets(3139503587, 4391384843, ItemType::Asset, Paging::default()) => |result| {
+    assert!(!result.assets.is_empty());
+});
 
-#[tokio::test]
-async fn user_owned_collectibles() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-    inventory::v1::user_owned_collectibles(&mut client, 3139503587, None, Paging::default())
-        .await
-        .unwrap();
-}
+test_endpoint!(user_owned_collectibles, [inventory::v1], user_owned_collectibles(3139503587, None, Paging::default()) => |result| {
+    assert!(!result.assets.is_empty());
+});

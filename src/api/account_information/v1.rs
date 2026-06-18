@@ -15,12 +15,12 @@ pub struct RobloxBadge {
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
-pub struct PromotionChannel {
-    pub id: u64,
-    #[serde(rename = "name")]
-    pub promotion_channel: String,
-    #[serde(rename = "promotionChannelType")]
-    pub kind: Option<u8>,
+pub struct PromotionChannels {
+    pub promotion_channels_visibility_privacy: String,
+    pub facebook: Option<String>,
+    pub twitter: Option<String>,
+    pub youtube: Option<String>,
+    pub twitch: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -34,12 +34,19 @@ pub struct Metadata {
     pub is_phone_number_enabled: bool,
     #[serde(rename = "MaxUserDescriptionLength")]
     pub max_user_description_length: u64,
-    #[serde(rename = "IsUserDescriptionEnabled")]
     pub is_user_description_enabled: bool,
-    #[serde(rename = "isUserEmailOnVerificationEnabled")]
+    #[serde(default, rename = "isUserEmailOnVerificationEnabled")]
     pub is_user_email_on_verification_enabled: bool,
-    #[serde(rename = "isUserAgreementsSignupEnabled")]
+    #[serde(default, rename = "isUserAgreementsSignupEnabled")]
     pub is_user_agreements_signup_enabled: bool,
+    #[serde(default)]
+    pub is_user_block_endpoints_updated: bool,
+    #[serde(default)]
+    pub should_use_persona_for_id_verification: bool,
+    #[serde(default)]
+    pub should_display_session_management: bool,
+    #[serde(default)]
+    pub is_password_required_for_aging_down: bool,
 }
 
 endpoint! {
@@ -83,7 +90,7 @@ endpoint! {
         GET "{URL}/metadata";
     }
 
-    promotion_channels() -> Vec<PromotionChannel> {
+    promotion_channels() -> PromotionChannels {
         GET "{URL}/promotion-channels";
     }
 

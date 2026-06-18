@@ -1,34 +1,6 @@
-use dotenvy_macro::dotenv;
-use roblox_api::{
-    Paging,
-    api::private_messages::{self, v1::MessageTab},
-    client::Client,
-};
+use roblox_api::Paging;
+use roblox_api::api::private_messages::v1::MessageTab;
 
-#[tokio::test]
-async fn unread_count() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-    private_messages::v1::unread_count(&mut client)
-        .await
-        .unwrap();
-}
-
-#[tokio::test]
-async fn messages() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-    private_messages::v1::messages(
-        &mut client,
-        MessageTab::Inbox,
-        Paging::new(Some(&0.to_string()), Some(100), None),
-    )
-    .await
-    .unwrap();
-}
-
-#[tokio::test]
-async fn announcements() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-    private_messages::v1::announcements(&mut client)
-        .await
-        .unwrap();
-}
+test_endpoint!(unread_count, [private_messages::v1], unread_count);
+test_endpoint!(messages, [private_messages::v1], messages(MessageTab::Inbox, Paging::new(Some(&0u64.to_string()), Some(100), None)));
+test_endpoint!(announcements, [private_messages::v1], announcements);

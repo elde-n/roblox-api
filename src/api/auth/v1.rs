@@ -112,7 +112,7 @@ async fn authentication_intent(client: &mut Client) -> Result<AuthenticationInte
 endpoint! {
     /// Logs in with the given credentials and returns a session token.
     login(client, login: &str, key: &str, login_type: LoginType) -> LoginResponse {
-        POST "{URL}/login" ;
+        POST "{URL}/login";
         types {
             Request<'a> {
                 login_type("ctype"): LoginType,
@@ -132,7 +132,7 @@ endpoint! {
     recommended_usernames_from_display_name(
         display_name: &str, birthday: DateTime
     ) -> RecommendedUsernamesFromDisplayName {
-        POST "{URL}/validators/recommendedUsernameFromDisplayName" ;
+        POST "{URL}/validators/recommendedUsernameFromDisplayName";
         types {
             Request<'a> {
                 display_name("displayName"): &'a str,

@@ -1,12 +1,6 @@
-use dotenvy_macro::dotenv;
-use roblox_api::{api::premium_features, client::Client};
 
 const USER_ID: u64 = 3139503587;
 
-#[tokio::test]
-async fn is_premium() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-    premium_features::v1::is_premium(&mut client, USER_ID)
-        .await
-        .unwrap();
-}
+test_endpoint!(is_premium, [premium_features::v1], is_premium(USER_ID) => |ok| {
+    assert!(ok);
+});

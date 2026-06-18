@@ -179,7 +179,6 @@ macro_rules! endpoint {
                     None,
                 )
                 .await?;
-
             endpoint!(@decode __response, $ret, $decode)
         }
     };
@@ -194,7 +193,7 @@ macro_rules! endpoint {
         params    = [$($param:ident : $param_ty:ty),*],
         ret       = $ret:ty,
         body      = [
-            $method:ident $url:expr ;
+            $method:ident $url:expr;
             $(paging_query { $p_var:ident, limit = $p_limit:literal })?
             $(types    { $($types:tt)* })?
             $(prelude  { $($pre:tt)* })?
@@ -230,7 +229,7 @@ macro_rules! endpoint {
         params    = [$($param:ident : $param_ty:ty),*],
         ret       = $ret:ty,
         body      = [
-            $method:ident $url:expr ;
+            $method:ident $url:expr;
             $(paging_query { $p_var:ident, limit = $p_limit:literal })?
             $(types    { $($types:tt)* })?
             $(prelude  { $($pre:tt)* })?
@@ -266,7 +265,7 @@ macro_rules! endpoint {
         params    = [$($param:ident : $param_ty:ty),*],
         ret       = $ret:ty,
         body      = [
-            $method:ident $url:expr ;
+            $method:ident $url:expr;
             $(paging_query { $p_var:ident, limit = $p_limit:literal })?
             $(types    { $($types:tt)* })?
             $(prelude  { $($pre:tt)* })?
@@ -302,7 +301,7 @@ macro_rules! endpoint {
         params    = [$($param:ident : $param_ty:ty),*],
         ret       = $ret:ty,
         body      = [
-            $method:ident $url:expr ;
+            $method:ident $url:expr;
             $(paging_query { $p_var:ident, limit = $p_limit:literal })?
             $(types    { $($types:tt)* })?
             $(prelude  { $($pre:tt)* })?

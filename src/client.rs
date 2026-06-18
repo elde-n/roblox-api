@@ -4,7 +4,7 @@ use reqwest::{
 };
 use serde::{Serialize, de::DeserializeOwned};
 
-use crate::{Error, ratelimit::Ratelimit};
+use crate::{ApiError, Error, ratelimit::Ratelimit};
 
 #[derive(Default)]
 pub struct Cookie(String);
@@ -63,8 +63,9 @@ impl Client {
         }
     }
 
+    #[deprecated = "Failed requests due to token validation are now automatically retried"]
     pub async fn ensure_token(&mut self) -> Result<(), Error> {
-        self.requestor.ensure_token().await
+        Ok(())
     }
 
     pub async fn ratelimits(&self) -> Option<Ratelimit> {
@@ -107,12 +108,10 @@ impl ClientRequestor {
         query: Option<&'a [(&'a str, &'a str)]>,
         headers: Option<HeaderMap>,
     ) -> Result<ResponseWrapped, Error> {
-        // TODO: use builder outside for this, so we don't need the 3 optionals
-
         let mut builder = self
             .client
-            .request(method, url)
-            .headers(headers.unwrap_or(self.default_headers.clone()));
+            .request(method.clone(), url)
+            .headers(headers.clone().unwrap_or(self.default_headers.clone()));
 
         // Even though sending None works, it might get serialized as null in json, which is a waste of bytes
         if let Some(request) = request {
@@ -123,7 +122,28 @@ impl ClientRequestor {
             builder = builder.query(&query);
         }
 
-        let response = self.validate_response(builder.send().await).await?;
-        Ok(ResponseWrapped(response))
+        let response = self.validate_response(builder.send().await).await;
+
+        match response {
+            Err(Error::ApiError(ApiError::TokenValidation)) => {
+                let mut builder = self
+                    .client
+                    .request(method, url)
+                    .headers(headers.unwrap_or(self.default_headers.clone()));
+
+                if let Some(request) = request {
+                    builder = builder.json(&request);
+                }
+
+                if let Some(query) = query {
+                    builder = builder.query(&query);
+                }
+
+                let response = self.validate_response(builder.send().await).await?;
+                Ok(ResponseWrapped(response))
+            }
+
+            response => Ok(ResponseWrapped(response?)),
+        }
     }
 }

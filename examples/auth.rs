@@ -8,13 +8,11 @@ use roblox_api::{
 #[tokio::main]
 async fn main() {
     let mut client = Client::default();
-    client.ensure_token().await.unwrap();
 
     let token = auth_token_service::v1::login_create(&mut client)
         .await
         .unwrap();
 
-    client.ensure_token().await.unwrap();
     loop {
         let status =
             auth_token_service::v1::login_status(&mut client, &token.code, &token.private_key)

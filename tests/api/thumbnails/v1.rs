@@ -1,13 +1,7 @@
-use roblox_api::{
-    api::thumbnails::{
-        self,
-        v1::{
-            ReturnPolicy, ThumbnailBatchRequest, ThumbnailFormat, ThumbnailRequestType,
-            ThumbnailSize,
-        },
-    },
-    client::Client,
+use roblox_api::api::thumbnails::v1::{
+    ReturnPolicy, ThumbnailBatchRequest, ThumbnailFormat, ThumbnailRequestType, ThumbnailSize,
 };
+
 
 #[test]
 fn thumbnail_size_from_str() {
@@ -25,77 +19,27 @@ fn thumbnail_request_type_from_str() {
     );
 }
 
-#[tokio::test]
-async fn assets() {
-    let mut client = Client::default();
+test_endpoint_noauth!(assets, [thumbnails::v1], assets(&[47433u64, 187789986], ThumbnailSize::S420x420, ThumbnailFormat::default(), ReturnPolicy::default(), false) => |thumbnails| {
+    assert!(!thumbnails.is_empty());
+});
 
-    let thumbnails = thumbnails::v1::assets(
-        &mut client,
-        &[47433, 187789986],
-        ThumbnailSize::S420x420,
-        ThumbnailFormat::default(),
-        ReturnPolicy::default(),
-        false,
-    )
-    .await
-    .unwrap();
+test_endpoint_noauth!(badge_icons, [thumbnails::v1], badge_icons(&[2124615090u64], ThumbnailSize::S150x150, ThumbnailFormat::default(), false) => |thumbnails| {
+    assert!(!thumbnails.is_empty());
+});
 
-    thumbnails.get(0).unwrap();
-}
+test_endpoint_noauth!(bundles, [thumbnails::v1], bundles(&[175772208088820u64], ThumbnailSize::S420x420, ThumbnailFormat::default(), false) => |thumbnails| {
+    assert!(!thumbnails.is_empty());
+});
 
-#[tokio::test]
-async fn badge_icons() {
-    let mut client = Client::default();
-
-    let thumbnails = thumbnails::v1::badge_icons(
-        &mut client,
-        &[2124615090],
-        ThumbnailSize::S150x150,
-        ThumbnailFormat::default(),
-        false,
-    )
-    .await
-    .unwrap();
-
-    thumbnails.get(0).unwrap();
-}
-
-#[tokio::test]
-async fn bundles() {
-    let mut client = Client::default();
-
-    let thumbnails = thumbnails::v1::bundles(
-        &mut client,
-        &[175772208088820],
-        ThumbnailSize::S420x420,
-        ThumbnailFormat::default(),
-        false,
-    )
-    .await
-    .unwrap();
-
-    thumbnails.get(0).unwrap();
-}
-
-#[tokio::test]
-async fn batch() {
-    let mut client = Client::default();
-
-    let thumbnails = thumbnails::v1::batch(
-        &mut client,
-        vec![ThumbnailBatchRequest {
-            id: 3139503587,
-            request_id: "",
-            token: "",
-            alias: "",
-            kind: ThumbnailRequestType::AvatarHeadShot,
-            size: ThumbnailSize::S420x420,
-            format: ThumbnailFormat::default(),
-            circular: true,
-        }],
-    )
-    .await
-    .unwrap();
-
-    thumbnails.get(0).unwrap();
-}
+test_endpoint_noauth!(batch, [thumbnails::v1], batch(vec![ThumbnailBatchRequest {
+    id: 3139503587,
+    request_id: "",
+    token: "",
+    alias: "",
+    kind: ThumbnailRequestType::AvatarHeadShot,
+    size: ThumbnailSize::S420x420,
+    format: ThumbnailFormat::default(),
+    circular: true,
+}]) => |thumbnails| {
+    assert!(!thumbnails.is_empty());
+});

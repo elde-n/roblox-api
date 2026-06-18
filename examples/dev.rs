@@ -112,8 +112,6 @@ async fn main() {
 
     println!("Updated model: {id}");
 
-    client.ensure_token().await.unwrap();
-
     develop::v1::revert_asset_version(&mut client, id, 1)
         .await
         .unwrap();

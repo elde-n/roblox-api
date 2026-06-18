@@ -1,44 +1,31 @@
 use dotenvy_macro::dotenv;
 use roblox_api::{Paging, SortOrder, api::users, client::Client};
 
-#[tokio::test]
-async fn authenticated_details() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-    users::v1::authenticated_details(&mut client).await.unwrap();
-}
-
-#[tokio::test]
-async fn birthdate() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-    users::v1::birthdate(&mut client).await.unwrap();
-}
-
-#[tokio::test]
-async fn gender() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-    users::v1::gender(&mut client).await.unwrap();
-}
-
-#[tokio::test]
-async fn description() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-    users::v1::description(&mut client).await.unwrap();
-}
+test_endpoint!(authenticated_details, [users::v1], authenticated_details => |user| {
+    assert!(!user.name.is_empty());
+});
+test_endpoint!(birthdate, [users::v1], birthdate);
+test_endpoint!(gender, [users::v1], gender);
+test_endpoint!(description, [users::v1], description);
+test_endpoint!(user_details, [users::v1], user_details(1) => |user| {
+    assert_eq!(user.id, 1);
+    assert_eq!(user.name, "Roblox");
+});
+test_endpoint!(users_by_id, [users::v1], users_by_id(&[1u64, 2, 3, 4], false) => |users| {
+    assert!(!users.is_empty());
+    assert_eq!(users.first().unwrap().id, 1);
+});
+test_endpoint!(users_by_name, [users::v1], users_by_name(&["Roblox", "test", "word"], false) => |users| {
+    assert!(!users.is_empty());
+});
 
 #[tokio::test]
 async fn validate_display_name_by_id() {
     let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-
     let authenticated = users::v1::authenticated_details(&mut client).await.unwrap();
     users::v1::validate_display_name_by_id(&mut client, authenticated.id, "エルデン")
         .await
         .unwrap();
-}
-
-#[tokio::test]
-async fn user_details() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-    users::v1::user_details(&mut client, 1).await.unwrap();
 }
 
 #[tokio::test]
@@ -51,20 +38,4 @@ async fn user_username_history() {
     )
     .await
     .unwrap();
-}
-
-#[tokio::test]
-async fn users_by_id() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-    users::v1::users_by_id(&mut client, &[1, 2, 3, 4], false)
-        .await
-        .unwrap();
-}
-
-#[tokio::test]
-async fn users_by_name() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-    users::v1::users_by_name(&mut client, &["Roblox", "test", "word"], false)
-        .await
-        .unwrap();
 }
