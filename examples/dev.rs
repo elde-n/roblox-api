@@ -1,4 +1,4 @@
-use std::{fs::File, io::Write, path::PathBuf};
+use std::time::Duration;
 
 use dotenvy_macro::dotenv;
 use roblox_api::{
@@ -8,7 +8,7 @@ use roblox_api::{
             self,
             v1::{CreationContext, Creator},
         },
-        data, develop, users,
+        develop, users,
     },
     client::Client,
 };
@@ -77,7 +77,7 @@ async fn main() {
     )
     .await;
 
-    let _ = assets::v1::upload(
+    let state = assets::v1::upload(
         &mut client,
         bytes,
         "Test model",
@@ -91,31 +91,34 @@ async fn main() {
     .await
     .unwrap();
 
-    // TODO: add assets::v1::update
-    //
+    let mut id = None;
+    while id == None {
+        let state = assets::v1::status(&mut client, &state.operation_id)
+            .await
+            .unwrap();
+
+        if let Some(ref r) = state.response {
+            id = Some(r.id.parse::<u64>().unwrap())
+        } else {
+            println!("sleeping until asset gets uploaded");
+            std::thread::sleep(Duration::from_secs(1));
+        }
+    }
+
+    let id = id.unwrap();
     // replace PRNT chunk with 0's, lol
-    // bytes[71..71 + 30].fill(0x00);
-    // let id = data::upload(
-    //     &mut client,
-    //     Some(id),
-    //     "Test Model",
-    //     "",
-    //     AssetTypeId::Model,
-    //     None,
-    //     1,
-    //     false,
-    //     false,
-    //     bytes,
-    // )
-    // .await
-    // .unwrap();
+    bytes[71..71 + 30].fill(0x00);
+    assets::v1::update(&mut client, id, bytes, "Test Model", "", AssetTypeId::Model)
+        .await
+        .unwrap();
 
-    // println!("Updated model: {id}");
+    println!("Updated model: {id}");
 
-    // develop::v1::revert_asset_version(&mut client, id, 1)
-    //     .await
-    //     .unwrap();
-    // println!("Revert model: {id} to the first version");
+    std::thread::sleep(Duration::from_secs(1));
+    develop::v1::revert_asset_version(&mut client, id, 1)
+        .await
+        .unwrap();
+    println!("Revert model: {id} to the first version");
 
     // TOOD: supply image bytes
     let result = assets::v1::upload(

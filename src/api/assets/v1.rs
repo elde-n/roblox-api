@@ -152,3 +152,62 @@ pub async fn upload(
         .parse_json::<AssetUploadStatus>(response)
         .await
 }
+
+pub async fn update(
+    client: &mut Client,
+    id: u64,
+    bytes: &[u8],
+    title: &str,
+    description: &str,
+    asset_type: AssetTypeId,
+) -> Result<AssetUploadStatus, Error> {
+    let mut headers = client.requestor.default_headers.clone();
+    headers.insert(header::ACCEPT, HeaderValue::from_str("*/*").unwrap());
+
+    #[derive(Clone, Debug, Deserialize, Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Request<'a> {
+        #[serde(rename = "assetId")]
+        id: u64,
+        #[serde(rename = "displayName")]
+        title: &'a str,
+        description: &'a str,
+    }
+
+    let request = serde_json::to_string(&Request {
+        id,
+        title,
+        description,
+    })
+    .unwrap();
+
+    let mime = match asset_type {
+        AssetTypeId::Model => "model/x-rbxm",
+        _ => infer::get(bytes)
+            .map(|t| t.mime_type())
+            .unwrap_or("application/octet-stream"),
+    };
+
+    let file_part = Part::bytes(bytes.to_owned())
+        .file_name("instance")
+        .mime_str(mime)?;
+
+    let result = client
+        .requestor
+        .client
+        .patch(format!("{URL}/assets/{id}"))
+        .headers(headers)
+        .multipart(
+            Form::new()
+                .text("request", request)
+                .part("fileContent", file_part),
+        )
+        .send()
+        .await;
+
+    let response = client.requestor.validate_response(result).await?;
+    client
+        .requestor
+        .parse_json::<AssetUploadStatus>(response)
+        .await
+}

@@ -101,5 +101,6 @@ endpoint! {
 
     revert_asset_version(id: u64, version: u64) -> () {
         POST "{URL}/assets/{id}/revert-version?assetVersionNumber={version}";
+        void
     }
 }
