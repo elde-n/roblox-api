@@ -11,6 +11,7 @@ pub const URL: &str = "https://data.roblox.com/data";
 //
 /// `id` can be set to None, or Some(0) to upload a new asset, using an existing `id` will overwrite the old asset
 /// on success RETURNS the new asset id
+#[deprecated = "Use assets::v1"]
 pub async fn upload(
     client: &mut Client,
     id: Option<u64>,
@@ -26,7 +27,7 @@ pub async fn upload(
     let id = id.unwrap_or(0);
     let genre_type_id = genre;
 
-    let mut url = format!("{URL}/upload.ashx?assetId={id}");
+    let mut url = format!("{URL}/upload.ashx&assetid={id}");
     if let AssetTypeId::Model = asset_type {
         url.push_str("&type=Model");
     } else if let AssetTypeId::Place = asset_type {
@@ -37,7 +38,7 @@ pub async fn upload(
     }
 
     if let Some(group_id) = group_id {
-        url.push_str(&format!("&groupId={group_id}"));
+        url.push_str(&format!("&groupId={}", group_id));
     }
 
     let mut headers = client.requestor.default_headers.clone();
@@ -51,11 +52,6 @@ pub async fn upload(
         HeaderValue::from_str("application/octect-stream").unwrap(),
     );
 
-    headers.insert(
-        header::USER_AGENT,
-        HeaderValue::from_str("Roblox/WinInet").unwrap(),
-    );
-
     let result = client
         .requestor
         .client
@@ -67,12 +63,18 @@ pub async fn upload(
             ("isPublic", &is_public.to_string()),
             ("allowComments", &allow_comments.to_string()),
         ])
-        .headers(headers)
+        .headers(headers.clone())
         .body(bytes.to_owned())
         .send()
         .await;
 
     let response = client.requestor.validate_response(result).await?;
-    let id: u64 = response.text().await.unwrap().parse().unwrap();
+
+    println!("test: {:?}", headers.clone());
+    let json = response.text().await?;
+
+    println!("text: {}", json.clone());
+    let id: u64 = json.parse().map_err(|_| Error::BadJson)?;
+
     Ok(id)
 }

@@ -1,8 +1,6 @@
-use std::path::Path;
-
 use reqwest::{
     header::{self, HeaderValue},
-    multipart::Form,
+    multipart::{Form, Part},
 };
 use serde::{Deserialize, Serialize};
 
@@ -97,7 +95,7 @@ endpoint! {
 // TODO: this api also takes in a patch request to update an exists asset "{URL}/assets/{id}"
 pub async fn upload(
     client: &mut Client,
-    path: impl AsRef<Path>,
+    bytes: &[u8],
     title: &str,
     description: &str,
     asset_type: AssetTypeId,
@@ -124,6 +122,17 @@ pub async fn upload(
     })
     .unwrap();
 
+    let mime = match asset_type {
+        AssetTypeId::Model => "model/x-rbxm",
+        _ => infer::get(bytes)
+            .map(|t| t.mime_type())
+            .unwrap_or("application/octet-stream"),
+    };
+
+    let file_part = Part::bytes(bytes.to_owned())
+        .file_name("instance")
+        .mime_str(mime)?;
+
     let result = client
         .requestor
         .client
@@ -132,9 +141,7 @@ pub async fn upload(
         .multipart(
             Form::new()
                 .text("request", request)
-                .file("fileContent", &path)
-                .await
-                .unwrap(),
+                .part("fileContent", file_part),
         )
         .send()
         .await;

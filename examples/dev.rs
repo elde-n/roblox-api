@@ -1,3 +1,5 @@
+use std::{fs::File, io::Write, path::PathBuf};
+
 use dotenvy_macro::dotenv;
 use roblox_api::{
     AssetTypeId,
@@ -14,7 +16,7 @@ use roblox_api::{
 #[tokio::main]
 async fn main() {
     let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
-    let authenticted = users::v1::authenticated_details(&mut client).await.unwrap();
+    let authenticated = users::v1::authenticated_details(&mut client).await.unwrap();
 
     let bytes = &mut [
         0x3c, 0x72, 0x6f, 0x62, 0x6c, 0x6f, 0x78, 0x21, // signature "<roblox!" (u64)
@@ -62,69 +64,68 @@ async fn main() {
     ];
 
     // ensure token
-    let _ = data::upload(
+    let _ = assets::v1::upload(
         &mut client,
-        None,
+        &[],
         "",
         "",
         AssetTypeId::Model,
-        None,
-        1,
-        false,
-        false,
-        &[],
+        CreationContext {
+            creator: Creator::UserId(authenticated.id.to_string()),
+            expected_price: None,
+        },
     )
     .await;
 
-    let id = data::upload(
+    let _ = assets::v1::upload(
         &mut client,
-        None,
-        "Test Model",
+        bytes,
+        "Test model",
         "",
         AssetTypeId::Model,
-        None,
-        1,
-        false,
-        false,
-        bytes,
+        CreationContext {
+            creator: Creator::UserId(authenticated.id.to_string()),
+            expected_price: None,
+        },
     )
     .await
     .unwrap();
 
-    println!("Uploaded new model: {id}");
-
+    // TODO: add assets::v1::update
+    //
     // replace PRNT chunk with 0's, lol
-    bytes[71..71 + 30].fill(0x00);
-    let id = data::upload(
-        &mut client,
-        Some(id),
-        "Test Model",
-        "",
-        AssetTypeId::Model,
-        None,
-        1,
-        false,
-        false,
-        bytes,
-    )
-    .await
-    .unwrap();
+    // bytes[71..71 + 30].fill(0x00);
+    // let id = data::upload(
+    //     &mut client,
+    //     Some(id),
+    //     "Test Model",
+    //     "",
+    //     AssetTypeId::Model,
+    //     None,
+    //     1,
+    //     false,
+    //     false,
+    //     bytes,
+    // )
+    // .await
+    // .unwrap();
 
-    println!("Updated model: {id}");
+    // println!("Updated model: {id}");
 
-    develop::v1::revert_asset_version(&mut client, id, 1)
-        .await
-        .unwrap();
-    println!("Revert model: {id} to the first version");
+    // develop::v1::revert_asset_version(&mut client, id, 1)
+    //     .await
+    //     .unwrap();
+    // println!("Revert model: {id} to the first version");
 
+    // TOOD: supply image bytes
     let result = assets::v1::upload(
         &mut client,
-        "test.png",
+        &[],
         "test",
         "",
         AssetTypeId::Decal,
         CreationContext {
-            creator: Creator::UserId(authenticted.id.to_string()),
+            creator: Creator::UserId(authenticated.id.to_string()),
             expected_price: None,
         },
     )

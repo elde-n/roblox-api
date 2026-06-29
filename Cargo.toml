@@ -18,6 +18,7 @@ web-socket = ["dep:reqwest-websocket", "dep:futures-util"]
 base64 = "0.22.1"
 chrono = "0.4.41"
 futures-util = { version = "0.3.31", optional = true }
+infer = "0.19.0"
 p256 = "0.13.2"
 reqwest = { version = "0.13.2", default-features = false, features = [
     "json",
