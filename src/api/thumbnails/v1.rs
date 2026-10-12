@@ -56,6 +56,7 @@ pub enum ReturnPolicy {
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Display, EnumString)]
 pub enum ThumbnailState {
+    Error,
     Pending,
     Blocked,
     Completed,
