@@ -34,33 +34,33 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn from_cookie(cookie: Cookie) -> Self {
+    pub fn from_cookie(cookie: Cookie) -> Result<Self, Error> {
         let client = reqwest::Client::new();
         let mut default_headers = HeaderMap::new();
 
         default_headers.insert(
             header::USER_AGENT,
-            HeaderValue::from_str("Roblox/WinInet").unwrap(),
+            HeaderValue::from_static("Roblox/WinInet"),
         );
 
         default_headers.insert(
             header::COOKIE,
-            HeaderValue::from_str(&cookie.to_string()).unwrap(),
+            HeaderValue::from_str(&cookie.to_string()).map_err(|_| Error::InvalidHeader)?,
         );
 
         // For some reason some APIs error if not set
         default_headers.append(
             header::COOKIE,
-            HeaderValue::from_str("RBXEventTrackerV2=&browserid=2").unwrap(),
+            HeaderValue::from_static("RBXEventTrackerV2=&browserid=2"),
         );
 
-        Client {
+        Ok(Client {
             requestor: ClientRequestor {
                 client,
                 default_headers,
                 ratelimit: None,
             },
-        }
+        })
     }
 
     #[deprecated = "Failed requests due to token validation are now automatically retried"]

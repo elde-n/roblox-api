@@ -3,6 +3,7 @@ use roblox_api::client::Client;
 
 pub fn client() -> Client {
     Client::from_cookie(dotenv!("ROBLOX_COOKIE").into())
+        .expect("ROBLOX_COOKIE should be a valid header value")
 }
 
 #[macro_export]

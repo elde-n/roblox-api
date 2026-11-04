@@ -44,12 +44,12 @@ pub async fn upload(
     let mut headers = client.requestor.default_headers.clone();
     headers.insert(
         header::ACCEPT,
-        HeaderValue::from_str("application/json").unwrap(),
+        HeaderValue::from_str("application/json").map_err(|_| Error::InvalidHeader)?,
     );
 
     headers.insert(
         header::CONTENT_TYPE,
-        HeaderValue::from_str("application/octect-stream").unwrap(),
+        HeaderValue::from_str("application/octect-stream").map_err(|_| Error::InvalidHeader)?,
     );
 
     let result = client

@@ -130,29 +130,24 @@ impl ClientRequestor {
     ) -> Result<(), Error> {
         self.default_headers.insert(
             CHALLENGE_ID_HEADER,
-            HeaderValue::from_str(&challenge.id).unwrap(),
+            HeaderValue::from_str(&challenge.id).map_err(|_| Error::InvalidHeader)?,
         );
 
         self.default_headers.insert(
             CHALLENGE_TYPE_HEADER,
-            HeaderValue::from_str(&challenge.kind.to_string()).unwrap(),
+            HeaderValue::from_str(&challenge.kind.to_string()).map_err(|_| Error::InvalidHeader)?,
         );
 
-        let metadata_b64 = BASE64_STANDARD.encode(
-            serde_json::to_vec(
-                &(ChallengeMetadataRequest {
-                    verification_token: verification_token.to_string(),
-                    challenge_id: challenge.metadata.server_challenge_id.clone(),
-                    action_type: challenge.metadata.action_type,
-                    remember_device: challenge.metadata.remember_device,
-                }),
-            )
-            .unwrap(),
-        );
+        let metadata_b64 = BASE64_STANDARD.encode(serde_json::to_vec(&ChallengeMetadataRequest {
+            verification_token: verification_token.to_string(),
+            challenge_id: challenge.metadata.server_challenge_id.clone(),
+            action_type: challenge.metadata.action_type,
+            remember_device: challenge.metadata.remember_device,
+        })?);
 
         self.default_headers.insert(
             CHALLENGE_METADATA_HEADER,
-            HeaderValue::from_str(&metadata_b64).unwrap(),
+            HeaderValue::from_str(&metadata_b64).map_err(|_| Error::InvalidHeader)?,
         );
 
         Ok(())

@@ -170,15 +170,14 @@ async fn handshake(mut socket: Socket) -> Result<Socket, Error> {
             serde_json::to_string(&HandshakeRequest {
                 protocol: "json",
                 version: 1,
-            })
-            .unwrap()
+            })?
             .as_str(),
         )
         .await?;
 
     let response = if let Message::Text(string) = socket.0.next().await.ok_or(Error::BadJson)?? {
         let messages: Vec<&str> = string.split_terminator(TERMINATOR).collect();
-        let first = messages.first().unwrap();
+        let first = messages.first().ok_or(Error::BadJson)?;
 
         Some(serde_json::from_str::<HandshakeResponse>(first)?)
     } else {
@@ -227,15 +226,24 @@ impl Socket {
                                 match message.target {
                                     Some(SocketMessageTarget::SubscriptionStatus) => {
                                         // arg.0 is event_type?
-                                        let json = serde_json::from_str::<SubscriptionStatus>(
-                                            &message.arguments.unwrap().get(1).unwrap().as_str(),
-                                        )?;
+                                        let argument = message
+                                            .arguments
+                                            .as_ref()
+                                            .and_then(|arguments| arguments.get(1))
+                                            .ok_or(Error::BadJson)?;
+                                        let json =
+                                            serde_json::from_str::<SubscriptionStatus>(argument)?;
 
                                         responses.push(MessageResponse::SubscriptionStatus(json));
                                     }
                                     Some(SocketMessageTarget::CommunicationChannels) => {
+                                        let argument = message
+                                            .arguments
+                                            .as_ref()
+                                            .and_then(|arguments| arguments.get(1))
+                                            .ok_or(Error::BadJson)?;
                                         let json = serde_json::from_str::<CommunicationChannels>(
-                                            &message.arguments.unwrap().get(1).unwrap().as_str(),
+                                            argument,
                                         )?;
 
                                         responses

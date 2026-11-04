@@ -9,7 +9,8 @@ use roblox_api::{
 
 #[tokio::test]
 async fn ratelimit() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
+    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into())
+        .expect("ROBLOX_COOKIE should be a valid header value");
 
     // this api should have ratelimits
     thumbnails::v1::assets(

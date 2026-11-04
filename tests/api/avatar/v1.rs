@@ -58,7 +58,8 @@ test_endpoint!(remove_outfit, [avatar::v1], remove_outfit(u64::MAX));
 
 #[tokio::test]
 async fn outfit_details() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
+    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into())
+        .expect("ROBLOX_COOKIE should be a valid header value");
     let result = avatar::v1::user_outfits(&mut client, USER_ID, Paging::default(), None)
         .await
         .unwrap();

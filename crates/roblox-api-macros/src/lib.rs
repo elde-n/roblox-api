@@ -94,6 +94,7 @@ fn expand(args: EndpointArgs, func: ItemFn) -> Result<TokenStream2> {
     let mut paging = None::<PagingArgs>;
     let mut body = None::<Expr>;
     let mut map = None::<MapArgs>;
+    let mut try_map = None::<MapArgs>;
     let mut raw_bytes = false;
     let mut void = false;
 
@@ -126,6 +127,10 @@ fn expand(args: EndpointArgs, func: ItemFn) -> Result<TokenStream2> {
                 }
                 Some("map") => {
                     map = Some(item.mac.parse_body()?);
+                    continue;
+                }
+                Some("try_map") => {
+                    try_map = Some(item.mac.parse_body()?);
                     continue;
                 }
                 Some("raw_bytes") => {
@@ -194,6 +199,9 @@ fn expand(args: EndpointArgs, func: ItemFn) -> Result<TokenStream2> {
     let decode = if let Some(map) = &map {
         let (pat, ty, expr) = (&map.pat, &map.ty, &map.expr);
         quote! { __response.json::<#ty>().await.map(|#pat| #expr) }
+    } else if let Some(map) = &try_map {
+        let (pat, ty, expr) = (&map.pat, &map.ty, &map.expr);
+        quote! { __response.json::<#ty>().await.and_then(|#pat| #expr) }
     } else if raw_bytes {
         quote! { __response.bytes().await }
     } else if void {

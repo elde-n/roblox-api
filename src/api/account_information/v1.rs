@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{DateTime, Gender, endpoint};
+use crate::{ApiError, DateTime, Error, Gender, endpoint};
 
 pub const URL: &str = "https://accountinformation.roblox.com/v1";
 
@@ -63,7 +63,7 @@ async fn birthdate() -> DateTime {
         #[serde(rename = "birthYear")]
         pub year: i32,
     }
-    map! { |res: BirthdateResponse| DateTime::from_ymd(res.year, res.month, res.day) }
+    try_map! { |res: BirthdateResponse| DateTime::from_ymd(res.year, res.month, res.day) }
 }
 
 #[endpoint(GET, "{URL}/description")]
@@ -83,7 +83,7 @@ async fn gender() -> Gender {
         #[serde(rename = "gender")]
         pub value: u8,
     }
-    map! { |res: GenderResponse| Gender::from_repr(res.value).expect("failed to parse gender") }
+    try_map! { |res: GenderResponse| Gender::from_repr(res.value).ok_or(Error::ApiError(ApiError::InvalidGender)) }
 }
 
 #[endpoint(GET, "{URL}/metadata")]

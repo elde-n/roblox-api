@@ -1,4 +1,4 @@
-use crate::{DateTime, Gender, Paging, endpoint};
+use crate::{ApiError, DateTime, Error, Gender, Paging, endpoint};
 
 pub const URL: &str = "https://users.roblox.com/v1";
 
@@ -213,7 +213,7 @@ async fn birthdate() -> DateTime {
         #[serde(rename = "birthYear")]
         pub year: i32,
     }
-    map! { |b: Response| DateTime::from_ymd(b.year, b.month, b.day) }
+    try_map! { |b: Response| DateTime::from_ymd(b.year, b.month, b.day) }
 }
 
 // According to documentation there's supposed to be a password,
@@ -230,9 +230,9 @@ async fn set_birthdate(birthdate: DateTime) -> () {
         #[serde(rename = "birthYear")]
         pub year: i32,
     }
-    let day = birthdate.day();
-    let month = birthdate.month();
-    let year = birthdate.year();
+    let day = birthdate.day()?;
+    let month = birthdate.month()?;
+    let year = birthdate.year()?;
 
     body! { Request { day, month, year } }
 }
@@ -264,7 +264,7 @@ async fn gender() -> Gender {
         #[serde(rename = "gender")]
         pub value: u8,
     }
-    map! { |g: Response| Gender::from_repr(g.value).expect("failed to parse gender") }
+    try_map! { |g: Response| Gender::from_repr(g.value).ok_or(Error::ApiError(ApiError::InvalidGender)) }
 }
 
 #[endpoint(POST, "{URL}/gender")]

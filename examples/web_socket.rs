@@ -17,7 +17,8 @@ use roblox_api::{
 #[cfg(feature = "web-socket")]
 #[tokio::main]
 async fn main() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
+    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into())
+        .expect("ROBLOX_COOKIE should be a valid header value");
     let mut socket = web_socket::user_hub::connect(&mut client).await.unwrap();
 
     loop {

@@ -21,7 +21,8 @@ test_endpoint!(users_by_name, [users::v1], users_by_name(&["Roblox", "test", "wo
 
 #[tokio::test]
 async fn validate_display_name_by_id() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
+    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into())
+        .expect("ROBLOX_COOKIE should be a valid header value");
     let authenticated = users::v1::authenticated_details(&mut client).await.unwrap();
     users::v1::validate_display_name_by_id(&mut client, authenticated.id, "エルデン")
         .await
@@ -30,7 +31,8 @@ async fn validate_display_name_by_id() {
 
 #[tokio::test]
 async fn user_username_history() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
+    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into())
+        .expect("ROBLOX_COOKIE should be a valid header value");
     users::v1::user_username_history(
         &mut client,
         85382088,

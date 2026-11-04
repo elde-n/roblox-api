@@ -20,28 +20,29 @@ use strum_macros::{Display, EnumString, FromRepr};
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct DateTime(String);
 impl DateTime {
-    pub fn from_ymd(year: i32, month: u8, day: u8) -> Self {
-        Self(
-            Utc.with_ymd_and_hms(year, month as u32, day as u32, 0, 0, 0)
-                .unwrap()
-                .to_rfc3339(),
-        )
+    pub fn from_ymd(year: i32, month: u8, day: u8) -> Result<Self, Error> {
+        let datetime = Utc
+            .with_ymd_and_hms(year, month as u32, day as u32, 0, 0, 0)
+            .single()
+            .ok_or(Error::InvalidDateTime)?;
+
+        Ok(Self(datetime.to_rfc3339()))
     }
 
-    pub fn day(&self) -> u8 {
-        chrono::DateTime::parse_from_rfc3339(&self.0).unwrap().day() as u8
+    fn parsed(&self) -> Result<chrono::DateTime<chrono::FixedOffset>, Error> {
+        chrono::DateTime::parse_from_rfc3339(&self.0).map_err(|_| Error::InvalidDateTime)
     }
 
-    pub fn month(&self) -> u8 {
-        chrono::DateTime::parse_from_rfc3339(&self.0)
-            .unwrap()
-            .month() as u8
+    pub fn day(&self) -> Result<u8, Error> {
+        Ok(self.parsed()?.day() as u8)
     }
 
-    pub fn year(&self) -> i32 {
-        chrono::DateTime::parse_from_rfc3339(&self.0)
-            .unwrap()
-            .year()
+    pub fn month(&self) -> Result<u8, Error> {
+        Ok(self.parsed()?.month() as u8)
+    }
+
+    pub fn year(&self) -> Result<i32, Error> {
+        Ok(self.parsed()?.year())
     }
 }
 
@@ -60,6 +61,11 @@ pub enum Error {
     IoError(std::io::Error),
     ReqwestError(reqwest::Error),
     InvalidHeader,
+    InvalidBase64,
+    InvalidDateTime,
+    InvalidNumber,
+    MissingChallenge,
+    UnsupportedChallenge(String),
     #[cfg(feature = "web-socket")]
     ReqwestWebSocketError(reqwest_websocket::Error),
 }

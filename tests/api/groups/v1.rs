@@ -31,7 +31,8 @@ test_endpoint!(
 
 #[tokio::test]
 async fn join() -> Result<(), Error> {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
+    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into())
+        .expect("ROBLOX_COOKIE should be a valid header value");
     let result = groups::v1::join(&mut client, ROBLOX_GROUP_ID).await;
     if let Err(Error::ApiError(ApiError::AlreadyInGroup)) = result {
         Ok(())
@@ -42,7 +43,8 @@ async fn join() -> Result<(), Error> {
 
 #[tokio::test]
 async fn join_request() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
+    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into())
+        .expect("ROBLOX_COOKIE should be a valid header value");
     let details = users::v1::authenticated_details(&mut client).await.unwrap();
     groups::v1::remove_join_request(&mut client, BHOP_GROUP_ID, details.id)
         .await

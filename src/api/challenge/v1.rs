@@ -23,8 +23,7 @@ async fn continue_challenge(challenge: &Challenge, verification_token: &str) -> 
         challenge_id: challenge.metadata.server_challenge_id.clone(),
         action_type: challenge.metadata.action_type,
         remember_device: challenge.metadata.remember_device,
-    })
-    .unwrap();
+    })?;
 
     body! {
         &Request {

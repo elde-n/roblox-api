@@ -33,7 +33,8 @@ async fn login_cancel() {
 
 #[tokio::test]
 async fn inspect_code() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
+    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into())
+        .expect("ROBLOX_COOKIE should be a valid header value");
     let token = auth_token_service::v1::login_create(&mut client)
         .await
         .unwrap();
@@ -48,7 +49,8 @@ async fn validate_code() {
     let token = auth_token_service::v1::login_create(&mut client)
         .await
         .unwrap();
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
+    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into())
+        .expect("ROBLOX_COOKIE should be a valid header value");
     auth_token_service::v1::inspect_code(&mut client, &token.code)
         .await
         .unwrap();

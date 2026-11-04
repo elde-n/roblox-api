@@ -89,7 +89,7 @@ async fn authentication_intent(client: &mut Client) -> Result<AuthenticationInte
 
     let unix = SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap()
+        .map_err(|_| Error::InvalidDateTime)?
         .as_secs();
 
     let key = SigningKey::random(&mut OsRng);

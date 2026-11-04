@@ -18,7 +18,8 @@ test_endpoint!(
 
 #[tokio::test]
 async fn conversation_participants_metadata() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
+    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into())
+        .expect("ROBLOX_COOKIE should be a valid header value");
     let result =
         platform_chat::v1::user_conversations(&mut client, Paging::new(None, Some(100), None))
             .await
@@ -34,7 +35,8 @@ async fn conversation_participants_metadata() {
 
 #[tokio::test]
 async fn conversations() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
+    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into())
+        .expect("ROBLOX_COOKIE should be a valid header value");
     let result =
         platform_chat::v1::user_conversations(&mut client, Paging::new(None, Some(100), None))
             .await
@@ -47,7 +49,8 @@ async fn conversations() {
 
 #[tokio::test]
 async fn conversation_messages() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
+    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into())
+        .expect("ROBLOX_COOKIE should be a valid header value");
     let result =
         platform_chat::v1::user_conversations(&mut client, Paging::new(None, Some(100), None))
             .await
@@ -63,7 +66,8 @@ async fn conversation_messages() {
 
 #[tokio::test]
 async fn send_messages_in_conversation() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
+    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into())
+        .expect("ROBLOX_COOKIE should be a valid header value");
     let result =
         platform_chat::v1::user_conversations(&mut client, Paging::new(None, Some(100), None))
             .await
@@ -87,7 +91,8 @@ async fn send_messages_in_conversation() {
 
 #[tokio::test]
 async fn update_typing_status_in_conversation() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
+    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into())
+        .expect("ROBLOX_COOKIE should be a valid header value");
     let result =
         platform_chat::v1::user_conversations(&mut client, Paging::new(None, Some(100), None))
             .await
@@ -103,7 +108,8 @@ async fn update_typing_status_in_conversation() {
 
 #[tokio::test]
 async fn add_users_to_conversation() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
+    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into())
+        .expect("ROBLOX_COOKIE should be a valid header value");
     let result =
         platform_chat::v1::user_conversations(&mut client, Paging::new(None, Some(100), None))
             .await
@@ -120,7 +126,8 @@ async fn add_users_to_conversation() {
 
 #[tokio::test]
 async fn remove_users_from_conversation() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
+    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into())
+        .expect("ROBLOX_COOKIE should be a valid header value");
     let result =
         platform_chat::v1::user_conversations(&mut client, Paging::new(None, Some(100), None))
             .await
@@ -137,7 +144,8 @@ async fn remove_users_from_conversation() {
 
 #[tokio::test]
 async fn create_conversations() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
+    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into())
+        .expect("ROBLOX_COOKIE should be a valid header value");
     platform_chat::v1::create_conversations(
         &mut client,
         &[ConversationCreateRequest {
@@ -151,7 +159,8 @@ async fn create_conversations() {
 
 #[tokio::test]
 async fn rename_conversations() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
+    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into())
+        .expect("ROBLOX_COOKIE should be a valid header value");
     let result =
         platform_chat::v1::user_conversations(&mut client, Paging::new(None, Some(100), None))
             .await
@@ -168,7 +177,8 @@ async fn rename_conversations() {
 
 #[tokio::test]
 async fn mark_conversations_as_read() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
+    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into())
+        .expect("ROBLOX_COOKIE should be a valid header value");
     let result =
         platform_chat::v1::user_conversations(&mut client, Paging::new(None, Some(100), None))
             .await

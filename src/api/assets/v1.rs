@@ -98,7 +98,10 @@ pub async fn upload(
     creation_context: CreationContext,
 ) -> Result<AssetUploadStatus, Error> {
     let mut headers = client.requestor.default_headers.clone();
-    headers.insert(header::ACCEPT, HeaderValue::from_str("*/*").unwrap());
+    headers.insert(
+        header::ACCEPT,
+        HeaderValue::from_str("*/*").map_err(|_| Error::InvalidHeader)?,
+    );
 
     #[derive(Clone, Debug, Deserialize, Serialize)]
     #[serde(rename_all = "camelCase")]
@@ -115,8 +118,7 @@ pub async fn upload(
         description,
         asset_type,
         creation_context,
-    })
-    .unwrap();
+    })?;
 
     let mime = match asset_type {
         AssetTypeId::Model => "model/x-rbxm",
@@ -158,7 +160,10 @@ pub async fn update(
     asset_type: AssetTypeId,
 ) -> Result<AssetUploadStatus, Error> {
     let mut headers = client.requestor.default_headers.clone();
-    headers.insert(header::ACCEPT, HeaderValue::from_str("*/*").unwrap());
+    headers.insert(
+        header::ACCEPT,
+        HeaderValue::from_str("*/*").map_err(|_| Error::InvalidHeader)?,
+    );
 
     #[derive(Clone, Debug, Deserialize, Serialize)]
     #[serde(rename_all = "camelCase")]
@@ -174,8 +179,7 @@ pub async fn update(
         id,
         title,
         description,
-    })
-    .unwrap();
+    })?;
 
     let mime = match asset_type {
         AssetTypeId::Model => "model/x-rbxm",

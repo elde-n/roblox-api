@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{DateTime, Paging, endpoint};
+use crate::{DateTime, Error, Paging, endpoint};
 
 pub const URL: &str = "https://apis.roblox.com/platform-chat-api/v1";
 
@@ -158,13 +158,13 @@ async fn conversations_participant_metadata(ids: &[&str]) -> Vec<ConversationsPa
         pub is_pending: bool,
     }
     body! { Request { ids } }
-    map! { |r: Response| {
+    try_map! { |r: Response| {
         let mut metadata = Vec::new();
         for (conv_id, v) in &r.metadata {
             let mut participants = Vec::new();
             for (user_id, pending) in &v.participants_metadata {
                 participants.push(ParticipantMetadata {
-                    id: user_id.parse().unwrap(),
+                    id: user_id.parse().map_err(|_| Error::InvalidNumber)?,
                     is_pending: pending.is_pending,
                 });
             }
@@ -173,7 +173,7 @@ async fn conversations_participant_metadata(ids: &[&str]) -> Vec<ConversationsPa
                 participants,
             });
         }
-        metadata
+        Ok(metadata)
     } }
 }
 

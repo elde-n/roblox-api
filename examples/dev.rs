@@ -15,7 +15,8 @@ use roblox_api::{
 
 #[tokio::main]
 async fn main() {
-    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into());
+    let mut client = Client::from_cookie(dotenv!("ROBLOX_COOKIE").into())
+        .expect("ROBLOX_COOKIE should be a valid header value");
     let authenticated = users::v1::authenticated_details(&mut client).await.unwrap();
 
     let bytes = &mut [

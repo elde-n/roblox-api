@@ -137,7 +137,7 @@ impl Serialize for ThumbnailSize {
 impl std::fmt::Display for ThumbnailSize {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let content = format!("{:?}", self);
-        write!(f, "{}", content.strip_prefix('S').unwrap())
+        write!(f, "{}", content.strip_prefix('S').unwrap_or(&content))
     }
 }
 
