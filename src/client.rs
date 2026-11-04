@@ -100,6 +100,20 @@ impl ClientRequestor {
         Ok(response.json::<T>().await?)
     }
 
+    fn headers(&self, extra: Option<HeaderMap>) -> HeaderMap {
+        let mut headers = self.default_headers.clone();
+
+        if let Some(extra) = extra {
+            for (name, value) in extra {
+                if let Some(name) = name {
+                    headers.insert(name, value);
+                }
+            }
+        }
+
+        headers
+    }
+
     pub(crate) async fn request<'a, R: Serialize>(
         &mut self,
         method: Method,
@@ -108,10 +122,11 @@ impl ClientRequestor {
         query: Option<&'a [(&'a str, &'a str)]>,
         headers: Option<HeaderMap>,
     ) -> Result<ResponseWrapped, Error> {
+        let headers = self.headers(headers);
         let mut builder = self
             .client
             .request(method.clone(), url)
-            .headers(headers.clone().unwrap_or(self.default_headers.clone()));
+            .headers(headers.clone());
 
         // Even though sending None works, it might get serialized as null in json, which is a waste of bytes
         if let Some(request) = request {
@@ -126,10 +141,7 @@ impl ClientRequestor {
 
         match response {
             Err(Error::ApiError(ApiError::TokenValidation)) => {
-                let mut builder = self
-                    .client
-                    .request(method, url)
-                    .headers(headers.unwrap_or(self.default_headers.clone()));
+                let mut builder = self.client.request(method, url).headers(headers.clone());
 
                 if let Some(request) = request {
                     builder = builder.json(&request);

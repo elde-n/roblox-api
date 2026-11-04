@@ -138,6 +138,7 @@ macro_rules! endpoint {
         types     = [$($types:tt)*],
         pre       = [$($pre:tt)*],
         query     = [$($qk:literal => $qv:expr),*],
+        headers   = [$($hk:literal => $hv:expr),*],
         body      = [$($body_expr:expr)?],
         decode    = $decode:tt,
     ) => {
@@ -169,6 +170,18 @@ macro_rules! endpoint {
             $( __query_pairs.push(($qk, $qv)); )*
             let query = if __query_pairs.is_empty() { None } else { Some(__query_pairs.as_slice()) };
 
+            #[allow(unused_mut)]
+            let mut __headers = $crate::reqwest::header::HeaderMap::new();
+            $(
+                __headers.insert(
+                    $crate::reqwest::header::HeaderName::from_bytes($hk.as_bytes())
+                        .map_err(|_| $crate::Error::InvalidHeader)?,
+                    $crate::reqwest::header::HeaderValue::from_str(&$hv)
+                        .map_err(|_| $crate::Error::InvalidHeader)?,
+                );
+            )*
+            let __headers = if __headers.is_empty() { None } else { Some(__headers) };
+
             let __response = $client
                 .requestor
                 .request(
@@ -176,7 +189,7 @@ macro_rules! endpoint {
                     &url,
                     endpoint!(@body $($body_expr)?),
                     query,
-                    None,
+                    __headers,
                 )
                 .await?;
             endpoint!(@decode __response, $ret, $decode)
@@ -198,6 +211,7 @@ macro_rules! endpoint {
             $(types    { $($types:tt)* })?
             $(prelude  { $($pre:tt)* })?
             $(query    { $($qk:literal => $qv:expr),* $(,)? })?
+            $(headers  { $($hk:literal => $hv:expr),* $(,)? })?
             $(body_serialize { $body_expr:expr })?
             map |$r:ident : $wrap:ty| $proj:expr
         ],
@@ -214,6 +228,7 @@ macro_rules! endpoint {
             types     = [$($($types)*)?],
             pre       = [$($($pre)*)?],
             query     = [$($($qk => $qv),*)?],
+            headers   = [$($($hk => $hv),*)?],
             body      = [$($body_expr)?],
             decode    = [map $r : $wrap => $proj],
         );
@@ -234,6 +249,7 @@ macro_rules! endpoint {
             $(types    { $($types:tt)* })?
             $(prelude  { $($pre:tt)* })?
             $(query    { $($qk:literal => $qv:expr),* $(,)? })?
+            $(headers  { $($hk:literal => $hv:expr),* $(,)? })?
             $(body_serialize { $body_expr:expr })?
             raw_bytes
         ],
@@ -250,6 +266,7 @@ macro_rules! endpoint {
             types     = [$($($types)*)?],
             pre       = [$($($pre)*)?],
             query     = [$($($qk => $qv),*)?],
+            headers   = [$($($hk => $hv),*)?],
             body      = [$($body_expr)?],
             decode    = bytes,
         );
@@ -270,6 +287,7 @@ macro_rules! endpoint {
             $(types    { $($types:tt)* })?
             $(prelude  { $($pre:tt)* })?
             $(query    { $($qk:literal => $qv:expr),* $(,)? })?
+            $(headers  { $($hk:literal => $hv:expr),* $(,)? })?
             $(body_serialize { $body_expr:expr })?
             void
         ],
@@ -286,6 +304,7 @@ macro_rules! endpoint {
             types     = [$($($types)*)?],
             pre       = [$($($pre)*)?],
             query     = [$($($qk => $qv),*)?],
+            headers   = [$($($hk => $hv),*)?],
             body      = [$($body_expr)?],
             decode    = void,
         );
@@ -306,6 +325,7 @@ macro_rules! endpoint {
             $(types    { $($types:tt)* })?
             $(prelude  { $($pre:tt)* })?
             $(query    { $($qk:literal => $qv:expr),* $(,)? })?
+            $(headers  { $($hk:literal => $hv:expr),* $(,)? })?
             $(body_serialize { $body_expr:expr })?
         ],
     ) => {
@@ -321,6 +341,7 @@ macro_rules! endpoint {
             types     = [$($($types)*)?],
             pre       = [$($($pre)*)?],
             query     = [$($($qk => $qv),*)?],
+            headers   = [$($($hk => $hv),*)?],
             body      = [$($body_expr)?],
             decode    = json,
         );

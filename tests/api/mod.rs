@@ -104,6 +104,7 @@ mod auth;
 mod auth_token_service;
 mod avatar;
 mod badges;
+mod client_settings;
 mod develop;
 mod economy;
 mod friends;

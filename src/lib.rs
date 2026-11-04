@@ -7,6 +7,9 @@ pub mod validation;
 #[macro_use]
 mod endpoint;
 
+#[doc(hidden)]
+pub use reqwest;
+
 use challenge::Challenge;
 use chrono::{Datelike, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
@@ -55,6 +58,7 @@ pub enum Error {
     BadJson,
     IoError(std::io::Error),
     ReqwestError(reqwest::Error),
+    InvalidHeader,
     #[cfg(feature = "web-socket")]
     ReqwestWebSocketError(reqwest_websocket::Error),
 }
