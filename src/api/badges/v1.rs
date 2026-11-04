@@ -92,32 +92,30 @@ pub struct BadgesResponse {
     pub previous_cursor: Option<String>,
 }
 
-endpoint! {
-    information(id: u64) -> Badge {
-        GET "{URL}/badges/{id}";
-    }
+#[endpoint(GET, "{URL}/badges/{id}")]
+async fn information(id: u64) -> Badge {}
 
-    universe_badges(id: u64, sort_by: Option<BadgeSortBy>, paging: Paging<'_>) -> BadgesResponse {
-        GET "{URL}/universes/{id}/badges";
-        paging_query { paging, limit = 10 }
-        prelude {
-            let sort_by_lower = sort_by.as_ref().map(|s| s.to_string().to_lowercase());
-        }
-        query {
-            "sortBy" => sort_by_lower.as_deref().unwrap_or(""),
-        }
-    }
+#[endpoint(GET, "{URL}/universes/{id}/badges")]
+async fn universe_badges(
+    id: u64,
+    sort_by: Option<BadgeSortBy>,
+    paging: Paging<'_>,
+) -> BadgesResponse {
+    paging!(paging, limit = 10);
+    let sort_by_lower = sort_by.as_ref().map(|s| s.to_string().to_lowercase());
 
-    user_badges(id: u64, paging: Paging<'_>) -> BadgesResponse {
-        GET "{URL}/users/{id}/badges";
-        paging_query { paging, limit = 10 }
-    }
-
-    remove(id: u64, user_id: u64) -> () {
-        DELETE "{URL}/user/{user_id}/badges/{id}";
-    }
-
-    authenticated_remove(id: u64) -> () {
-        DELETE "{URL}/user/badges/{id}";
+    query! {
+        "sortBy" => sort_by_lower.as_deref().unwrap_or(""),
     }
 }
+
+#[endpoint(GET, "{URL}/users/{id}/badges")]
+async fn user_badges(id: u64, paging: Paging<'_>) -> BadgesResponse {
+    paging!(paging, limit = 10);
+}
+
+#[endpoint(DELETE, "{URL}/user/{user_id}/badges/{id}")]
+async fn remove(id: u64, user_id: u64) -> () {}
+
+#[endpoint(DELETE, "{URL}/user/badges/{id}")]
+async fn authenticated_remove(id: u64) -> () {}

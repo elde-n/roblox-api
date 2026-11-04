@@ -158,39 +158,42 @@ pub struct Notification {
     pub content: NotificationContent,
 }
 
-endpoint! {
-    unread_count() -> NotificationUnreadCount {
-        GET "{URL}/stream-notifications/unread-count";
-    }
+#[endpoint(GET, "{URL}/stream-notifications/unread-count")]
+async fn unread_count() -> NotificationUnreadCount {}
 
-    recent(paging: Paging<'_>) -> Vec<Notification> {
-        GET "{URL}/stream-notifications/get-recent";
-        prelude {
-            let limit = paging.limit.unwrap_or(20).to_string();
-            let cursor = match paging.cursor {
-                Some(c) => c.to_string(),
-                None => String::new(),
-            };
-        }
-        query {
-            "maxRows" => &limit,
-            "startIndex" => &cursor,
-        }
-    }
+#[endpoint(GET, "{URL}/stream-notifications/get-recent")]
+async fn recent(paging: Paging<'_>) -> Vec<Notification> {
+    let limit = paging.limit.unwrap_or(20).to_string();
+    let cursor = match paging.cursor {
+        Some(c) => c.to_string(),
+        None => String::new(),
+    };
 
-    clear_unread() -> String {
-        POST "{URL}/stream-notifications/clear-unread";
-        types {
-            Response { status_message("statusMessage"): String }
-        }
-        map |r: Response| r.status_message
+    query! {
+        "maxRows" => &limit,
+        "startIndex" => &cursor,
     }
+}
 
-    dismiss(id: &str) -> String {
-        POST "{URL}/stream-notifications/clear-unread/action/{id}/SpecialItemIgnoreAction";
-        types {
-            Response { status_message("statusMessage"): String }
-        }
-        map |r: Response| r.status_message
+#[endpoint(POST, "{URL}/stream-notifications/clear-unread")]
+async fn clear_unread() -> String {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "statusMessage")]
+        pub status_message: String,
     }
+    map! { |r: Response| r.status_message }
+}
+
+#[endpoint(
+    POST,
+    "{URL}/stream-notifications/clear-unread/action/{id}/SpecialItemIgnoreAction"
+)]
+async fn dismiss(id: &str) -> String {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "statusMessage")]
+        pub status_message: String,
+    }
+    map! { |r: Response| r.status_message }
 }

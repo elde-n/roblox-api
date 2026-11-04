@@ -78,29 +78,26 @@ struct AssetsResponse {
     assets: Vec<Asset>,
 }
 
-endpoint! {
-    assets(ids: &[u64]) -> Vec<Asset> {
-        GET "{URL}/assets";
-        prelude {
-            let ids = ids
-                .iter()
-                .map(|x| x.to_string())
-                .collect::<Vec<String>>()
-                .join(",");
-        }
-        query {
-            "assetIds" => &ids,
-        }
-        map |r: AssetsResponse| r.assets
-    }
+#[endpoint(GET, "{URL}/assets")]
+async fn assets(ids: &[u64]) -> Vec<Asset> {
+    let ids = ids
+        .iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<String>>()
+        .join(",");
 
-    published_asset_versions(id: u64, paging: Paging<'_>) -> PublishedAssetVersions {
-        GET "{URL}/assets/{id}/published-versions";
-        paging_query { paging, limit = 10 }
+    query! {
+        "assetIds" => &ids,
     }
+    map! { |r: AssetsResponse| r.assets }
+}
 
-    revert_asset_version(id: u64, version: u64) -> () {
-        POST "{URL}/assets/{id}/revert-version?assetVersionNumber={version}";
-        void
-    }
+#[endpoint(GET, "{URL}/assets/{id}/published-versions")]
+async fn published_asset_versions(id: u64, paging: Paging<'_>) -> PublishedAssetVersions {
+    paging!(paging, limit = 10);
+}
+
+#[endpoint(POST, "{URL}/assets/{id}/revert-version?assetVersionNumber={version}")]
+async fn revert_asset_version(id: u64, version: u64) -> () {
+    void!();
 }

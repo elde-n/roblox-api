@@ -20,18 +20,14 @@ pub struct AgreementAcceptances {
     pub acceptances: Vec<Agreement>,
 }
 
-endpoint! {
-    acceptances(agreements: &[&str]) -> AgreementAcceptances {
-        POST "{URL}/agreements/acceptances";
-
-        types {
-            Request<'a> {
-                agreements("agreements"): &'a [&'a str],
-            }
-        }
-
-        body_serialize {
-            Request { agreements }
-        }
+#[endpoint(POST, "{URL}/agreements/acceptances")]
+async fn acceptances(agreements: &[&str]) -> AgreementAcceptances {
+    #[derive(Serialize)]
+    struct Request<'a> {
+        #[serde(rename = "agreements")]
+        pub agreements: &'a [&'a str],
+    }
+    body! {
+        Request { agreements }
     }
 }

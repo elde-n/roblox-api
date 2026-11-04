@@ -21,18 +21,18 @@ pub struct UserPresence {
     pub job_id: Option<String>,
 }
 
-endpoint! {
-    presence(ids: &[u64]) -> Vec<UserPresence> {
-        POST "{URL}/presence/users";
-        types {
-            Request<'a> {
-                users("userIds"): &'a [u64],
-            }
-            Response {
-                presences("userPresences"): Vec<UserPresence>,
-            }
-        }
-        body_serialize { Request { users: ids } }
-        map |r: Response| r.presences
+#[endpoint(POST, "{URL}/presence/users")]
+async fn presence(ids: &[u64]) -> Vec<UserPresence> {
+    #[derive(Serialize)]
+    struct Request<'a> {
+        #[serde(rename = "userIds")]
+        pub users: &'a [u64],
     }
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "userPresences")]
+        pub presences: Vec<UserPresence>,
+    }
+    body! { Request { users: ids } }
+    map! { |r: Response| r.presences }
 }

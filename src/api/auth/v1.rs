@@ -109,41 +109,42 @@ async fn authentication_intent(client: &mut Client) -> Result<AuthenticationInte
     })
 }
 
-endpoint! {
-    /// Logs in with the given credentials and returns a session token.
-    login(client, login: &str, key: &str, login_type: LoginType) -> LoginResponse {
-        POST "{URL}/login";
-        types {
-            Request<'a> {
-                login_type("ctype"): LoginType,
-                login("cvalue"): &'a str,
-                key("password"): &'a str,
-                authentication_intent("secureAuthenticationIntent"): AuthenticationIntent,
-            }
-        }
-        prelude {
-            let intent = authentication_intent(client).await?;
-        }
-        body_serialize {
-            &Request { login_type, login, key, authentication_intent: intent }
-        }
+/// Logs in with the given credentials and returns a session token.
+#[endpoint(POST, "{URL}/login")]
+async fn login(login: &str, key: &str, login_type: LoginType) -> LoginResponse {
+    #[derive(Serialize)]
+    struct Request<'a> {
+        #[serde(rename = "ctype")]
+        pub login_type: LoginType,
+        #[serde(rename = "cvalue")]
+        pub login: &'a str,
+        #[serde(rename = "password")]
+        pub key: &'a str,
+        #[serde(rename = "secureAuthenticationIntent")]
+        pub authentication_intent: AuthenticationIntent,
     }
+    let intent = authentication_intent(client).await?;
 
-    recommended_usernames_from_display_name(
-        display_name: &str, birthday: DateTime
-    ) -> RecommendedUsernamesFromDisplayName {
-        POST "{URL}/validators/recommendedUsernameFromDisplayName";
-        types {
-            Request<'a> {
-                display_name("displayName"): &'a str,
-                birthday: String,
-            }
-        }
-        body_serialize {
-            &Request {
-                display_name,
-                birthday: birthday.to_string(),
-            }
+    body! {
+        &Request { login_type, login, key, authentication_intent: intent }
+    }
+}
+
+#[endpoint(POST, "{URL}/validators/recommendedUsernameFromDisplayName")]
+async fn recommended_usernames_from_display_name(
+    display_name: &str,
+    birthday: DateTime,
+) -> RecommendedUsernamesFromDisplayName {
+    #[derive(Serialize)]
+    struct Request<'a> {
+        #[serde(rename = "displayName")]
+        pub display_name: &'a str,
+        pub birthday: String,
+    }
+    body! {
+        &Request {
+            display_name,
+            birthday: birthday.to_string(),
         }
     }
 }

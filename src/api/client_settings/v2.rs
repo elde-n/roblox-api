@@ -47,8 +47,8 @@ pub struct OtaInfo {
     pub tryout_name: Option<String>,
     #[serde(rename = "localAssetURI")]
     pub local_asset_uri: String,
-    pub is_forced_update: bool,
     pub app_storage_reset_id: String,
+    pub is_forced_update: bool,
     pub is_development_config: bool,
     pub assets_manifest: HashMap<String, String>,
     pub version_v2: u64,
@@ -68,24 +68,20 @@ pub enum ChannelAssignmentType {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct BetaProgramInfo {
-    pub name: Option<String>,
     pub id: Option<String>,
+    pub name: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct UserChannel {
-    pub channel_name: String,
-    pub channel_assignment_type: Option<ChannelAssignmentType>,
+    #[serde(rename = "channelName")]
+    pub name: String,
+    #[serde(rename = "channelAssignmentType")]
+    pub kind: Option<ChannelAssignmentType>,
     pub token: Option<String>,
     pub program: Option<BetaProgramInfo>,
     pub is_flag_only: Option<bool>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
-pub struct ApplicationSettings {
-    pub application_settings: HashMap<String, String>,
 }
 
 impl std::fmt::Display for BinaryType {
@@ -100,79 +96,91 @@ fn path_segment(name: &str, value: Option<&str>) -> String {
         .unwrap_or_default()
 }
 
-endpoint! {
-    /// Get the client version information for a specific binary
-    ///
-    /// Private channels require a `Roblox-Channel-Token` from [`user_channel`].
-    client_version(binary_type: BinaryType, channel_name: Option<&str>, channel_token: Option<&str>) -> ClientVersionResponse {
-        GET "{URL}/client-version/{binary_type}{channel}";
-        prelude {
-            let channel = path_segment("channel", channel_name);
-            let channel_token = channel_token.unwrap_or_default();
-        }
-        headers {
-            "Roblox-Channel-Token" => channel_token,
-        }
+/// Get the client version information for a specific binary
+///
+/// Private channels require a `Roblox-Channel-Token` from [`user_channel`].
+#[endpoint(GET, "{URL}/client-version/{binary_type}{channel}")]
+async fn client_version(
+    binary_type: BinaryType,
+    channel_name: Option<&str>,
+    channel_token: Option<&str>,
+) -> ClientVersionResponse {
+    let channel = path_segment("channel", channel_name);
+    let channel_token = channel_token.unwrap_or_default();
+
+    headers! {
+        "Roblox-Channel-Token" => channel_token,
+    }
+}
+
+/// Get the over-the-air update information for a specific binary and version
+#[endpoint(GET, "{URL}/ota-version/{binary_type}")]
+async fn ota_version(
+    binary_type: BinaryType,
+    version: &str,
+    channel: Option<&str>,
+    name: Option<&str>,
+    tag: Option<&str>,
+) -> Vec<OtaInfo> {
+    let channel = channel.unwrap_or_default();
+    let name = name.unwrap_or_default();
+    let tag = tag.unwrap_or_default();
+
+    query! {
+        "version" => version,
+        "channel" => channel,
+        "name" => name,
+        "tag" => tag,
+    }
+}
+
+/// Get the channel assigned to the authenticated user for a specific binary
+#[endpoint(GET, "{URL}/user-channel")]
+async fn user_channel(binary_type: BinaryType) -> UserChannel {
+    let binary_type = binary_type.to_string();
+
+    query! {
+        "binaryType" => &binary_type,
+    }
+}
+
+/// Lists all known compression dictionaries
+#[endpoint(GET, "{URL}/compression-dictionaries")]
+async fn compression_dictionaries() -> Vec<CompressionDictionary> {
+    #[derive(Serialize, Deserialize)]
+    struct Response {
+        pub dictionaries: Vec<CompressionDictionary>,
     }
 
-    /// Get the over-the-air update information for a specific binary and version
-    ota_version(binary_type: BinaryType, version: &str, channel: Option<&str>, name: Option<&str>, tag: Option<&str>) -> Vec<OtaInfo> {
-        GET "{URL}/ota-version/{binary_type}";
-        prelude {
-            let channel = channel.unwrap_or_default();
-            let name = name.unwrap_or_default();
-            let tag = tag.unwrap_or_default();
-        }
+    map! { |r: Response| r.dictionaries }
+}
 
-        query {
-            "version" => version,
-            "channel" => channel,
-            "name" => name,
-            "tag" => tag,
-        }
+/// Returns the specified compression dictionary as bytes
+#[endpoint(GET, "{URL}/compression-dictionaries/{hash}")]
+async fn compression_dictionary(hash: &str) -> Vec<u8> {
+    raw_bytes!();
+}
+
+/// Get the client settings for a specific application
+#[endpoint(GET, "{URL}/settings/application/{application}{bucket}")]
+async fn settings(application: &str, bucket: Option<&str>) -> HashMap<String, String> {
+    let bucket = path_segment("bucket", bucket);
+
+    #[derive(Serialize, Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Response {
+        application_settings: HashMap<String, String>,
     }
 
-    /// Get the channel assigned to the authenticated user for a specific binary
-    user_channel(binary_type: BinaryType) -> UserChannel {
-        GET "{URL}/user-channel";
-        prelude {
-            let binary_type = binary_type.to_string();
-        }
-        query {
-            "binaryType" => &binary_type,
-        }
-    }
+    map! { |r: Response| r.application_settings }
+}
 
-    /// Lists all known compression dictionaries
-    compression_dictionaries() -> Vec<CompressionDictionary> {
-        GET "{URL}/compression-dictionaries";
-        types {
-            CompressionDictionaries { dictionaries: Vec<CompressionDictionary> }
-        }
-        map |r: CompressionDictionaries| r.dictionaries
-    }
-
-    /// Returns the specified compression dictionary as bytes
-    compression_dictionary(hash: &str) -> Vec<u8> {
-        GET "{URL}/compression-dictionaries/{hash}";
-        raw_bytes
-    }
-
-    /// Get the client settings for a specific application
-    settings(application: &str, bucket: Option<&str>) -> ApplicationSettings {
-        GET "{URL}/settings/application/{application}{bucket}";
-        prelude {
-            let bucket = path_segment("bucket", bucket);
-        }
-    }
-
-    /// Get the zstd-compressed client settings for a specific application
-    settings_compressed(application: &str, hash: &str, bucket: Option<&str>) -> Vec<u8> {
-        GET "{CDN_URL}/settings-compressed/application/{application}{bucket}/{hash}.dcz";
-        prelude {
-            let bucket = path_segment("bucket", bucket);
-        }
-
-        raw_bytes
-    }
+/// Get the zstd-compressed client settings for a specific application
+#[endpoint(
+    GET,
+    "{CDN_URL}/settings-compressed/application/{application}{bucket}/{hash}.dcz"
+)]
+async fn settings_compressed(application: &str, hash: &str, bucket: Option<&str>) -> Vec<u8> {
+    let bucket = path_segment("bucket", bucket);
+    raw_bytes!();
 }

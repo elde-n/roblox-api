@@ -11,15 +11,12 @@ pub enum PermissionContext {
     IgnoreUniverse,
 }
 
-endpoint! {
-    asset(id: u64) -> Vec<u8> {
-        GET "{URL}/asset";
-        prelude {
-            let id_str = id.to_string();
-        }
-        query {
-            "id" => &id_str,
-        }
-        raw_bytes
+#[endpoint(GET, "{URL}/asset")]
+async fn asset(id: u64) -> Vec<u8> {
+    let id_str = id.to_string();
+
+    query! {
+        "id" => &id_str,
     }
+    raw_bytes!();
 }

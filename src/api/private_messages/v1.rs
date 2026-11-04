@@ -84,69 +84,92 @@ impl std::fmt::Display for MessageTab {
     }
 }
 
-endpoint! {
-    unread_count() -> u64 {
-        GET "{URL}/messages/unread/count";
-        types { CountResponse { count: u64 } }
-        map |r: CountResponse| r.count
+#[endpoint(GET, "{URL}/messages/unread/count")]
+async fn unread_count() -> u64 {
+    #[derive(Serialize, Deserialize)]
+    struct CountResponse {
+        pub count: u64,
     }
+    map! { |r: CountResponse| r.count }
+}
 
-    /// The paging cursor is a page number
-    messages(tab: MessageTab, paging: Paging<'_>) -> Messages {
-        GET "{URL}/messages";
-        prelude {
-            let tab = tab.to_string();
-            let limit = paging.limit.unwrap_or(100).to_string();
-            let cursor = paging.cursor.map_or(String::new(), |c| c.to_string());
-        }
-        query {
-            "messageTab" => &tab,
-            "pageNumber" => &cursor,
-            "pageSize" => &limit
-        }
-    }
+/// The paging cursor is a page number
+#[endpoint(GET, "{URL}/messages")]
+async fn messages(tab: MessageTab, paging: Paging<'_>) -> Messages {
+    let tab = tab.to_string();
+    let limit = paging.limit.unwrap_or(100).to_string();
+    let cursor = paging.cursor.map_or(String::new(), |c| c.to_string());
 
-    announcements() -> Announcements {
-        GET "{URL}/announcements";
+    query! {
+        "messageTab" => &tab,
+        "pageNumber" => &cursor,
+        "pageSize" => &limit
     }
+}
 
-    archive(ids: &[u64]) -> Vec<u64> {
-        POST "{URL}/messages/archive";
-        types {
-            Request<'a> { message_ids("messageIds"): &'a [u64] }
-            ActionResponse { failed("failedMessages"): Vec<u64> }
-        }
-        body_serialize { Request { message_ids: ids } }
-        map |r: ActionResponse| r.failed
-    }
+#[endpoint(GET, "{URL}/announcements")]
+async fn announcements() -> Announcements {}
 
-    unarchive(ids: &[u64]) -> Vec<u64> {
-        POST "{URL}/messages/unarchive";
-        types {
-            Request<'a> { message_ids("messageIds"): &'a [u64] }
-            ActionResponse { failed("failedMessages"): Vec<u64> }
-        }
-        body_serialize { Request { message_ids: ids } }
-        map |r: ActionResponse| r.failed
+#[endpoint(POST, "{URL}/messages/archive")]
+async fn archive(ids: &[u64]) -> Vec<u64> {
+    #[derive(Serialize)]
+    struct Request<'a> {
+        #[serde(rename = "messageIds")]
+        pub message_ids: &'a [u64],
     }
+    #[derive(Serialize, Deserialize)]
+    struct ActionResponse {
+        #[serde(rename = "failedMessages")]
+        pub failed: Vec<u64>,
+    }
+    body! { Request { message_ids: ids } }
+    map! { |r: ActionResponse| r.failed }
+}
 
-    mark_as_read(ids: &[u64]) -> Vec<u64> {
-        POST "{URL}/messages/mark-read";
-        types {
-            Request<'a> { message_ids("messageIds"): &'a [u64] }
-            ActionResponse { failed("failedMessages"): Vec<u64> }
-        }
-        body_serialize { Request { message_ids: ids } }
-        map |r: ActionResponse| r.failed
+#[endpoint(POST, "{URL}/messages/unarchive")]
+async fn unarchive(ids: &[u64]) -> Vec<u64> {
+    #[derive(Serialize)]
+    struct Request<'a> {
+        #[serde(rename = "messageIds")]
+        pub message_ids: &'a [u64],
     }
+    #[derive(Serialize, Deserialize)]
+    struct ActionResponse {
+        #[serde(rename = "failedMessages")]
+        pub failed: Vec<u64>,
+    }
+    body! { Request { message_ids: ids } }
+    map! { |r: ActionResponse| r.failed }
+}
 
-    mark_as_unread(ids: &[u64]) -> Vec<u64> {
-        POST "{URL}/messages/mark-unread";
-        types {
-            Request<'a> { message_ids("messageIds"): &'a [u64] }
-            ActionResponse { failed("failedMessages"): Vec<u64> }
-        }
-        body_serialize { Request { message_ids: ids } }
-        map |r: ActionResponse| r.failed
+#[endpoint(POST, "{URL}/messages/mark-read")]
+async fn mark_as_read(ids: &[u64]) -> Vec<u64> {
+    #[derive(Serialize)]
+    struct Request<'a> {
+        #[serde(rename = "messageIds")]
+        pub message_ids: &'a [u64],
     }
+    #[derive(Serialize, Deserialize)]
+    struct ActionResponse {
+        #[serde(rename = "failedMessages")]
+        pub failed: Vec<u64>,
+    }
+    body! { Request { message_ids: ids } }
+    map! { |r: ActionResponse| r.failed }
+}
+
+#[endpoint(POST, "{URL}/messages/mark-unread")]
+async fn mark_as_unread(ids: &[u64]) -> Vec<u64> {
+    #[derive(Serialize)]
+    struct Request<'a> {
+        #[serde(rename = "messageIds")]
+        pub message_ids: &'a [u64],
+    }
+    #[derive(Serialize, Deserialize)]
+    struct ActionResponse {
+        #[serde(rename = "failedMessages")]
+        pub failed: Vec<u64>,
+    }
+    body! { Request { message_ids: ids } }
+    map! { |r: ActionResponse| r.failed }
 }

@@ -82,15 +82,11 @@ pub struct AssetUploadStatus {
     pub response: Option<AssetUploadResponse>,
 }
 
-endpoint! {
-    asset(id: u64) -> AssetInfo {
-        GET "{URL}/assets/{id}";
-    }
+#[endpoint(GET, "{URL}/assets/{id}")]
+async fn asset(id: u64) -> AssetInfo {}
 
-    status(operation_id: &str) -> AssetUploadStatus {
-        GET "{URL}/operations/{operation_id}";
-    }
-}
+#[endpoint(GET, "{URL}/operations/{operation_id}")]
+async fn status(operation_id: &str) -> AssetUploadStatus {}
 
 // TODO: this api also takes in a patch request to update an exists asset "{URL}/assets/{id}"
 pub async fn upload(

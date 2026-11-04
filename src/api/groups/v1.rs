@@ -225,141 +225,143 @@ pub struct GroupUsers {
     pub previous_cursor: Option<String>,
 }
 
-endpoint! {
-    information(id: u64) -> GroupInformation {
-        GET "{URL}/groups/{id}";
-    }
+#[endpoint(GET, "{URL}/groups/{id}")]
+async fn information(id: u64) -> GroupInformation {}
 
-    /// Gets group membership information in the context of the authenticated user
-    membership(id: u64, notification_preferences: bool) -> Membership {
-        GET "{URL}/groups/{id}/membership";
-        prelude {
-            let notification_preferences = notification_preferences.to_string();
-        }
-        query {
-            "includeNotificationPreferences" => &notification_preferences,
-        }
-    }
+/// Gets group membership information in the context of the authenticated user
+#[endpoint(GET, "{URL}/groups/{id}/membership")]
+async fn membership(id: u64, notification_preferences: bool) -> Membership {
+    let notification_preferences = notification_preferences.to_string();
 
-    /// Gets the Group's name change history
-    name_history(id: u64) -> NameHistory {
-        GET "{URL}/groups/{id}/name-history";
-        types {
-            NameHistoryItem {
-                name: String,
-                created: DateTime,
-            }
-            Response {
-                items("data"): Vec<NameHistoryItem>,
-                next_cursor("nextPageCursor"): Option<String>,
-                previous_cursor("previousPageCursor"): Option<String>,
-            }
-        }
-        map |r: Response| NameHistory {
-            names: r.items.into_iter().map(|x| (x.name, x.created)).collect(),
-            next_cursor: r.next_cursor,
-            previous_cursor: r.previous_cursor,
-        }
+    query! {
+        "includeNotificationPreferences" => &notification_preferences,
     }
+}
 
-    /// Gets groups that the authenticated user has requested to join
-    pending_join_requests() -> Vec<GroupInformation> {
-        GET "{URL}/user/groups/pending";
-        types {
-            Response {
-                groups("data"): Vec<GroupInformation>,
-            }
-        }
-        map |r: Response| r.groups
+/// Gets the Group's name change history
+#[endpoint(GET, "{URL}/groups/{id}/name-history")]
+async fn name_history(id: u64) -> NameHistory {
+    #[derive(Serialize, Deserialize)]
+    struct NameHistoryItem {
+        pub name: String,
+        pub created: DateTime,
     }
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "data")]
+        pub items: Vec<NameHistoryItem>,
+        #[serde(rename = "nextPageCursor")]
+        pub next_cursor: Option<String>,
+        #[serde(rename = "previousPageCursor")]
+        pub previous_cursor: Option<String>,
+    }
+    map! { |r: Response| NameHistory {
+        names: r.items.into_iter().map(|x| (x.name, x.created)).collect(),
+        next_cursor: r.next_cursor,
+        previous_cursor: r.previous_cursor,
+    } }
+}
 
-    roles(id: u64) -> Vec<GroupRole> {
-        GET "{URL}/groups/{id}/roles";
-        types {
-            Response {
-                roles: Vec<GroupRole>,
-            }
-        }
-        map |r: Response| r.roles
+/// Gets groups that the authenticated user has requested to join
+#[endpoint(GET, "{URL}/user/groups/pending")]
+async fn pending_join_requests() -> Vec<GroupInformation> {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "data")]
+        pub groups: Vec<GroupInformation>,
     }
+    map! { |r: Response| r.groups }
+}
 
-    user_roles(id: u64) -> Vec<(GroupInformation, GroupRole)> {
-        GET "{URL}/users/{id}/groups/roles";
-        types {
-            GroupAndRole {
-                group: GroupInformation,
-                role: GroupRole,
-            }
-            Response {
-                items("data"): Vec<GroupAndRole>,
-            }
-        }
-        map |r: Response| r.items.into_iter().map(|x| (x.group, x.role)).collect()
+#[endpoint(GET, "{URL}/groups/{id}/roles")]
+async fn roles(id: u64) -> Vec<GroupRole> {
+    #[derive(Deserialize)]
+    struct Response {
+        pub roles: Vec<GroupRole>,
     }
+    map! { |r: Response| r.roles }
+}
 
-    /// Gets the permissions for a group's roleset. The authorized user must either be the group owner or the roleset being requested, except for guest roles, which can be viewed by all (members and guests).
-    roleset_permissions(id: u64, roleset_id: u64) -> RolePermissions {
-        GET "{URL}/groups/{id}/roles/{roleset_id}/permissions";
+#[endpoint(GET, "{URL}/users/{id}/groups/roles")]
+async fn user_roles(id: u64) -> Vec<(GroupInformation, GroupRole)> {
+    #[derive(Serialize, Deserialize)]
+    struct GroupAndRole {
+        pub group: GroupInformation,
+        pub role: GroupRole,
     }
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "data")]
+        pub items: Vec<GroupAndRole>,
+    }
+    map! { |r: Response| r.items.into_iter().map(|x| (x.group, x.role)).collect() }
+}
 
-    /// Gets all permissions for each role
-    role_permissions(id: u64) -> Vec<RolePermissions> {
-        GET "{URL}/groups/{id}/roles/permissions";
-        types {
-            Response {
-                items("data"): Vec<RolePermissions>,
-            }
-        }
-        map |r: Response| r.items
-    }
+/// Gets the permissions for a group's roleset. The authorized user must either be the group owner or the roleset being requested, except for guest roles, which can be viewed by all (members and guests).
+#[endpoint(GET, "{URL}/groups/{id}/roles/{roleset_id}/permissions")]
+async fn roleset_permissions(id: u64, roleset_id: u64) -> RolePermissions {}
 
-    users(id: u64, paging: Paging<'_>) -> GroupUsers {
-        GET "{URL}/groups/{id}/users";
-        paging_query { paging, limit = 10 }
-        types {
-            User {
-                user: GroupUser,
-                role: GroupRole,
-            }
-            Response {
-                users("data"): Vec<User>,
-                next_cursor("nextPageCursor"): Option<String>,
-                previous_cursor("previousPageCursor"): Option<String>,
-            }
-        }
-        map |r: Response| GroupUsers {
-            users: r.users.into_iter().map(|u| (u.user, u.role)).collect(),
-            next_cursor: r.next_cursor,
-            previous_cursor: r.previous_cursor,
-        }
+/// Gets all permissions for each role
+#[endpoint(GET, "{URL}/groups/{id}/roles/permissions")]
+async fn role_permissions(id: u64) -> Vec<RolePermissions> {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "data")]
+        pub items: Vec<RolePermissions>,
     }
+    map! { |r: Response| r.items }
+}
 
-    /// Gets a list of group wall posts
-    wall_posts(id: u64, paging: Paging<'_>) -> WallPosts {
-        GET "{URL}/groups/{id}/wall/posts";
-        paging_query { paging, limit = 10 }
+#[endpoint(GET, "{URL}/groups/{id}/users")]
+async fn users(id: u64, paging: Paging<'_>) -> GroupUsers {
+    paging!(paging, limit = 10);
+    #[derive(Serialize, Deserialize)]
+    struct User {
+        pub user: GroupUser,
+        pub role: GroupRole,
     }
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "data")]
+        pub users: Vec<User>,
+        #[serde(rename = "nextPageCursor")]
+        pub next_cursor: Option<String>,
+        #[serde(rename = "previousPageCursor")]
+        pub previous_cursor: Option<String>,
+    }
+    map! { |r: Response| GroupUsers {
+        users: r.users.into_iter().map(|u| (u.user, u.role)).collect(),
+        next_cursor: r.next_cursor,
+        previous_cursor: r.previous_cursor,
+    } }
+}
 
-    join(id: u64) -> () {
-        POST "{URL}/groups/{id}/users";
-        types {
-            Request<'a> {
-                session_id: &'a str,
-                redemption_token: &'a str,
-            }
-        }
-        body_serialize { Request { session_id: "", redemption_token: "" } }
-    }
+/// Gets a list of group wall posts
+#[endpoint(GET, "{URL}/groups/{id}/wall/posts")]
+async fn wall_posts(id: u64, paging: Paging<'_>) -> WallPosts {
+    paging!(paging, limit = 10);
+}
 
-    remove_join_request(id: u64, user_id: u64) -> () {
-        DELETE "{URL}/groups/{id}/join-requests/users/{user_id}";
-        types { Request {} }
-        body_serialize { Request {} }
+#[endpoint(POST, "{URL}/groups/{id}/users")]
+async fn join(id: u64) -> () {
+    #[derive(Serialize)]
+    struct Request<'a> {
+        pub session_id: &'a str,
+        pub redemption_token: &'a str,
     }
+    body! { Request { session_id: "", redemption_token: "" } }
+}
 
-    remove(id: u64, user_id: u64) -> () {
-        DELETE "{URL}/groups/{id}/users/{user_id}";
-        types { Request {} }
-        body_serialize { Request {} }
-    }
+#[endpoint(DELETE, "{URL}/groups/{id}/join-requests/users/{user_id}")]
+async fn remove_join_request(id: u64, user_id: u64) -> () {
+    #[derive(Serialize)]
+    struct Request {}
+    body! { Request {} }
+}
+
+#[endpoint(DELETE, "{URL}/groups/{id}/users/{user_id}")]
+async fn remove(id: u64, user_id: u64) -> () {
+    #[derive(Serialize)]
+    struct Request {}
+    body! { Request {} }
 }

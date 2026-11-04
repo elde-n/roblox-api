@@ -74,17 +74,17 @@ pub struct UserOwnedAssets {
     pub assets: Vec<UserOwnedAssetInfo>,
 }
 
-endpoint! {
-    asset_owners(id: u64, paging: Paging<'_>) -> AssetOwners {
-        GET "{URL}/assets/{id}/owners";
-        paging_query { paging, limit = 10 }
-    }
+#[endpoint(GET, "{URL}/assets/{id}/owners")]
+async fn asset_owners(id: u64, paging: Paging<'_>) -> AssetOwners {
+    paging!(paging, limit = 10);
+}
 
-    user_owned_assets(user_id: u64, asset_type_id: AssetTypeId, paging: Paging<'_>) -> UserOwnedAssets {
-        GET "{URL}/users/{user_id}/inventory/{__aid}";
-        paging_query { paging, limit = 10 }
-        prelude {
-            let __aid = asset_type_id as u8;
-        }
-    }
+#[endpoint(GET, "{URL}/users/{user_id}/inventory/{__aid}")]
+async fn user_owned_assets(
+    user_id: u64,
+    asset_type_id: AssetTypeId,
+    paging: Paging<'_>,
+) -> UserOwnedAssets {
+    paging!(paging, limit = 10);
+    let __aid = asset_type_id as u8;
 }

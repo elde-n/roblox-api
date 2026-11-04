@@ -29,20 +29,23 @@ pub struct TwoStepVerify {
     pub ticket: Option<String>,
 }
 
-endpoint! {
-    authenticator_verify(id: u64, code: &str, challenge_id: &str, method: &str) -> TwoStepVerify {
-        POST "{URL}/users/{id}/channels/authenticator/verify";
-
-        types {
-            Request<'a> {
-                code("code"): &'a str,
-                challenge_id("challengeId"): &'a str,
-                method("verificationMethod"): &'a str,
-            }
-        }
-
-        body_serialize {
-            Request { code, challenge_id, method }
-        }
+#[endpoint(POST, "{URL}/users/{id}/channels/authenticator/verify")]
+async fn authenticator_verify(
+    id: u64,
+    code: &str,
+    challenge_id: &str,
+    method: &str,
+) -> TwoStepVerify {
+    #[derive(Serialize)]
+    struct Request<'a> {
+        #[serde(rename = "code")]
+        pub code: &'a str,
+        #[serde(rename = "challengeId")]
+        pub challenge_id: &'a str,
+        #[serde(rename = "verificationMethod")]
+        pub method: &'a str,
+    }
+    body! {
+        Request { code, challenge_id, method }
     }
 }

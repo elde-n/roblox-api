@@ -120,38 +120,29 @@ pub struct GamepassProductInformation {
     pub minimum_membership_level: u8,
 }
 
-endpoint! {
-    details(id: u64) -> GamepassDetails {
-        GET "{URL}/game-passes/{id}/details";
+#[endpoint(GET, "{URL}/game-passes/{id}/details")]
+async fn details(id: u64) -> GamepassDetails {}
+
+#[endpoint(GET, "{URL}/game-passes/{id}/product-info")]
+async fn product_information(id: u64) -> GamepassProductInformation {}
+
+/// The cursor is the gamepass_id you want to start from
+#[endpoint(GET, "{URL}/users/{id}/game-passes")]
+async fn user_gamepasses(id: u64, paging: Paging<'_>) -> Vec<Gamepass> {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "gamePasses")]
+        pub gamepasses: Vec<Gamepass>,
     }
+    let count = paging.limit.unwrap_or(100).to_string();
+    let cursor = match paging.cursor {
+        Some(cursor) => cursor.to_string(),
+        None => String::new(),
+    };
 
-    product_information(id: u64) -> GamepassProductInformation {
-        GET "{URL}/game-passes/{id}/product-info";
+    query! {
+        "count" => &count,
+        "exclusiveStartId" => &cursor,
     }
-
-    /// The cursor is the gamepass_id you want to start from
-    user_gamepasses(id: u64, paging: Paging<'_>) -> Vec<Gamepass> {
-        GET "{URL}/users/{id}/game-passes";
-
-        types {
-            Response {
-                gamepasses("gamePasses"): Vec<Gamepass>,
-            }
-        }
-
-        prelude {
-            let count = paging.limit.unwrap_or(100).to_string();
-            let cursor = match paging.cursor {
-                Some(cursor) => cursor.to_string(),
-                None => String::new(),
-            };
-        }
-
-        query {
-            "count" => &count,
-            "exclusiveStartId" => &cursor,
-        }
-
-        map |r: Response| r.gamepasses
-    }
+    map! { |r: Response| r.gamepasses }
 }

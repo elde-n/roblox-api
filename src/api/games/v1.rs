@@ -195,80 +195,82 @@ pub struct UniverseGamepassesResponse {
     pub previous_cursor: Option<String>,
 }
 
-endpoint! {
-    batch_place_details(ids: &[u64]) -> Vec<PlaceDetails> {
-        GET "{URL}/games/multiget-place-details";
-        prelude {
-            let joined_ids = ids
-                .iter()
-                .map(|x| x.to_string())
-                .collect::<Vec<String>>()
-                .join(",");
-        }
-        query {
-            "placeIds" => &joined_ids,
-        }
-    }
+#[endpoint(GET, "{URL}/games/multiget-place-details")]
+async fn batch_place_details(ids: &[u64]) -> Vec<PlaceDetails> {
+    let joined_ids = ids
+        .iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<String>>()
+        .join(",");
 
-    /// Set server_kind to 0, if you want a valid response
-    servers(id: u64, server_kind: u8, exclude_full_games: bool, paging: Paging<'_>) -> ServersResponse {
-        GET "{URL}/games/{id}/servers/{server_kind}";
-        paging_query { paging, limit = 10 }
-        prelude {
-            let exclude_full_games = exclude_full_games.to_string();
-        }
-        query {
-            "excludeFullGames" => &exclude_full_games,
-        }
+    query! {
+        "placeIds" => &joined_ids,
     }
+}
 
-    private_servers(id: u64, exclude_friend_servers: bool, paging: Paging<'_>) -> PrivateServersResponse {
-        GET "{URL}/games/{id}/private-servers";
-        paging_query { paging, limit = 10 }
-        prelude {
-            let exclude_friend_servers = exclude_friend_servers.to_string();
-        }
-        query {
-            "excludeFriendServers" => &exclude_friend_servers,
-        }
-    }
+/// Set server_kind to 0, if you want a valid response
+#[endpoint(GET, "{URL}/games/{id}/servers/{server_kind}")]
+async fn servers(
+    id: u64,
+    server_kind: u8,
+    exclude_full_games: bool,
+    paging: Paging<'_>,
+) -> ServersResponse {
+    paging!(paging, limit = 10);
+    let exclude_full_games = exclude_full_games.to_string();
 
-    private_server_info(id: u64) -> PrivateServerInfo {
-        GET "{URL}/vip-servers/{id}";
+    query! {
+        "excludeFullGames" => &exclude_full_games,
     }
+}
 
-    universe_favorite_count(id: u64) -> u64 {
-        GET "{URL}/games/{id}/favorites/count";
-        types {
-            Response {
-                favorites("favoritesCount"): u64,
-            }
-        }
-        map |r: Response| r.favorites
-    }
+#[endpoint(GET, "{URL}/games/{id}/private-servers")]
+async fn private_servers(
+    id: u64,
+    exclude_friend_servers: bool,
+    paging: Paging<'_>,
+) -> PrivateServersResponse {
+    paging!(paging, limit = 10);
+    let exclude_friend_servers = exclude_friend_servers.to_string();
 
-    universe_votes(ids: &[u64]) -> Vec<UniverseVotes> {
-        GET "{URL}/games/votes";
-        types {
-            Response {
-                votes("data"): Vec<UniverseVotes>,
-            }
-        }
-        prelude {
-            let joined_ids = ids
-                .iter()
-                .map(|x| x.to_string())
-                .collect::<Vec<String>>()
-                .join(",");
-        }
-        query {
-            "universeIds" => &joined_ids,
-        }
-        map |r: Response| r.votes
+    query! {
+        "excludeFriendServers" => &exclude_friend_servers,
     }
+}
 
-    universe_gamepasses(id: u64, paging: Paging<'_>) -> UniverseGamepassesResponse {
-        GET "{URL}/games/{id}/game-passes";
-        paging_query { paging, limit = 10 }
+#[endpoint(GET, "{URL}/vip-servers/{id}")]
+async fn private_server_info(id: u64) -> PrivateServerInfo {}
+
+#[endpoint(GET, "{URL}/games/{id}/favorites/count")]
+async fn universe_favorite_count(id: u64) -> u64 {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "favoritesCount")]
+        pub favorites: u64,
     }
+    map! { |r: Response| r.favorites }
+}
+
+#[endpoint(GET, "{URL}/games/votes")]
+async fn universe_votes(ids: &[u64]) -> Vec<UniverseVotes> {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "data")]
+        pub votes: Vec<UniverseVotes>,
+    }
+    let joined_ids = ids
+        .iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<String>>()
+        .join(",");
+
+    query! {
+        "universeIds" => &joined_ids,
+    }
+    map! { |r: Response| r.votes }
+}
+
+#[endpoint(GET, "{URL}/games/{id}/game-passes")]
+async fn universe_gamepasses(id: u64, paging: Paging<'_>) -> UniverseGamepassesResponse {
+    paging!(paging, limit = 10);
 }

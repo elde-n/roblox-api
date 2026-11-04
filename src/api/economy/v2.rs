@@ -99,8 +99,5 @@ pub struct DetailsResponse {
     pub collectible_details: CollectibleDetails,
 }
 
-endpoint! {
-    details(id: u64) -> DetailsResponse {
-        GET "{URL}/assets/{id}/details";
-    }
-}
+#[endpoint(GET, "{URL}/assets/{id}/details")]
+async fn details(id: u64) -> DetailsResponse {}

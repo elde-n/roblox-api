@@ -63,49 +63,47 @@ pub struct UserOwnedCollectibles {
     pub assets: Vec<CollectibleInfo>,
 }
 
-endpoint! {
-    can_view_inventory(user_id: u64) -> bool {
-        GET "{URL}/users/{user_id}/can-view-inventory";
-
-        types {
-            Response {
-                can_view("canView"): bool,
-            }
-        }
-
-        map |r: Response| r.can_view
+#[endpoint(GET, "{URL}/users/{user_id}/can-view-inventory")]
+async fn can_view_inventory(user_id: u64) -> bool {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "canView")]
+        pub can_view: bool,
     }
+    map! { |r: Response| r.can_view }
+}
 
-    user_owns_assets(user_id: u64, id: u64, item_type: ItemType, paging: Paging<'_>) -> UserOwnsAssets {
-        GET "{URL}/users/{user_id}/items/{item_type_as_u8}/{id}";
+#[endpoint(GET, "{URL}/users/{user_id}/items/{item_type_as_u8}/{id}")]
+async fn user_owns_assets(
+    user_id: u64,
+    id: u64,
+    item_type: ItemType,
+    paging: Paging<'_>,
+) -> UserOwnsAssets {
+    let item_type_as_u8 = item_type as u8;
+    let cursor = match paging.cursor {
+        Some(cursor) => cursor.to_string(),
+        None => String::new(),
+    };
 
-        prelude {
-            let item_type_as_u8 = item_type as u8;
-            let cursor = match paging.cursor {
-                Some(cursor) => cursor.to_string(),
-                None => String::new(),
-            };
-        }
-
-        query {
-            "cursor" => &cursor,
-        }
+    query! {
+        "cursor" => &cursor,
     }
+}
 
-    user_owned_collectibles(user_id: u64, asset_type_id: Option<AssetTypeId>, paging: Paging<'_>) -> UserOwnedCollectibles {
-        GET "{URL}/users/{user_id}/assets/collectibles";
+#[endpoint(GET, "{URL}/users/{user_id}/assets/collectibles")]
+async fn user_owned_collectibles(
+    user_id: u64,
+    asset_type_id: Option<AssetTypeId>,
+    paging: Paging<'_>,
+) -> UserOwnedCollectibles {
+    paging!(paging, limit = 10);
+    let asset_type = match asset_type_id {
+        Some(id) => (id as u8).to_string(),
+        None => String::new(),
+    };
 
-        paging_query { paging, limit = 10 }
-
-        prelude {
-            let asset_type = match asset_type_id {
-                Some(id) => (id as u8).to_string(),
-                None => String::new(),
-            };
-        }
-
-        query {
-            "assetType" => &asset_type,
-        }
+    query! {
+        "assetType" => &asset_type,
     }
 }

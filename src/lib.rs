@@ -1,11 +1,12 @@
+extern crate self as roblox_api;
+
+pub use roblox_api_macros::endpoint;
+
 pub mod api;
 pub mod challenge;
 pub mod client;
 pub mod ratelimit;
 pub mod validation;
-
-#[macro_use]
-mod endpoint;
 
 #[doc(hidden)]
 pub use reqwest;

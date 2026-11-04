@@ -63,69 +63,62 @@ pub struct GamesResponse {
     pub previous_cursor: Option<String>,
 }
 
-endpoint! {
-    universe_media(id: u64, all_experiences: bool) -> Vec<UniverseMedia> {
-        GET "{URL}/games/{id}/media";
-        types {
-            Response {
-                media("data"): Vec<UniverseMedia>,
-            }
-        }
-        prelude {
-            let all_experiences = all_experiences.to_string();
-        }
-        query {
-            "fetchAllExperienceRelatedMedia" => &all_experiences,
-        }
-        map |r: Response| r.media
+#[endpoint(GET, "{URL}/games/{id}/media")]
+async fn universe_media(id: u64, all_experiences: bool) -> Vec<UniverseMedia> {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "data")]
+        pub media: Vec<UniverseMedia>,
     }
+    let all_experiences = all_experiences.to_string();
 
-    /// Apparently this API only works on owned groups, use v2 instead
-    /// Set `access_filter` to 1, if you want a valid response
-    group_games(id: u64, access_filter: u8, paging: Paging<'_>) -> GamesResponse {
-        GET "{URL}/groups/{id}/games";
-        paging_query { paging, limit = 10 }
-        prelude {
-            let access_filter = access_filter.to_string();
-        }
-        query {
-            "accessFilter" => &access_filter,
-        }
+    query! {
+        "fetchAllExperienceRelatedMedia" => &all_experiences,
     }
+    map! { |r: Response| r.media }
+}
 
-    /// Set `access_filter` to 1, if you want a valid response
-    group_games_v2(id: u64, access_filter: u8, paging: Paging<'_>) -> GamesResponse {
-        GET "{URL}/groups/{id}/gamesV2";
-        paging_query { paging, limit = 10 }
-        prelude {
-            let access_filter = access_filter.to_string();
-        }
-        query {
-            "accessFilter" => &access_filter,
-        }
+/// Apparently this API only works on owned groups, use v2 instead
+/// Set `access_filter` to 1, if you want a valid response
+#[endpoint(GET, "{URL}/groups/{id}/games")]
+async fn group_games(id: u64, access_filter: u8, paging: Paging<'_>) -> GamesResponse {
+    paging!(paging, limit = 10);
+    let access_filter = access_filter.to_string();
+
+    query! {
+        "accessFilter" => &access_filter,
     }
+}
 
-    /// Set `access_filter` to 2, if you want a valid response
-    user_games(id: u64, access_filter: u8, paging: Paging<'_>) -> GamesResponse {
-        GET "{URL}/users/{id}/games";
-        paging_query { paging, limit = 10 }
-        prelude {
-            let access_filter = access_filter.to_string();
-        }
-        query {
-            "accessFilter" => &access_filter,
-        }
+/// Set `access_filter` to 1, if you want a valid response
+#[endpoint(GET, "{URL}/groups/{id}/gamesV2")]
+async fn group_games_v2(id: u64, access_filter: u8, paging: Paging<'_>) -> GamesResponse {
+    paging!(paging, limit = 10);
+    let access_filter = access_filter.to_string();
+
+    query! {
+        "accessFilter" => &access_filter,
     }
+}
 
-    /// Set `access_filter` to 2, if you want a valid response
-    user_favorited_games(id: u64, access_filter: u8, paging: Paging<'_>) -> GamesResponse {
-        GET "{URL}/users/{id}/favorite/games";
-        paging_query { paging, limit = 10 }
-        prelude {
-            let access_filter = access_filter.to_string();
-        }
-        query {
-            "accessFilter" => &access_filter,
-        }
+/// Set `access_filter` to 2, if you want a valid response
+#[endpoint(GET, "{URL}/users/{id}/games")]
+async fn user_games(id: u64, access_filter: u8, paging: Paging<'_>) -> GamesResponse {
+    paging!(paging, limit = 10);
+    let access_filter = access_filter.to_string();
+
+    query! {
+        "accessFilter" => &access_filter,
+    }
+}
+
+/// Set `access_filter` to 2, if you want a valid response
+#[endpoint(GET, "{URL}/users/{id}/favorite/games")]
+async fn user_favorited_games(id: u64, access_filter: u8, paging: Paging<'_>) -> GamesResponse {
+    paging!(paging, limit = 10);
+    let access_filter = access_filter.to_string();
+
+    query! {
+        "accessFilter" => &access_filter,
     }
 }

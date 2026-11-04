@@ -98,26 +98,24 @@ pub struct ItemDetail {
     pub fiat_product: FiatProduct,
 }
 
-endpoint! {
-    item_details(ids: &[u64]) -> Vec<ItemDetail> {
-        GET "{URL}/items/details";
-        types {
-            Response {
-                data: Vec<ItemDetail>,
-            }
-        }
-        prelude {
-            let ids = ids.iter().map(|x| x.to_string()).collect::<Vec<_>>().join(",");
-        }
-        query { "assetIds" => &ids }
-        map |r: Response| r.data
+#[endpoint(GET, "{URL}/items/details")]
+async fn item_details(ids: &[u64]) -> Vec<ItemDetail> {
+    #[derive(Deserialize)]
+    struct Response {
+        pub data: Vec<ItemDetail>,
     }
+    let ids = ids
+        .iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<_>>()
+        .join(",");
 
-    creations(id: u64, asset_type: AssetTypeId, paging: Paging<'_>) -> Creations {
-        GET "{URL}/creations/user/{id}/{asset_type_id}";
-        paging_query { paging, limit = 30 }
-        prelude {
-            let asset_type_id = asset_type as u8;
-        }
-    }
+    query! { "assetIds" => &ids }
+    map! { |r: Response| r.data }
+}
+
+#[endpoint(GET, "{URL}/creations/user/{id}/{asset_type_id}")]
+async fn creations(id: u64, asset_type: AssetTypeId, paging: Paging<'_>) -> Creations {
+    paging!(paging, limit = 30);
+    let asset_type_id = asset_type as u8;
 }

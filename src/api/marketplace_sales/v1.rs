@@ -27,40 +27,49 @@ pub struct PurchaseResponse {
     pub error: Option<String>,
 }
 
-endpoint! {
-    purchase(asset_id: &str, product_id: &str, price: u64, currency: Currency, purchaser: MarketEntity, seller: MarketEntity) -> PurchaseResponse {
-        POST "{URL}/item/{asset_id}/purchase-item";
+#[endpoint(POST, "{URL}/item/{asset_id}/purchase-item")]
+async fn purchase(
+    asset_id: &str,
+    product_id: &str,
+    price: u64,
+    currency: Currency,
+    purchaser: MarketEntity,
+    seller: MarketEntity,
+) -> PurchaseResponse {
+    #[derive(Serialize)]
+    struct Request<'a> {
+        #[serde(rename = "collectibleItemId")]
+        pub asset_id: &'a str,
+        #[serde(rename = "collectibleProductId")]
+        pub product_id: &'a str,
+        #[serde(rename = "expectedCurrency")]
+        pub currency: u8,
+        #[serde(rename = "expectedPrice")]
+        pub price: u64,
+        #[serde(rename = "expectedPurchaserId")]
+        pub user_id: u64,
+        #[serde(rename = "expectedPurchaserType")]
+        pub purchaser_type: MarketEntityType,
+        #[serde(rename = "expectedSellerId")]
+        pub seller_id: u64,
+        #[serde(rename = "expectedSellerType")]
+        pub seller_type: MarketEntityType,
+        #[serde(rename = "idempotencyKey")]
+        pub idempotency_key: &'a str,
+    }
+    let idempotency_key = Uuid::new_v4().to_string();
 
-        types {
-            Request<'a> {
-                asset_id("collectibleItemId"): &'a str,
-                product_id("collectibleProductId"): &'a str,
-                currency("expectedCurrency"): u8,
-                price("expectedPrice"): u64,
-                user_id("expectedPurchaserId"): u64,
-                purchaser_type("expectedPurchaserType"): MarketEntityType,
-                seller_id("expectedSellerId"): u64,
-                seller_type("expectedSellerType"): MarketEntityType,
-                idempotency_key("idempotencyKey"): &'a str,
-            }
-        }
-
-        prelude {
-            let idempotency_key = Uuid::new_v4().to_string();
-        }
-
-        body_serialize {
-            Request {
-                asset_id,
-                product_id,
-                currency: currency as u8,
-                price,
-                user_id: purchaser.id,
-                purchaser_type: purchaser.kind,
-                seller_id: seller.id,
-                seller_type: seller.kind,
-                idempotency_key: &idempotency_key,
-            }
+    body! {
+        Request {
+            asset_id,
+            product_id,
+            currency: currency as u8,
+            price,
+            user_id: purchaser.id,
+            purchaser_type: purchaser.kind,
+            seller_id: seller.id,
+            seller_type: seller.kind,
+            idempotency_key: &idempotency_key,
         }
     }
 }

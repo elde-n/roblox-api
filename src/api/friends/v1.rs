@@ -122,109 +122,105 @@ struct CountResponse {
     count: u16,
 }
 
-endpoint! {
-    friend_requests_count() -> u16 {
-        GET "{URL}/user/friend-requests/count";
-        map |r: CountResponse| r.count
-    }
+#[endpoint(GET, "{URL}/user/friend-requests/count")]
+async fn friend_requests_count() -> u16 {
+    map! { |r: CountResponse| r.count }
+}
 
-    new_friend_requests_count() -> u16 {
-        GET "{URL}/my/new-friend-requests/count";
-        map |r: CountResponse| r.count
-    }
+#[endpoint(GET, "{URL}/my/new-friend-requests/count")]
+async fn new_friend_requests_count() -> u16 {
+    map! { |r: CountResponse| r.count }
+}
 
-    user_friends_count(id: u64) -> u16 {
-        GET "{URL}/users/{id}/friends/count";
-        map |r: CountResponse| r.count
-    }
+#[endpoint(GET, "{URL}/users/{id}/friends/count")]
+async fn user_friends_count(id: u64) -> u16 {
+    map! { |r: CountResponse| r.count }
+}
 
-    user_followings_count(id: u64) -> u16 {
-        GET "{URL}/users/{id}/followings/count";
-        map |r: CountResponse| r.count
-    }
+#[endpoint(GET, "{URL}/users/{id}/followings/count")]
+async fn user_followings_count(id: u64) -> u16 {
+    map! { |r: CountResponse| r.count }
+}
 
-    user_followers_count(id: u64) -> u16 {
-        GET "{URL}/users/{id}/followers/count";
-        map |r: CountResponse| r.count
-    }
+#[endpoint(GET, "{URL}/users/{id}/followers/count")]
+async fn user_followers_count(id: u64) -> u16 {
+    map! { |r: CountResponse| r.count }
+}
 
-    following_status(ids: &[u64]) -> Vec<FollowingStatus> {
-        POST "{URL}/user/following-exists";
-        types {
-            Request<'a> {
-                user_ids("targetUserIds"): &'a [u64],
-            }
-            Response {
-                statuses("followings"): Vec<FollowingStatus>,
-            }
-        }
-        body_serialize {
-            &Request { user_ids: ids }
-        }
-        map |r: Response| r.statuses
+#[endpoint(POST, "{URL}/user/following-exists")]
+async fn following_status(ids: &[u64]) -> Vec<FollowingStatus> {
+    #[derive(Serialize)]
+    struct Request<'a> {
+        #[serde(rename = "targetUserIds")]
+        pub user_ids: &'a [u64],
     }
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "followings")]
+        pub statuses: Vec<FollowingStatus>,
+    }
+    body! {
+        &Request { user_ids: ids }
+    }
+    map! { |r: Response| r.statuses }
+}
 
-    friend_requests(paging: Paging<'_>) -> FriendRequests {
-        GET "{URL}/my/friends/requests";
-        paging_query { paging, limit = 18 }
-    }
+#[endpoint(GET, "{URL}/my/friends/requests")]
+async fn friend_requests(paging: Paging<'_>) -> FriendRequests {
+    paging!(paging, limit = 18);
+}
 
-    user_followers(id: u64) -> Followers {
-        GET "{URL}/users/{id}/followers";
-    }
+#[endpoint(GET, "{URL}/users/{id}/followers")]
+async fn user_followers(id: u64) -> Followers {}
 
-    user_followings(id: u64) -> Followers {
-        GET "{URL}/users/{id}/followings";
-    }
+#[endpoint(GET, "{URL}/users/{id}/followings")]
+async fn user_followings(id: u64) -> Followers {}
 
-    user_friends_online(id: u64) -> Vec<FriendOnlineStatus> {
-        GET "{URL}/users/{id}/friends/online";
-        types {
-            Response {
-                online("data"): Vec<FriendOnlineStatus>,
-            }
-        }
-        map |r: Response| r.online
+#[endpoint(GET, "{URL}/users/{id}/friends/online")]
+async fn user_friends_online(id: u64) -> Vec<FriendOnlineStatus> {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "data")]
+        pub online: Vec<FriendOnlineStatus>,
     }
+    map! { |r: Response| r.online }
+}
 
-    user_friends_find(id: u64, paging: Paging<'_>) -> FriendsFind {
-        GET "{URL}/users/{id}/friends/find";
-        prelude {
-            let limit = paging.limit.unwrap_or(18).to_string();
-            let cursor = paging.cursor.unwrap_or("");
-        }
-        query {
-            "cursor" => cursor,
-            "limit" => &limit,
-            "userSort" => "1",
-        }
-    }
+#[endpoint(GET, "{URL}/users/{id}/friends/find")]
+async fn user_friends_find(id: u64, paging: Paging<'_>) -> FriendsFind {
+    let limit = paging.limit.unwrap_or(18).to_string();
+    let cursor = paging.cursor.unwrap_or("");
 
-    user_friends_search(id: u64, query: &str, paging: Paging<'_>) -> FriendsFind {
-        GET "{URL}/users/{id}/friends/search";
-        paging_query { paging, limit = 36 }
-        query {
-            "query" => query,
-        }
+    query! {
+        "cursor" => cursor,
+        "limit" => &limit,
+        "userSort" => "1",
     }
+}
 
-    user_friend_statuses(id: u64, friends: &[u64]) -> Vec<FriendStatus> {
-        GET "{URL}/users/{id}/friends/statuses";
-        types {
-            Response {
-                statuses("data"): Vec<FriendStatus>,
-            }
-        }
-        prelude {
-            let ids = friends
-                .iter()
-                .map(|x| x.to_string())
-                .collect::<Vec<String>>()
-                .join(",");
-        }
-        query {
-            "userIds" => &ids,
-        }
-        map |r: Response| r.statuses
+#[endpoint(GET, "{URL}/users/{id}/friends/search")]
+async fn user_friends_search(id: u64, query: &str, paging: Paging<'_>) -> FriendsFind {
+    paging!(paging, limit = 36);
+    query! {
+        "query" => query,
     }
+}
+
+#[endpoint(GET, "{URL}/users/{id}/friends/statuses")]
+async fn user_friend_statuses(id: u64, friends: &[u64]) -> Vec<FriendStatus> {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "data")]
+        pub statuses: Vec<FriendStatus>,
+    }
+    let ids = friends
+        .iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<String>>()
+        .join(",");
+
+    query! {
+        "userIds" => &ids,
+    }
+    map! { |r: Response| r.statuses }
 }

@@ -88,222 +88,229 @@ pub struct UserSearchByKeyword {
     pub previous_cursor: Option<String>,
 }
 
-endpoint! {
-    user_details(id: u64) -> UserDetails {
-        GET "{URL}/users/{id}";
-    }
+#[endpoint(GET, "{URL}/users/{id}")]
+async fn user_details(id: u64) -> UserDetails {}
 
-    user_username_history(id: u64, paging: Paging<'_>) -> NameHistory {
-        GET "{URL}/users/{id}/username-history";
-        paging_query { paging, limit = 10 }
-        types {
-            Username {
-                name: String,
-            }
-            Response {
-                data: Vec<Username>,
-                next_cursor("nextPageCursor"): Option<String>,
-                previous_cursor("previousPageCursor"): Option<String>,
-            }
-        }
-        map |r: Response| {
-            let names = r.data.iter().map(|x| x.name.clone()).collect();
-            NameHistory {
-                names,
-                next_cursor: r.next_cursor,
-                previous_cursor: r.previous_cursor,
-            }
-        }
+#[endpoint(GET, "{URL}/users/{id}/username-history")]
+async fn user_username_history(id: u64, paging: Paging<'_>) -> NameHistory {
+    paging!(paging, limit = 10);
+    #[derive(Serialize, Deserialize)]
+    struct Username {
+        pub name: String,
     }
-
-    users_by_id(ids: &[u64], exclude_terminated: bool) -> Vec<UserById> {
-        POST "{URL}/users";
-        types {
-            Request<'a> {
-                ids("userIds"): &'a [u64],
-                exclude_terminated("excludeBannedUsers"): bool,
-            }
-            Response {
-                data: Vec<UserById>,
-            }
-        }
-        body_serialize { Request { ids, exclude_terminated } }
-        map |r: Response| r.data
+    #[derive(Deserialize)]
+    struct Response {
+        pub data: Vec<Username>,
+        #[serde(rename = "nextPageCursor")]
+        pub next_cursor: Option<String>,
+        #[serde(rename = "previousPageCursor")]
+        pub previous_cursor: Option<String>,
     }
-
-    users_by_name(names: &[&str], exclude_terminated: bool) -> Vec<UserByName> {
-        POST "{URL}/usernames/users";
-        types {
-            Request<'a> {
-                names("usernames"): &'a [&'a str],
-                exclude_terminated("excludeBannedUsers"): bool,
-            }
-            Response {
-                data: Vec<UserByName>,
-            }
+    map! { |r: Response| {
+        let names = r.data.iter().map(|x| x.name.clone()).collect();
+        NameHistory {
+            names,
+            next_cursor: r.next_cursor,
+            previous_cursor: r.previous_cursor,
         }
-        body_serialize { Request { names, exclude_terminated } }
-        map |r: Response| r.data
+    } }
+}
+
+#[endpoint(POST, "{URL}/users")]
+async fn users_by_id(ids: &[u64], exclude_terminated: bool) -> Vec<UserById> {
+    #[derive(Serialize)]
+    struct Request<'a> {
+        #[serde(rename = "userIds")]
+        pub ids: &'a [u64],
+        #[serde(rename = "excludeBannedUsers")]
+        pub exclude_terminated: bool,
     }
-
-    // this api seems to be dysfunctional, try using search::omni instead
-    search_by_keyword(keyword: &str,session_id: Option<&str>,paging: Paging<'_>) -> UserSearchByKeyword {
-        GET "{URL}/users/search";
-        paging_query { paging, limit = 10 }
-        prelude {
-            let session_id_str = session_id.map(|s| s.to_string()).unwrap_or_default();
-        }
-        query {
-            "keyword" => keyword,
-            "sessionId" => &session_id_str,
-        }
+    #[derive(Deserialize)]
+    struct Response {
+        pub data: Vec<UserById>,
     }
+    body! { Request { ids, exclude_terminated } }
+    map! { |r: Response| r.data }
+}
 
-    authenticated_details() -> ClientDetails {
-        GET "{URL}/users/authenticated";
+#[endpoint(POST, "{URL}/usernames/users")]
+async fn users_by_name(names: &[&str], exclude_terminated: bool) -> Vec<UserByName> {
+    #[derive(Serialize)]
+    struct Request<'a> {
+        #[serde(rename = "usernames")]
+        pub names: &'a [&'a str],
+        #[serde(rename = "excludeBannedUsers")]
+        pub exclude_terminated: bool,
     }
-
-    authenticated_age_bracket() -> u64 {
-        GET "{URL}/users/authenticated/age-bracket";
-        types {
-            Response {
-                age_bracket("ageBracket"): u64,
-            }
-        }
-        map |r: Response| r.age_bracket
+    #[derive(Deserialize)]
+    struct Response {
+        pub data: Vec<UserByName>,
     }
+    body! { Request { names, exclude_terminated } }
+    map! { |r: Response| r.data }
+}
 
-    authenticated_country_code() -> String {
-        GET "{URL}/users/authenticated/country-code";
-        types {
-            Response {
-                country_code("countryCode"): String,
-            }
-        }
-        map |r: Response| r.country_code
+// this api seems to be dysfunctional, try using search::omni instead
+
+#[endpoint(GET, "{URL}/users/search")]
+async fn search_by_keyword(
+    keyword: &str,
+    session_id: Option<&str>,
+    paging: Paging<'_>,
+) -> UserSearchByKeyword {
+    paging!(paging, limit = 10);
+    let session_id_str = session_id.map(|s| s.to_string()).unwrap_or_default();
+
+    query! {
+        "keyword" => keyword,
+        "sessionId" => &session_id_str,
     }
+}
 
-    authenticated_roles() -> Vec<String> {
-        GET "{URL}/users/authenticated/roles";
-        types {
-            Response {
-                roles: Vec<String>,
-            }
-        }
-        map |r: Response| r.roles
+#[endpoint(GET, "{URL}/users/authenticated")]
+async fn authenticated_details() -> ClientDetails {}
+
+#[endpoint(GET, "{URL}/users/authenticated/age-bracket")]
+async fn authenticated_age_bracket() -> u64 {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "ageBracket")]
+        pub age_bracket: u64,
     }
+    map! { |r: Response| r.age_bracket }
+}
 
-    authenticated_app_launch_info() -> ClientAppLaunchInfo {
-        GET "{URL}/users/authenticated/app-launch-info";
+#[endpoint(GET, "{URL}/users/authenticated/country-code")]
+async fn authenticated_country_code() -> String {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "countryCode")]
+        pub country_code: String,
     }
+    map! { |r: Response| r.country_code }
+}
 
-    birthdate() -> DateTime {
-        GET "{URL}/birthdate";
-        types {
-            Response {
-                day("birthDay"): u8,
-                month("birthMonth"): u8,
-                year("birthYear"): i32,
-            }
-        }
-        map |b: Response| DateTime::from_ymd(b.year, b.month, b.day)
+#[endpoint(GET, "{URL}/users/authenticated/roles")]
+async fn authenticated_roles() -> Vec<String> {
+    #[derive(Deserialize)]
+    struct Response {
+        pub roles: Vec<String>,
     }
+    map! { |r: Response| r.roles }
+}
 
-    // According to documentation there's supposed to be a password,
-    // yet the roblox website doesn't use it..
-    set_birthdate(birthdate: DateTime) -> () {
-        POST "{URL}/birthdate";
-        types {
-            Request {
-                day("birthDay"): u8,
-                month("birthMonth"): u8,
-                year("birthYear"): i32,
-            }
-        }
-        prelude {
-            let day = birthdate.day();
-            let month = birthdate.month();
-            let year = birthdate.year();
-        }
-        body_serialize { Request { day, month, year } }
+#[endpoint(GET, "{URL}/users/authenticated/app-launch-info")]
+async fn authenticated_app_launch_info() -> ClientAppLaunchInfo {}
+
+#[endpoint(GET, "{URL}/birthdate")]
+async fn birthdate() -> DateTime {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "birthDay")]
+        pub day: u8,
+        #[serde(rename = "birthMonth")]
+        pub month: u8,
+        #[serde(rename = "birthYear")]
+        pub year: i32,
     }
+    map! { |b: Response| DateTime::from_ymd(b.year, b.month, b.day) }
+}
 
-    description() -> String {
-        GET "{URL}/description";
-        types {
-            Response {
-                value("description"): String,
-            }
-        }
-        map |r: Response| r.value
+// According to documentation there's supposed to be a password,
+// yet the roblox website doesn't use it..
+
+#[endpoint(POST, "{URL}/birthdate")]
+async fn set_birthdate(birthdate: DateTime) -> () {
+    #[derive(Serialize)]
+    struct Request {
+        #[serde(rename = "birthDay")]
+        pub day: u8,
+        #[serde(rename = "birthMonth")]
+        pub month: u8,
+        #[serde(rename = "birthYear")]
+        pub year: i32,
     }
+    let day = birthdate.day();
+    let month = birthdate.month();
+    let year = birthdate.year();
 
-    set_description(description: &str) -> () {
-        POST "{URL}/description";
-        types {
-            Request<'a> {
-                value("description"): &'a str,
-            }
-        }
-        body_serialize { Request { value: description } }
+    body! { Request { day, month, year } }
+}
+
+#[endpoint(GET, "{URL}/description")]
+async fn description() -> String {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "description")]
+        pub value: String,
     }
+    map! { |r: Response| r.value }
+}
 
-    gender() -> Gender {
-        GET "{URL}/gender";
-        types {
-            Response {
-                value("gender"): u8,
-            }
-        }
-        map |g: Response| Gender::from_repr(g.value).expect("failed to parse gender")
+#[endpoint(POST, "{URL}/description")]
+async fn set_description(description: &str) -> () {
+    #[derive(Serialize)]
+    struct Request<'a> {
+        #[serde(rename = "description")]
+        pub value: &'a str,
     }
+    body! { Request { value: description } }
+}
 
-    set_gender(gender: Gender) -> () {
-        POST "{URL}/gender";
-         types {
-            SetGenderRequest {
-                value("gender"): u8,
-            }
-        }
-        prelude {
-            let value = gender as u8;
-        }
-        body_serialize { SetGenderRequest { value } }
-
+#[endpoint(GET, "{URL}/gender")]
+async fn gender() -> Gender {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "gender")]
+        pub value: u8,
     }
+    map! { |g: Response| Gender::from_repr(g.value).expect("failed to parse gender") }
+}
 
-    validate_display_name(display_name: &str, birthdate: DateTime) -> () {
-        GET "{URL}/display-names/validate";
-        prelude {
-            let birthdate = birthdate.to_string();
-        }
-        query {
-            "displayName" => display_name,
-            "birthdate" => &birthdate,
-        }
+#[endpoint(POST, "{URL}/gender")]
+async fn set_gender(gender: Gender) -> () {
+    #[derive(Serialize, Deserialize)]
+    struct SetGenderRequest {
+        #[serde(rename = "gender")]
+        pub value: u8,
     }
+    let value = gender as u8;
 
-    // TODO: I don't know what `id` is for, as this api only seems to be used for the client only,
-    // there's also currently no way to require id from Client, perhaps we should authenticate
-    // on from_cookie method, and store the ClientDetails in the Client
-    validate_display_name_by_id(id: u64, display_name: &str) -> () {
-        GET "{URL}/users/{id}/display-names/validate";
-        query {
-            "displayName" => display_name,
-        }
-        void
-    }
+    body! { SetGenderRequest { value } }
+}
 
-    // TODO: I don't know what `id` is for, as this api only seems to be used for the client only,
-    // there's also currently no way to require id from Client, perhaps we should authenticate
-    // on from_cookie method, and store the ClientDetails in the Client
-    set_display_name(id: u64, display_name: &str) -> () {
-        PATCH "{URL}/users/{id}/display-names";
-        types {
-            Request<'a> {
-                display_name("newDisplayName"): &'a str,
-            }
-        }
-        body_serialize { Request { display_name } }
+#[endpoint(GET, "{URL}/display-names/validate")]
+async fn validate_display_name(display_name: &str, birthdate: DateTime) -> () {
+    let birthdate = birthdate.to_string();
+
+    query! {
+        "displayName" => display_name,
+        "birthdate" => &birthdate,
     }
+}
+
+// TODO: I don't know what `id` is for, as this api only seems to be used for the client only,
+// there's also currently no way to require id from Client, perhaps we should authenticate
+// on from_cookie method, and store the ClientDetails in the Client
+
+#[endpoint(GET, "{URL}/users/{id}/display-names/validate")]
+async fn validate_display_name_by_id(id: u64, display_name: &str) -> () {
+    query! {
+        "displayName" => display_name,
+    }
+    void!();
+}
+
+// TODO: I don't know what `id` is for, as this api only seems to be used for the client only,
+// there's also currently no way to require id from Client, perhaps we should authenticate
+// on from_cookie method, and store the ClientDetails in the Client
+
+#[endpoint(PATCH, "{URL}/users/{id}/display-names")]
+async fn set_display_name(id: u64, display_name: &str) -> () {
+    #[derive(Serialize)]
+    struct Request<'a> {
+        #[serde(rename = "newDisplayName")]
+        pub display_name: &'a str,
+    }
+    body! { Request { display_name } }
 }

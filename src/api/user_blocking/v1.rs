@@ -13,28 +13,26 @@ pub struct UserBlockStatus {
     pub is_blocking_viewer: bool,
 }
 
-endpoint! {
-    is_blocked(id: u64) -> bool {
-        GET "{URL}/users/{id}/is-blocked";
+#[endpoint(GET, "{URL}/users/{id}/is-blocked")]
+async fn is_blocked(id: u64) -> bool {}
+
+#[endpoint(POST, "{URL}/users/batch-check-reciprocal-block")]
+async fn batch_check_reciprocal_block(requester_id: u64, ids: &[u64]) -> Vec<UserBlockStatus> {
+    #[derive(Serialize)]
+    struct Request<'a> {
+        #[serde(rename = "requesterUserId")]
+        pub requester_id: u64,
+        #[serde(rename = "userIds")]
+        pub ids: &'a [u64],
     }
 
-    batch_check_reciprocal_block(requester_id: u64, ids: &[u64]) -> Vec<UserBlockStatus> {
-        POST "{URL}/users/batch-check-reciprocal-block";
-
-        types {
-            Request<'a> {
-                requester_id("requesterUserId"): u64,
-                ids("userIds"): &'a [u64],
-            }
-            Response {
-                users: Vec<UserBlockStatus>,
-            }
-        }
-
-        body_serialize {
-            Request { requester_id, ids }
-        }
-
-        map |res: Response| res.users
+    #[derive(Deserialize)]
+    struct Response {
+        pub users: Vec<UserBlockStatus>,
     }
+
+    body! {
+        Request { requester_id, ids }
+    }
+    map! { |res: Response| res.users }
 }

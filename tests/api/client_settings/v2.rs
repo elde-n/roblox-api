@@ -16,7 +16,7 @@ test_endpoint!(client_version_with_token, [client_settings::v2], client_version(
 });
 
 test_endpoint!(user_channel, [client_settings::v2], user_channel(BINARY_TYPE) => |resp| {
-    assert!(!resp.channel_name.is_empty());
+    assert!(!resp.name.is_empty());
 });
 
 test_endpoint!(compression_dictionaries, [client_settings::v2], compression_dictionaries() => |resp| {
@@ -25,11 +25,11 @@ test_endpoint!(compression_dictionaries, [client_settings::v2], compression_dict
 });
 
 test_endpoint!(settings, [client_settings::v2], settings(APPLICATION, None) => |resp| {
-    assert!(!resp.application_settings.is_empty());
+    assert!(!resp.is_empty());
 });
 
 test_endpoint!(settings_with_bucket, [client_settings::v2], settings(APPLICATION, Some("zcanary")) => |resp| {
-    assert!(!resp.application_settings.is_empty());
+    assert!(!resp.is_empty());
 });
 
 #[tokio::test]

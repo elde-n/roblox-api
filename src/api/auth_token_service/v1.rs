@@ -38,70 +38,62 @@ pub struct InspectionInfo {
     pub device_info: String,
 }
 
-endpoint! {
-    login_create() -> LoginToken {
-        POST "{URL}/login/create";
+#[endpoint(POST, "{URL}/login/create")]
+async fn login_create() -> LoginToken {}
+
+#[endpoint(POST, "{URL}/login/cancel")]
+async fn login_cancel(code: &str) -> () {
+    #[derive(Serialize)]
+    struct Request<'a> {
+        pub code: &'a str,
     }
-
-    login_cancel(code: &str) -> () {
-        POST "{URL}/login/cancel";
-        types {
-            Request<'a> {
-                code: &'a str,
-            }
-        }
-        body_serialize {
-            &Request { code }
-        }
-
-        void
+    body! {
+        &Request { code }
     }
+    void!();
+}
 
-    login_status(code: &str, key: &str) -> LoginTokenStatus {
-        POST "{URL}/login/status";
-        types {
-            Request<'a> {
-                code: &'a str,
-                key("privateKey"): &'a str,
-            }
-        }
-        body_serialize {
-            &Request { code, key }
-        }
+#[endpoint(POST, "{URL}/login/status")]
+async fn login_status(code: &str, key: &str) -> LoginTokenStatus {
+    #[derive(Serialize)]
+    struct Request<'a> {
+        pub code: &'a str,
+        #[serde(rename = "privateKey")]
+        pub key: &'a str,
     }
-
-    inspect_code(code: &str) -> InspectionInfo {
-        POST "{URL}/login/enterCode";
-        types {
-            Request<'a> {
-                code: &'a str,
-            }
-        }
-        body_serialize {
-            &Request { code }
-        }
+    body! {
+        &Request { code, key }
     }
+}
 
-    validate_code(code: &str) -> () {
-        POST "{URL}/login/validateCode";
-        types {
-            Request<'a> {
-                code: &'a str,
-            }
-        }
-        body_serialize {
-            &Request { code }
-        }
-
-        void
+#[endpoint(POST, "{URL}/login/enterCode")]
+async fn inspect_code(code: &str) -> InspectionInfo {
+    #[derive(Serialize)]
+    struct Request<'a> {
+        pub code: &'a str,
     }
-
-    qr_code_image(key: &str, code: &str) -> Vec<u8> {
-        GET "{URL}/login/qr-code-image";
-        query {
-            "key" => key,
-            "code" => code,
-        }
-        raw_bytes
+    body! {
+        &Request { code }
     }
+}
+
+#[endpoint(POST, "{URL}/login/validateCode")]
+async fn validate_code(code: &str) -> () {
+    #[derive(Serialize)]
+    struct Request<'a> {
+        pub code: &'a str,
+    }
+    body! {
+        &Request { code }
+    }
+    void!();
+}
+
+#[endpoint(GET, "{URL}/login/qr-code-image")]
+async fn qr_code_image(key: &str, code: &str) -> Vec<u8> {
+    query! {
+        "key" => key,
+        "code" => code,
+    }
+    raw_bytes!();
 }

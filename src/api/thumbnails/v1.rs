@@ -165,360 +165,505 @@ impl ThumbnailFormat {
     }
 }
 
-endpoint! {
-    /// Returns thumbnail URLs for a list of asset ids.
-    assets(ids: &[u64], size: ThumbnailSize, format: ThumbnailFormat, return_policy: ReturnPolicy, circular: bool) -> Vec<ThumbnailResponse> {
-        GET "{URL}/assets";
-        types {
-            Response { data("data"): Vec<ThumbnailResponse> }
-        }
-        prelude {
-            let joined_ids = ids.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
-            let size = size.to_string();
-            let format = format.to_string();
-            let return_policy = return_policy.to_string();
-            let circular = circular.to_string();
-        }
-        query {
-            "assetIds" => &joined_ids,
-            "size" => &size,
-            "format" => &format,
-            "returnPolicy" => &return_policy,
-            "isCircular" => &circular,
-        }
-        map |r: Response| r.data
+/// Returns thumbnail URLs for a list of asset ids.
+#[endpoint(GET, "{URL}/assets")]
+async fn assets(
+    ids: &[u64],
+    size: ThumbnailSize,
+    format: ThumbnailFormat,
+    return_policy: ReturnPolicy,
+    circular: bool,
+) -> Vec<ThumbnailResponse> {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "data")]
+        pub data: Vec<ThumbnailResponse>,
     }
+    let joined_ids = ids
+        .iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<String>>()
+        .join(",");
+    let size = size.to_string();
+    let format = format.to_string();
+    let return_policy = return_policy.to_string();
+    let circular = circular.to_string();
 
-    /// Returns a 3D thumbnail of an asset.
-    asset_3d(id: u64, encode_gltf: bool) -> ThumbnailResponse {
-        GET "{URL}/assets-thumbnail-3d";
-        prelude {
-            let id = id.to_string();
-            let encode_gltf = encode_gltf.to_string();
-        }
-        query {
-            "assetId" => &id,
-            "useGltf" => &encode_gltf,
-        }
+    query! {
+        "assetIds" => &joined_ids,
+        "size" => &size,
+        "format" => &format,
+        "returnPolicy" => &return_policy,
+        "isCircular" => &circular,
     }
+    map! { |r: Response| r.data }
+}
 
-    /// Returns thumbnail URLs for a list of badge ids.
-    badge_icons(ids: &[u64], size: ThumbnailSize, format: ThumbnailFormat, circular: bool) -> Vec<ThumbnailResponse> {
-        GET "{URL}/badges/icons";
-        types {
-            Response { data("data"): Vec<ThumbnailResponse> }
-        }
-        prelude {
-            let joined_ids = ids.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
-            let size = size.to_string();
-            let format = format.to_string();
-            let circular = circular.to_string();
-        }
-        query {
-            "badgeIds" => &joined_ids,
-            "size" => &size,
-            "format" => &format,
-            "isCircular" => &circular,
-        }
-        map |r: Response| r.data
-    }
+/// Returns a 3D thumbnail of an asset.
+#[endpoint(GET, "{URL}/assets-thumbnail-3d")]
+async fn asset_3d(id: u64, encode_gltf: bool) -> ThumbnailResponse {
+    let id = id.to_string();
+    let encode_gltf = encode_gltf.to_string();
 
-    /// Returns thumbnail URLs for a list of bundle ids.
-    bundles(ids: &[u64], size: ThumbnailSize, format: ThumbnailFormat, circular: bool) -> Vec<ThumbnailResponse> {
-        GET "{URL}/bundles/thumbnails";
-        types {
-            Response { data("data"): Vec<ThumbnailResponse> }
-        }
-        prelude {
-            let joined_ids = ids.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
-            let size = size.to_string();
-            let format = format.to_string();
-            let circular = circular.to_string();
-        }
-        query {
-            "bundleIds" => &joined_ids,
-            "size" => &size,
-            "format" => &format,
-            "isCircular" => &circular,
-        }
-        map |r: Response| r.data
+    query! {
+        "assetId" => &id,
+        "useGltf" => &encode_gltf,
     }
+}
 
-    /// Returns thumbnail URLs for a list of developer product ids.
-    developer_products(ids: &[u64], size: ThumbnailSize, format: ThumbnailFormat, circular: bool) -> Vec<ThumbnailResponse> {
-        GET "{URL}/developer-products/icons";
-        types {
-            Response { data("data"): Vec<ThumbnailResponse> }
-        }
-        prelude {
-            let joined_ids = ids.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
-            let size = size.to_string();
-            let format = format.to_string();
-            let circular = circular.to_string();
-        }
-        query {
-            "developerProductIds" => &joined_ids,
-            "size" => &size,
-            "format" => &format,
-            "isCircular" => &circular,
-        }
-        map |r: Response| r.data
+/// Returns thumbnail URLs for a list of badge ids.
+#[endpoint(GET, "{URL}/badges/icons")]
+async fn badge_icons(
+    ids: &[u64],
+    size: ThumbnailSize,
+    format: ThumbnailFormat,
+    circular: bool,
+) -> Vec<ThumbnailResponse> {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "data")]
+        pub data: Vec<ThumbnailResponse>,
     }
+    let joined_ids = ids
+        .iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<String>>()
+        .join(",");
+    let size = size.to_string();
+    let format = format.to_string();
+    let circular = circular.to_string();
 
-    /// Returns thumbnail URLs for a list of game pass ids.
-    gamepasses(ids: &[u64], size: ThumbnailSize, format: ThumbnailFormat, circular: bool) -> Vec<ThumbnailResponse> {
-        GET "{URL}/game-passes";
-        types {
-            Response { data("data"): Vec<ThumbnailResponse> }
-        }
-        prelude {
-            let joined_ids = ids.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
-            let size = size.to_string();
-            let format = format.to_string();
-            let circular = circular.to_string();
-        }
-        query {
-            "gamePassIds" => &joined_ids,
-            "size" => &size,
-            "format" => &format,
-            "isCircular" => &circular,
-        }
-        map |r: Response| r.data
+    query! {
+        "badgeIds" => &joined_ids,
+        "size" => &size,
+        "format" => &format,
+        "isCircular" => &circular,
     }
+    map! { |r: Response| r.data }
+}
 
-    /// Fetches game thumbnail URLs for a list of universes' thumbnail ids.
-    /// Ids that do not correspond to a valid thumbnail will be filtered out.
-    universe_thumbnails(universe_id: u64, ids: &[u64], size: ThumbnailSize, format: ThumbnailFormat, return_policy: ReturnPolicy, circular: bool) -> Vec<ThumbnailResponse> {
-        GET "{URL}/games/{universe_id}/thumbnails";
-        types {
-            Response { data("data"): Vec<ThumbnailResponse> }
-        }
-        prelude {
-            let joined_ids = ids.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
-            let size = size.to_string();
-            let format = format.to_string();
-            let return_policy = return_policy.to_string();
-            let circular = circular.to_string();
-        }
-        query {
-            "thumbnailIds" => &joined_ids,
-            "size" => &size,
-            "format" => &format,
-            "returnPolicy" => &return_policy,
-            "isCircular" => &circular,
-        }
-        map |r: Response| r.data
+/// Returns thumbnail URLs for a list of bundle ids.
+#[endpoint(GET, "{URL}/bundles/thumbnails")]
+async fn bundles(
+    ids: &[u64],
+    size: ThumbnailSize,
+    format: ThumbnailFormat,
+    circular: bool,
+) -> Vec<ThumbnailResponse> {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "data")]
+        pub data: Vec<ThumbnailResponse>,
     }
+    let joined_ids = ids
+        .iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<String>>()
+        .join(",");
+    let size = size.to_string();
+    let format = format.to_string();
+    let circular = circular.to_string();
 
-    /// Returns thumbnail URLs for a list of universe ids.
-    games(ids: &[u64], size: ThumbnailSize, format: ThumbnailFormat, return_policy: ReturnPolicy, circular: bool, defaults: bool, count_per_universe: u32) -> Vec<ThumbnailResponse> {
-        GET "{URL}/games/multiget/thumbnails";
-        types {
-            Response { data("data"): Vec<ThumbnailResponse> }
-        }
-        prelude {
-            let joined_ids = ids.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
-            let size = size.to_string();
-            let format = format.to_string();
-            let return_policy = return_policy.to_string();
-            let circular = circular.to_string();
-            let defaults = defaults.to_string();
-            let count_per_universe = count_per_universe.to_string();
-        }
-        query {
-            "universeIds" => &joined_ids,
-            "size" => &size,
-            "format" => &format,
-            "returnPolicy" => &return_policy,
-            "isCircular" => &circular,
-            "defaults" => &defaults,
-            "countPerUniverse" => &count_per_universe,
-        }
-        map |r: Response| r.data
+    query! {
+        "bundleIds" => &joined_ids,
+        "size" => &size,
+        "format" => &format,
+        "isCircular" => &circular,
     }
+    map! { |r: Response| r.data }
+}
 
-    /// Returns game icon URLs for a list of universe ids.
-    game_icons(ids: &[u64], size: ThumbnailSize, format: ThumbnailFormat, return_policy: ReturnPolicy, circular: bool) -> Vec<ThumbnailResponse> {
-        GET "{URL}/games/icons";
-        types {
-            Response { data("data"): Vec<ThumbnailResponse> }
-        }
-        prelude {
-            let joined_ids = ids.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
-            let size = size.to_string();
-            let format = format.to_string();
-            let return_policy = return_policy.to_string();
-            let circular = circular.to_string();
-        }
-        query {
-            "universeIds" => &joined_ids,
-            "size" => &size,
-            "format" => &format,
-            "returnPolicy" => &return_policy,
-            "isCircular" => &circular,
-        }
-        map |r: Response| r.data
+/// Returns thumbnail URLs for a list of developer product ids.
+#[endpoint(GET, "{URL}/developer-products/icons")]
+async fn developer_products(
+    ids: &[u64],
+    size: ThumbnailSize,
+    format: ThumbnailFormat,
+    circular: bool,
+) -> Vec<ThumbnailResponse> {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "data")]
+        pub data: Vec<ThumbnailResponse>,
     }
+    let joined_ids = ids
+        .iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<String>>()
+        .join(",");
+    let size = size.to_string();
+    let format = format.to_string();
+    let circular = circular.to_string();
 
-    /// Returns thumbnail URLs for a list of group ids.
-    group_icons(ids: &[u64], size: ThumbnailSize, format: ThumbnailFormat, circular: bool) -> Vec<ThumbnailResponse> {
-        GET "{URL}/groups/icons";
-        types {
-            Response { data("data"): Vec<ThumbnailResponse> }
-        }
-        prelude {
-            let joined_ids = ids.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
-            let size = size.to_string();
-            let format = format.to_string();
-            let circular = circular.to_string();
-        }
-        query {
-            "groupIds" => &joined_ids,
-            "size" => &size,
-            "format" => &format,
-            "isCircular" => &circular,
-        }
-        map |r: Response| r.data
+    query! {
+        "developerProductIds" => &joined_ids,
+        "size" => &size,
+        "format" => &format,
+        "isCircular" => &circular,
     }
+    map! { |r: Response| r.data }
+}
 
-    /// Returns place icon URLs for a list of place ids.
-    place_icons(ids: &[u64], size: ThumbnailSize, format: ThumbnailFormat, return_policy: ReturnPolicy, circular: bool) -> Vec<ThumbnailResponse> {
-        GET "{URL}/places/gameicons";
-        types {
-            Response { data("data"): Vec<ThumbnailResponse> }
-        }
-        prelude {
-            let joined_ids = ids.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
-            let size = size.to_string();
-            let format = format.to_string();
-            let return_policy = return_policy.to_string();
-            let circular = circular.to_string();
-        }
-        query {
-            "placeIds" => &joined_ids,
-            "size" => &size,
-            "format" => &format,
-            "returnPolicy" => &return_policy,
-            "isCircular" => &circular,
-        }
-        map |r: Response| r.data
+/// Returns thumbnail URLs for a list of game pass ids.
+#[endpoint(GET, "{URL}/game-passes")]
+async fn gamepasses(
+    ids: &[u64],
+    size: ThumbnailSize,
+    format: ThumbnailFormat,
+    circular: bool,
+) -> Vec<ThumbnailResponse> {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "data")]
+        pub data: Vec<ThumbnailResponse>,
     }
+    let joined_ids = ids
+        .iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<String>>()
+        .join(",");
+    let size = size.to_string();
+    let format = format.to_string();
+    let circular = circular.to_string();
 
-    /// Returns avatar thumbnail URLs for a list of user ids.
-    avatars(ids: &[u64], size: ThumbnailSize, format: ThumbnailFormat, circular: bool) -> Vec<ThumbnailResponse> {
-        GET "{URL}/users/avatar";
-        types {
-            Response { data("data"): Vec<ThumbnailResponse> }
-        }
-        prelude {
-            let joined_ids = ids.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
-            let size = size.to_string();
-            let format = format.to_string();
-            let circular = circular.to_string();
-        }
-        query {
-            "userIds" => &joined_ids,
-            "size" => &size,
-            "format" => &format,
-            "isCircular" => &circular,
-        }
-        map |r: Response| r.data
+    query! {
+        "gamePassIds" => &joined_ids,
+        "size" => &size,
+        "format" => &format,
+        "isCircular" => &circular,
     }
+    map! { |r: Response| r.data }
+}
 
-    /// Returns a 3D avatar thumbnail for a user id.
-    avatar_3d(id: u64) -> ThumbnailResponse {
-        GET "{URL}/avatar-3d";
-        prelude {
-            let id = id.to_string();
-        }
-        query {
-            "userId" => &id,
-        }
+/// Fetches game thumbnail URLs for a list of universes' thumbnail ids.
+/// Ids that do not correspond to a valid thumbnail will be filtered out.
+#[endpoint(GET, "{URL}/games/{universe_id}/thumbnails")]
+async fn universe_thumbnails(
+    universe_id: u64,
+    ids: &[u64],
+    size: ThumbnailSize,
+    format: ThumbnailFormat,
+    return_policy: ReturnPolicy,
+    circular: bool,
+) -> Vec<ThumbnailResponse> {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "data")]
+        pub data: Vec<ThumbnailResponse>,
     }
+    let joined_ids = ids
+        .iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<String>>()
+        .join(",");
+    let size = size.to_string();
+    let format = format.to_string();
+    let return_policy = return_policy.to_string();
+    let circular = circular.to_string();
 
-    /// Returns avatar bust thumbnail URLs for a list of user ids.
-    avatar_busts(ids: &[u64], size: ThumbnailSize, format: ThumbnailFormat, circular: bool) -> Vec<ThumbnailResponse> {
-        GET "{URL}/users/avatar-bust";
-        types {
-            Response { data("data"): Vec<ThumbnailResponse> }
-        }
-        prelude {
-            let joined_ids = ids.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
-            let size = size.to_string();
-            let format = format.to_string();
-            let circular = circular.to_string();
-        }
-        query {
-            "userIds" => &joined_ids,
-            "size" => &size,
-            "format" => &format,
-            "isCircular" => &circular,
-        }
-        map |r: Response| r.data
+    query! {
+        "thumbnailIds" => &joined_ids,
+        "size" => &size,
+        "format" => &format,
+        "returnPolicy" => &return_policy,
+        "isCircular" => &circular,
     }
+    map! { |r: Response| r.data }
+}
 
-    /// Returns avatar headshot thumbnail URLs for a list of user ids.
-    avatar_headshots(ids: &[u64], size: ThumbnailSize, format: ThumbnailFormat, circular: bool) -> Vec<ThumbnailResponse> {
-        GET "{URL}/users/avatar-headshot";
-        types {
-            Response { data("data"): Vec<ThumbnailResponse> }
-        }
-        prelude {
-            let joined_ids = ids.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
-            let size = size.to_string();
-            let format = format.to_string();
-            let circular = circular.to_string();
-        }
-        query {
-            "userIds" => &joined_ids,
-            "size" => &size,
-            "format" => &format,
-            "isCircular" => &circular,
-        }
-        map |r: Response| r.data
+/// Returns thumbnail URLs for a list of universe ids.
+#[endpoint(GET, "{URL}/games/multiget/thumbnails")]
+async fn games(
+    ids: &[u64],
+    size: ThumbnailSize,
+    format: ThumbnailFormat,
+    return_policy: ReturnPolicy,
+    circular: bool,
+    defaults: bool,
+    count_per_universe: u32,
+) -> Vec<ThumbnailResponse> {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "data")]
+        pub data: Vec<ThumbnailResponse>,
     }
+    let joined_ids = ids
+        .iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<String>>()
+        .join(",");
+    let size = size.to_string();
+    let format = format.to_string();
+    let return_policy = return_policy.to_string();
+    let circular = circular.to_string();
+    let defaults = defaults.to_string();
+    let count_per_universe = count_per_universe.to_string();
 
-    /// Returns a 3D outfit thumbnail for an outfit id.
-    outfit_3d(id: u64) -> ThumbnailResponse {
-        GET "{URL}/outfit-3d";
-        prelude {
-            let id = id.to_string();
-        }
-        query {
-            "outfitId" => &id,
-        }
+    query! {
+        "universeIds" => &joined_ids,
+        "size" => &size,
+        "format" => &format,
+        "returnPolicy" => &return_policy,
+        "isCircular" => &circular,
+        "defaults" => &defaults,
+        "countPerUniverse" => &count_per_universe,
     }
+    map! { |r: Response| r.data }
+}
 
-    /// Returns outfit thumbnail URLs for a list of user outfit ids.
-    outfits(ids: &[u64], size: ThumbnailSize, format: ThumbnailFormat, circular: bool) -> Vec<ThumbnailResponse> {
-        GET "{URL}/users/outfits";
-        types {
-            Response { data("data"): Vec<ThumbnailResponse> }
-        }
-        prelude {
-            let joined_ids = ids.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
-            let size = size.to_string();
-            let format = format.to_string();
-            let circular = circular.to_string();
-        }
-        query {
-            "userOutfitIds" => &joined_ids,
-            "size" => &size,
-            "format" => &format,
-            "isCircular" => &circular,
-        }
-        map |r: Response| r.data
+/// Returns game icon URLs for a list of universe ids.
+#[endpoint(GET, "{URL}/games/icons")]
+async fn game_icons(
+    ids: &[u64],
+    size: ThumbnailSize,
+    format: ThumbnailFormat,
+    return_policy: ReturnPolicy,
+    circular: bool,
+) -> Vec<ThumbnailResponse> {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "data")]
+        pub data: Vec<ThumbnailResponse>,
     }
+    let joined_ids = ids
+        .iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<String>>()
+        .join(",");
+    let size = size.to_string();
+    let format = format.to_string();
+    let return_policy = return_policy.to_string();
+    let circular = circular.to_string();
 
-    /// Returns batch thumbnail results for multiple requests of varying types and sizes.
-    batch(requests: Vec<ThumbnailBatchRequest<'_>>) -> Vec<ThumbnailResponseFromBatch> {
-        POST "{URL}/batch";
-        types {
-            Response { data("data"): Vec<ThumbnailResponseFromBatch> }
-        }
-        body_serialize { &requests }
-        map |r: Response| r.data
+    query! {
+        "universeIds" => &joined_ids,
+        "size" => &size,
+        "format" => &format,
+        "returnPolicy" => &return_policy,
+        "isCircular" => &circular,
     }
+    map! { |r: Response| r.data }
+}
+
+/// Returns thumbnail URLs for a list of group ids.
+#[endpoint(GET, "{URL}/groups/icons")]
+async fn group_icons(
+    ids: &[u64],
+    size: ThumbnailSize,
+    format: ThumbnailFormat,
+    circular: bool,
+) -> Vec<ThumbnailResponse> {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "data")]
+        pub data: Vec<ThumbnailResponse>,
+    }
+    let joined_ids = ids
+        .iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<String>>()
+        .join(",");
+    let size = size.to_string();
+    let format = format.to_string();
+    let circular = circular.to_string();
+
+    query! {
+        "groupIds" => &joined_ids,
+        "size" => &size,
+        "format" => &format,
+        "isCircular" => &circular,
+    }
+    map! { |r: Response| r.data }
+}
+
+/// Returns place icon URLs for a list of place ids.
+#[endpoint(GET, "{URL}/places/gameicons")]
+async fn place_icons(
+    ids: &[u64],
+    size: ThumbnailSize,
+    format: ThumbnailFormat,
+    return_policy: ReturnPolicy,
+    circular: bool,
+) -> Vec<ThumbnailResponse> {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "data")]
+        pub data: Vec<ThumbnailResponse>,
+    }
+    let joined_ids = ids
+        .iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<String>>()
+        .join(",");
+    let size = size.to_string();
+    let format = format.to_string();
+    let return_policy = return_policy.to_string();
+    let circular = circular.to_string();
+
+    query! {
+        "placeIds" => &joined_ids,
+        "size" => &size,
+        "format" => &format,
+        "returnPolicy" => &return_policy,
+        "isCircular" => &circular,
+    }
+    map! { |r: Response| r.data }
+}
+
+/// Returns avatar thumbnail URLs for a list of user ids.
+#[endpoint(GET, "{URL}/users/avatar")]
+async fn avatars(
+    ids: &[u64],
+    size: ThumbnailSize,
+    format: ThumbnailFormat,
+    circular: bool,
+) -> Vec<ThumbnailResponse> {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "data")]
+        pub data: Vec<ThumbnailResponse>,
+    }
+    let joined_ids = ids
+        .iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<String>>()
+        .join(",");
+    let size = size.to_string();
+    let format = format.to_string();
+    let circular = circular.to_string();
+
+    query! {
+        "userIds" => &joined_ids,
+        "size" => &size,
+        "format" => &format,
+        "isCircular" => &circular,
+    }
+    map! { |r: Response| r.data }
+}
+
+/// Returns a 3D avatar thumbnail for a user id.
+#[endpoint(GET, "{URL}/avatar-3d")]
+async fn avatar_3d(id: u64) -> ThumbnailResponse {
+    let id = id.to_string();
+
+    query! {
+        "userId" => &id,
+    }
+}
+
+/// Returns avatar bust thumbnail URLs for a list of user ids.
+#[endpoint(GET, "{URL}/users/avatar-bust")]
+async fn avatar_busts(
+    ids: &[u64],
+    size: ThumbnailSize,
+    format: ThumbnailFormat,
+    circular: bool,
+) -> Vec<ThumbnailResponse> {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "data")]
+        pub data: Vec<ThumbnailResponse>,
+    }
+    let joined_ids = ids
+        .iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<String>>()
+        .join(",");
+    let size = size.to_string();
+    let format = format.to_string();
+    let circular = circular.to_string();
+
+    query! {
+        "userIds" => &joined_ids,
+        "size" => &size,
+        "format" => &format,
+        "isCircular" => &circular,
+    }
+    map! { |r: Response| r.data }
+}
+
+/// Returns avatar headshot thumbnail URLs for a list of user ids.
+#[endpoint(GET, "{URL}/users/avatar-headshot")]
+async fn avatar_headshots(
+    ids: &[u64],
+    size: ThumbnailSize,
+    format: ThumbnailFormat,
+    circular: bool,
+) -> Vec<ThumbnailResponse> {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "data")]
+        pub data: Vec<ThumbnailResponse>,
+    }
+    let joined_ids = ids
+        .iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<String>>()
+        .join(",");
+    let size = size.to_string();
+    let format = format.to_string();
+    let circular = circular.to_string();
+
+    query! {
+        "userIds" => &joined_ids,
+        "size" => &size,
+        "format" => &format,
+        "isCircular" => &circular,
+    }
+    map! { |r: Response| r.data }
+}
+
+/// Returns a 3D outfit thumbnail for an outfit id.
+#[endpoint(GET, "{URL}/outfit-3d")]
+async fn outfit_3d(id: u64) -> ThumbnailResponse {
+    let id = id.to_string();
+
+    query! {
+        "outfitId" => &id,
+    }
+}
+
+/// Returns outfit thumbnail URLs for a list of user outfit ids.
+#[endpoint(GET, "{URL}/users/outfits")]
+async fn outfits(
+    ids: &[u64],
+    size: ThumbnailSize,
+    format: ThumbnailFormat,
+    circular: bool,
+) -> Vec<ThumbnailResponse> {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "data")]
+        pub data: Vec<ThumbnailResponse>,
+    }
+    let joined_ids = ids
+        .iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<String>>()
+        .join(",");
+    let size = size.to_string();
+    let format = format.to_string();
+    let circular = circular.to_string();
+
+    query! {
+        "userOutfitIds" => &joined_ids,
+        "size" => &size,
+        "format" => &format,
+        "isCircular" => &circular,
+    }
+    map! { |r: Response| r.data }
+}
+
+/// Returns batch thumbnail results for multiple requests of varying types and sizes.
+#[endpoint(POST, "{URL}/batch")]
+async fn batch(requests: Vec<ThumbnailBatchRequest<'_>>) -> Vec<ThumbnailResponseFromBatch> {
+    #[derive(Deserialize)]
+    struct Response {
+        #[serde(rename = "data")]
+        pub data: Vec<ThumbnailResponseFromBatch>,
+    }
+    body! { &requests }
+    map! { |r: Response| r.data }
 }
 
 // TODO: measurements api

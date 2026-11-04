@@ -49,58 +49,55 @@ pub struct Metadata {
     pub is_password_required_for_aging_down: bool,
 }
 
-endpoint! {
-    roblox_badges(id: u64) -> Vec<RobloxBadge> {
-        GET "{URL}/users/{id}/roblox-badges";
-    }
+#[endpoint(GET, "{URL}/users/{id}/roblox-badges")]
+async fn roblox_badges(id: u64) -> Vec<RobloxBadge> {}
 
-    birthdate() -> DateTime {
-        GET "{URL}/birthdate";
-        types {
-            BirthdateResponse {
-                day("birthDay"): u8,
-                month("birthMonth"): u8,
-                year("birthYear"): i32,
-            }
-        }
-        map |res: BirthdateResponse| DateTime::from_ymd(res.year, res.month, res.day)
+#[endpoint(GET, "{URL}/birthdate")]
+async fn birthdate() -> DateTime {
+    #[derive(Serialize, Deserialize)]
+    struct BirthdateResponse {
+        #[serde(rename = "birthDay")]
+        pub day: u8,
+        #[serde(rename = "birthMonth")]
+        pub month: u8,
+        #[serde(rename = "birthYear")]
+        pub year: i32,
     }
+    map! { |res: BirthdateResponse| DateTime::from_ymd(res.year, res.month, res.day) }
+}
 
-    description() -> String {
-        GET "{URL}/description";
-        types {
-            DescriptionResponse {
-                value("description"): String,
-            }
-        }
-        map |res: DescriptionResponse| res.value
+#[endpoint(GET, "{URL}/description")]
+async fn description() -> String {
+    #[derive(Serialize, Deserialize)]
+    struct DescriptionResponse {
+        #[serde(rename = "description")]
+        pub value: String,
     }
+    map! { |res: DescriptionResponse| res.value }
+}
 
-    gender() -> Gender {
-        GET "{URL}/gender";
-        types {
-            GenderResponse {
-                value("gender"): u8,
-            }
-        }
-        map |res: GenderResponse| Gender::from_repr(res.value).expect("failed to parse gender")
+#[endpoint(GET, "{URL}/gender")]
+async fn gender() -> Gender {
+    #[derive(Serialize, Deserialize)]
+    struct GenderResponse {
+        #[serde(rename = "gender")]
+        pub value: u8,
     }
+    map! { |res: GenderResponse| Gender::from_repr(res.value).expect("failed to parse gender") }
+}
 
-    metadata() -> Metadata {
-        GET "{URL}/metadata";
-    }
+#[endpoint(GET, "{URL}/metadata")]
+async fn metadata() -> Metadata {}
 
-    promotion_channels() -> PromotionChannels {
-        GET "{URL}/promotion-channels";
-    }
+#[endpoint(GET, "{URL}/promotion-channels")]
+async fn promotion_channels() -> PromotionChannels {}
 
-    star_code_affiliate() -> u64 {
-        GET "{URL}/star-code-affiliates";
-        types {
-            StarCodeAffiliateResponse {
-                id("userId"): u64,
-            }
-        }
-        map |res: StarCodeAffiliateResponse| res.id
+#[endpoint(GET, "{URL}/star-code-affiliates")]
+async fn star_code_affiliate() -> u64 {
+    #[derive(Serialize, Deserialize)]
+    struct StarCodeAffiliateResponse {
+        #[serde(rename = "userId")]
+        pub id: u64,
     }
+    map! { |res: StarCodeAffiliateResponse| res.id }
 }
