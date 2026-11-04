@@ -3,7 +3,7 @@ use std::time::SystemTime;
 use base64::{Engine, prelude::BASE64_STANDARD};
 use p256::{
     ecdsa::{Signature, SigningKey, signature::Signer},
-    elliptic_curve::rand_core::OsRng,
+    elliptic_curve::Generate,
 };
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -92,7 +92,7 @@ async fn authentication_intent(client: &mut Client) -> Result<AuthenticationInte
         .map_err(|_| Error::InvalidDateTime)?
         .as_secs();
 
-    let key = SigningKey::random(&mut OsRng);
+    let key = SigningKey::generate();
     let public_key = BASE64_STANDARD.encode(key.verifying_key().to_sec1_bytes());
 
     let binding = format!("{}:{}:{}", public_key, unix, nonce);
